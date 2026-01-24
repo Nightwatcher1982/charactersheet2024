@@ -52,7 +52,8 @@ const createEmptyCharacter = (): Partial<Character> => ({
   feats: [], // 专长列表
   backgroundEquipmentChoice: undefined, // 背景装备选择
   backgroundAbilityBonuses: {}, // 背景属性加值
-  classFeatureChoices: {} // 职业和物种特性选择
+  classFeatureChoices: {}, // 职业和物种特性选择
+  equippedWeapons: [] // 用户选择的武器（武器ID数组）
 });
 
 export const useCharacterStore = create<CharacterStore>()(

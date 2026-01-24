@@ -174,6 +174,47 @@ export const CLASS_FEATURES: ClassFeaturesData[] = [
     ]
   },
   {
+    classId: 'bard',
+    className: '吟游诗人',
+    weaponMastery: {
+      name: '武器精通',
+      nameEn: 'Weapon Mastery',
+      description: '你对武器的训练使你能够运用两种自选的你具有熟练的武器的精通词条。每当你完成一次长休时，你可以改变你所选择的武器类型。',
+      selectableWeapons: ['短剑', '细剑', '手弩', '短弓', '长弓']
+    },
+    level1Features: [
+      {
+        id: 'spellcasting',
+        name: '施法',
+        nameEn: 'Spellcasting',
+        level: 1,
+        description: '作为音乐和魔法的实践者，你拥有一个法术列表，你可以从中选择法术来施展。',
+        details: [
+          '戏法：你知晓两个吟游诗人戏法',
+          '法术位：吟游诗人特性表显示了你可用于施展一环及以上法术的法术位数量',
+          '已知法术：你知晓一定数量的吟游诗人法术',
+          '施法属性：你吟游诗人法术的施法属性是魅力',
+          '施法法器：你可以使用乐器作为你吟游诗人法术的施法法器'
+        ]
+      },
+      {
+        id: 'bardic-inspiration',
+        name: '吟游激励',
+        nameEn: 'Bardic Inspiration',
+        level: 1,
+        description: '你可以用话语或音乐来激励他人。',
+        details: [
+          '在你的回合，你可以用一个附赠动作选择一个你30尺内可见的生物（可以是你自己）',
+          '该生物获得一个吟游激励骰（d6）',
+          '在接下来的10分钟内，该生物可以在一次属性检定、攻击检定或豁免检定中，使用一个反应动作来掷这个骰子，并将结果加到检定结果上',
+          '一旦使用，吟游激励骰就会消失',
+          '你完成一次长休后，重获所有已消耗的使用次数',
+          '使用次数等于你的魅力调整值（至少1次）'
+        ]
+      }
+    ]
+  },
+  {
     classId: 'rogue',
     className: '游荡者',
     weaponMastery: {
@@ -249,6 +290,196 @@ export const CLASS_FEATURES: ClassFeaturesData[] = [
           '法术位：2级开始获得法术位',
           '已知法术：你知晓一定数量的游侠法术',
           '施法属性：你游侠法术的施法属性是感知'
+        ]
+      }
+    ]
+  },
+  {
+    classId: 'barbarian',
+    className: '野蛮人',
+    weaponMastery: {
+      name: '武器精通',
+      nameEn: 'Weapon Mastery',
+      description: '你对武器的训练使你能够运用两种自选的你具有熟练的武器的精通词条。每当你完成一次长休时，你可以改变你所选择的武器类型。',
+      selectableWeapons: ['所有简易和军用武器']
+    },
+    level1Features: [
+      {
+        id: 'rage',
+        name: '狂暴',
+        nameEn: 'Rage',
+        level: 1,
+        description: '在战斗中，你可以进入狂暴状态，释放原始的愤怒力量。',
+        details: [
+          '在你的回合，你可以使用一个附赠动作进入狂暴状态',
+          '狂暴持续1分钟，或直到你陷入昏迷、结束狂暴（附赠动作）',
+          '狂暴时，近战武器攻击的伤害骰获得+2加值',
+          '你对钝击、穿刺和挥砍伤害具有抗性',
+          '你完成一次长休后，重获所有已消耗的使用次数',
+          '使用次数等于你的体质调整值（至少2次）'
+        ]
+      },
+      {
+        id: 'unarmored-defense',
+        name: '无甲防御',
+        nameEn: 'Unarmored Defense',
+        level: 1,
+        description: '当你未穿着护甲时，你的AC等于10+敏捷调整值+体质调整值。',
+        details: [
+          '你可以使用盾牌并仍获得此收益',
+          '此特性在你穿着护甲时无效'
+        ]
+      }
+    ]
+  },
+  {
+    classId: 'druid',
+    className: '德鲁伊',
+    weaponMastery: {
+      name: '武器精通',
+      nameEn: 'Weapon Mastery',
+      description: '你对武器的训练使你能够运用两种自选的你具有熟练的武器的精通词条。每当你完成一次长休时，你可以改变你所选择的武器类型。',
+      selectableWeapons: ['木棒', '匕首', '飞镖', '标枪', '硬头锤', '木棍', '弯刀', '镰刀', '投石索', '矛']
+    },
+    level1Features: [
+      {
+        id: 'spellcasting',
+        name: '施法',
+        nameEn: 'Spellcasting',
+        level: 1,
+        description: '作为自然的守护者，你可以施展德鲁伊法术。',
+        details: [
+          '戏法：你知晓两个德鲁伊戏法',
+          '法术位：德鲁伊特性表显示了你可用的法术位数量',
+          '准备法术：准备法术数量等于你的感知调整值+德鲁伊等级',
+          '仪式施法：你可以将任何已准备的具有仪式标签的德鲁伊法术作为仪式施展',
+          '施法属性：你德鲁伊法术的施法属性是感知',
+          '施法法器：你可以使用德鲁伊法器作为你德鲁伊法术的施法法器'
+        ]
+      },
+      {
+        id: 'wild-shape',
+        name: '野性形态',
+        nameEn: 'Wild Shape',
+        level: 1,
+        description: '你可以使用魔法来改变自己的形态。',
+        details: [
+          '你可以使用一个动作变形成一只野兽，其挑战等级为0，且没有飞行或游泳速度',
+          '你保持自己的智力、感知和魅力值，以及所有技能和豁免检定的熟练项',
+          '你获得该野兽的感官、移动方式和特殊能力',
+          '你完成一次短休或长休后，重获所有已消耗的使用次数',
+          '使用次数等于你的感知调整值（至少1次）'
+        ]
+      }
+    ]
+  },
+  {
+    classId: 'monk',
+    className: '武僧',
+    weaponMastery: {
+      name: '武器精通',
+      nameEn: 'Weapon Mastery',
+      description: '你对武器的训练使你能够运用两种自选的你具有熟练的武器的精通词条。每当你完成一次长休时，你可以改变你所选择的武器类型。',
+      selectableWeapons: ['所有简易武器', '短剑']
+    },
+    level1Features: [
+      {
+        id: 'unarmored-defense',
+        name: '无甲防御',
+        nameEn: 'Unarmored Defense',
+        level: 1,
+        description: '当你未穿着护甲也未持盾时，你的AC等于10+敏捷调整值+感知调整值。',
+        details: [
+          '此特性在你穿着护甲或持盾时无效'
+        ]
+      },
+      {
+        id: 'martial-arts',
+        name: '武艺',
+        nameEn: 'Martial Arts',
+        level: 1,
+        description: '你的徒手攻击和特定武器攻击可以使用敏捷调整值代替力量调整值。',
+        details: [
+          '当你使用徒手攻击或武僧武器进行攻击时，可以使用敏捷调整值进行攻击和伤害检定',
+          '当你使用攻击动作进行徒手攻击或使用武僧武器攻击时，可以用附赠动作进行一次徒手攻击',
+          '徒手攻击的伤害骰为d4，随等级提升'
+        ]
+      }
+    ]
+  },
+  {
+    classId: 'sorcerer',
+    className: '术士',
+    level1Features: [
+      {
+        id: 'spellcasting',
+        name: '施法',
+        nameEn: 'Spellcasting',
+        level: 1,
+        description: '作为天生拥有魔法力量的施法者，你可以施展术士法术。',
+        details: [
+          '戏法：你知晓四个术士戏法',
+          '法术位：术士特性表显示了你可用的法术位数量',
+          '已知法术：你知晓一定数量的术士法术',
+          '施法属性：你术士法术的施法属性是魅力',
+          '施法法器：你可以使用奥术法器作为你术士法术的施法法器'
+        ]
+      },
+      {
+        id: 'sorcerous-origin',
+        name: '术士起源',
+        nameEn: 'Sorcerous Origin',
+        level: 1,
+        description: '你选择一种术士起源，它决定了你魔法的来源和性质。',
+        details: [
+          '龙裔血统：你的魔法源于龙族血统',
+          '狂野魔法：你的魔法充满混沌和不可预测性',
+          '风暴术士：你的魔法源于元素风暴',
+          '每种起源都提供独特的1级特性'
+        ]
+      }
+    ]
+  },
+  {
+    classId: 'warlock',
+    className: '邪术师',
+    level1Features: [
+      {
+        id: 'spellcasting',
+        name: '施法',
+        nameEn: 'Spellcasting',
+        level: 1,
+        description: '作为与异界存在订立契约的施法者，你可以施展邪术师法术。',
+        details: [
+          '戏法：你知晓两个邪术师戏法',
+          '法术位：邪术师特性表显示了你可用的法术位数量（短休恢复）',
+          '已知法术：你知晓一定数量的邪术师法术',
+          '施法属性：你邪术师法术的施法属性是魅力',
+          '施法法器：你可以使用奥术法器作为你邪术师法术的施法法器'
+        ]
+      },
+      {
+        id: 'pact-magic',
+        name: '契约魔法',
+        nameEn: 'Pact Magic',
+        level: 1,
+        description: '你的魔法来自与异界存在的契约。',
+        details: [
+          '你的法术位在短休后恢复，而非长休',
+          '所有法术位都是同一环阶（从1环开始，随等级提升）',
+          '你完成一次短休后，重获所有已消耗的法术位'
+        ]
+      },
+      {
+        id: 'pact-boon',
+        name: '契约恩赐',
+        nameEn: 'Pact Boon',
+        level: 1,
+        description: '你的守护神赐予你一个特殊的恩赐。',
+        details: [
+          '锁链契约：获得一个魔宠',
+          '刀锋契约：可以召唤契约武器',
+          '魔典契约：获得暗影之书，学习额外戏法'
         ]
       }
     ]

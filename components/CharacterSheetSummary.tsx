@@ -5,7 +5,7 @@ import { getFeatById } from '@/lib/feats-data';
 import { getLanguageById } from '@/lib/languages-data';
 import { getClassFeaturesByName } from '@/lib/class-features-data';
 import { BACKGROUND_EQUIPMENT } from '@/lib/equipment-packages-data';
-import { getWeaponByName, calculateWeaponAttackBonus } from '@/lib/weapons-data';
+import { WEAPONS, getWeaponByName, calculateWeaponAttackBonus } from '@/lib/weapons-data';
 import { User, Shield, Heart, Zap, Award, Globe, Package, Star, Swords, BookOpen, Sword } from 'lucide-react';
 
 interface CharacterSheetSummaryProps {
@@ -100,9 +100,20 @@ export default function CharacterSheetSummary({ character }: CharacterSheetSumma
   const selectedEquipment = character.backgroundEquipmentChoice === 'A' ? equipmentData?.optionA : 
                             character.backgroundEquipmentChoice === 'B' ? equipmentData?.optionB : null;
 
-  // 从装备中提取武器
+  // 从装备中提取武器，或使用用户选择的武器
   const equippedWeapons = [];
-  if (selectedEquipment && 'items' in selectedEquipment) {
+  
+  // 优先使用用户选择的武器
+  if (character.equippedWeapons && character.equippedWeapons.length > 0) {
+    for (const weaponId of character.equippedWeapons) {
+      const weapon = WEAPONS.find(w => w.id === weaponId);
+      if (weapon) {
+        equippedWeapons.push({ weapon, quantity: 1 });
+      }
+    }
+  }
+  // 如果没有用户选择的武器，从背景装备中提取
+  else if (selectedEquipment && 'items' in selectedEquipment) {
     for (const item of selectedEquipment.items) {
       const weapon = getWeaponByName(item.name);
       if (weapon) {
@@ -393,11 +404,11 @@ export default function CharacterSheetSummary({ character }: CharacterSheetSumma
       {/* 武器 */}
       {equippedWeapons.length > 0 && (
         <div className="card">
-          <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-            <Swords className="w-5 h-5 text-purple-600" />
+          <h3 className="text-base font-bold text-gray-900 mb-2 flex items-center gap-2">
+            <Swords className="w-4 h-4 text-purple-600" />
             武器
           </h3>
-          <div className="space-y-3">
+          <div className="space-y-1.5">
             {equippedWeapons.map((item, index) => {
               const { weapon, quantity } = item;
               const isProficient = isWeaponProficient(weapon.category);
@@ -421,58 +432,50 @@ export default function CharacterSheetSummary({ character }: CharacterSheetSumma
               const attackBonusStr = attackBonus >= 0 ? `+${attackBonus}` : `${attackBonus}`;
               
               return (
-                <div key={index} className="border-l-4 border-purple-500 rounded-r bg-purple-50 p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <div className="font-bold text-purple-900 flex items-center gap-2">
+                <div key={index} className="border-l-2 border-purple-400 rounded-r bg-purple-50 p-2 text-xs">
+                  {/* 紧凑布局：一行显示主要信息 */}
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <div className="font-bold text-purple-900 text-sm truncate">
                         {weapon.name}
-                        {quantity > 1 && (
-                          <span className="text-xs bg-purple-200 px-2 py-0.5 rounded-full">×{quantity}</span>
-                        )}
-                        {!isProficient && (
-                          <span className="text-xs bg-red-200 text-red-800 px-2 py-0.5 rounded-full">不熟练</span>
-                        )}
+                        {quantity > 1 && <span className="text-xs ml-1">×{quantity}</span>}
                       </div>
-                      <div className="text-sm text-gray-600">{weapon.category}</div>
+                      {!isProficient && (
+                        <span className="text-xs bg-red-200 text-red-800 px-1.5 py-0.5 rounded flex-shrink-0">不熟练</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <div className="text-center">
+                        <div className="text-xs text-purple-700">命中</div>
+                        <div className="text-base font-bold text-purple-900">{attackBonusStr}</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-red-700">伤害</div>
+                        <div className="text-base font-bold text-red-900">{weapon.damage}{damageBonus}</div>
+                      </div>
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-3 mb-2">
-                    <div>
-                      <div className="text-xs text-purple-700 mb-1">攻击命中</div>
-                      <div className="text-2xl font-bold text-purple-900">{attackBonusStr}</div>
-                      <div className="text-xs text-gray-600">{isProficient ? '属性 + 熟练' : '仅属性'}</div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-red-700 mb-1">伤害</div>
-                      <div className="text-2xl font-bold text-red-900">{weapon.damage}{damageBonus}</div>
-                      <div className="text-xs text-gray-600">{weapon.damageType}</div>
-                    </div>
+                  {/* 第二行：类型、属性、精通（紧凑） */}
+                  <div className="flex items-center gap-2 text-xs text-gray-600 flex-wrap">
+                    <span>{weapon.category}</span>
+                    <span>•</span>
+                    <span>{weapon.damageType}</span>
+                    {weapon.properties.length > 0 && (
+                      <>
+                        <span>•</span>
+                        <span className="text-gray-500">{weapon.properties.join('、')}</span>
+                      </>
+                    )}
+                    {weapon.mastery && (
+                      <>
+                        <span>•</span>
+                        <span className="text-yellow-700 font-medium">
+                          ✨ {weapon.mastery}: {weapon.masteryDescription}
+                        </span>
+                      </>
+                    )}
                   </div>
-                  
-                  {weapon.properties.length > 0 && (
-                    <div className="mb-2">
-                      <div className="text-xs text-gray-600 mb-1">属性：</div>
-                      <div className="flex flex-wrap gap-1">
-                        {weapon.properties.map((prop, i) => (
-                          <span key={i} className="text-xs bg-white px-2 py-0.5 rounded border border-gray-300">
-                            {prop}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {weapon.mastery && (
-                    <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded p-2 border border-yellow-300">
-                      <div className="text-xs font-bold text-yellow-900 mb-1">
-                        ✨ 武器精通：{weapon.mastery}
-                      </div>
-                      <div className="text-xs text-yellow-800">
-                        {weapon.masteryDescription}
-                      </div>
-                    </div>
-                  )}
                 </div>
               );
             })}
@@ -511,27 +514,46 @@ export default function CharacterSheetSummary({ character }: CharacterSheetSumma
               </div>
             )}
 
-            {/* 其他职业特性 */}
-            {classFeatures.level1Features.map((feature) => (
-              <div key={feature.id} className="bg-blue-50 border-l-4 border-blue-500 rounded-r p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Star className="w-4 h-4 text-blue-600" />
-                  <h4 className="font-bold text-blue-900">{feature.name}</h4>
-                  <span className="text-xs text-blue-600">({feature.nameEn})</span>
+            {/* 所有1级职业特性（包括默认特性） */}
+            {classFeatures.level1Features.map((feature) => {
+              // 检查是否是用户选择的特性
+              const featureChoices = classData ? ((classData as any)?.featureChoices || []) : [];
+              const isSelectableFeature = featureChoices.some((fc: any) => fc.id === feature.id);
+              const selectedOption = isSelectableFeature ? 
+                (character.classFeatureChoices?.[feature.id] as string) : null;
+              
+              return (
+                <div key={feature.id} className="bg-blue-50 border-l-4 border-blue-500 rounded-r p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Star className="w-4 h-4 text-blue-600" />
+                      <h4 className="font-bold text-blue-900">{feature.name}</h4>
+                      <span className="text-xs text-blue-600">({feature.nameEn})</span>
+                    </div>
+                    {selectedOption && (
+                      <span className="text-xs bg-orange-200 text-orange-800 px-2 py-0.5 rounded">
+                        已选择：{(() => {
+                          const fc = featureChoices.find((f: any) => f.id === feature.id);
+                          const option = fc?.options.find((o: any) => o.id === selectedOption);
+                          return option?.name || selectedOption;
+                        })()}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-blue-800 mb-2">{feature.description}</p>
+                  {feature.details && feature.details.length > 0 && (
+                    <ul className="space-y-1 text-xs text-blue-700">
+                      {feature.details.map((detail, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <span className="text-blue-500 mt-0.5">•</span>
+                          <span>{detail}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
-                <p className="text-sm text-blue-800 mb-2">{feature.description}</p>
-                {feature.details && feature.details.length > 0 && (
-                  <ul className="space-y-1 text-xs text-blue-700">
-                    {feature.details.map((detail, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <span className="text-blue-500 mt-0.5">•</span>
-                        <span>{detail}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

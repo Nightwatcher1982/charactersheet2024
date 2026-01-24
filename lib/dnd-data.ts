@@ -35,6 +35,9 @@ export interface Character {
   languages?: string[]; // 语言ID列表，如 ['common', 'dwarvish', 'elvish']
   feats?: string[]; // 专长ID列表，如 ['alert', 'magic-initiate-cleric']
   backgroundEquipmentChoice?: 'A' | 'B'; // 背景装备选择
+  avatar?: string; // 头像（base64编码的图片数据）
+  remainingGold?: number; // 剩余金币（购买装备后）
+  classStartingEquipment?: string; // 职业起始装备选择ID，如 "option1"
 }
 
 export interface ClassFeatureChoice {
@@ -60,7 +63,7 @@ export const CLASSES = [
     primaryAbility: ['力量'],
     savingThrows: ['力量', '体质'],
     skillChoices: 2, // 可选择的技能数量
-    availableSkills: ['动物驯养', '竞技', '威吓', '自然', '察觉', '生存'],
+    availableSkills: ['驯兽', '运动', '威吓', '自然', '察觉', '求生'],
     proficiencies: {
       armor: ['轻甲', '中甲', '盾牌'],
       weapons: ['简易武器', '军用武器'],
@@ -76,7 +79,7 @@ export const CLASSES = [
     primaryAbility: ['魅力'],
     savingThrows: ['敏捷', '魅力'],
     skillChoices: 3,
-    availableSkills: ['杂技', '动物驯养', '奥秘', '竞技', '欺瞒', '历史', '洞悉', '威吓', '调查', '医药', '自然', '察觉', '表演', '说服', '宗教', '巧手', '隐匿', '生存'],
+    availableSkills: ['特技', '驯兽', '奥秘', '运动', '欺瞒', '历史', '洞悉', '威吓', '调查', '医药', '自然', '察觉', '表演', '游说', '宗教', '巧手', '隐匿', '求生'],
     proficiencies: {
       armor: ['轻甲'],
       weapons: ['简易武器', '手弩', '长剑', '细剑', '短剑'],
@@ -92,7 +95,7 @@ export const CLASSES = [
     primaryAbility: ['感知'],
     savingThrows: ['感知', '魅力'],
     skillChoices: 2,
-    availableSkills: ['历史', '洞悉', '医药', '说服', '宗教'],
+    availableSkills: ['历史', '洞悉', '医药', '游说', '宗教'],
     proficiencies: {
       armor: ['轻甲', '中甲', '盾牌'],
       weapons: ['简易武器'],
@@ -137,7 +140,7 @@ export const CLASSES = [
     primaryAbility: ['感知'],
     savingThrows: ['智力', '感知'],
     skillChoices: 2,
-    availableSkills: ['奥秘', '动物驯养', '洞悉', '医药', '自然', '察觉', '宗教', '生存'],
+    availableSkills: ['奥秘', '驯兽', '洞悉', '医药', '自然', '察觉', '宗教', '求生'],
     proficiencies: {
       armor: ['轻甲', '中甲', '盾牌（非金属）'],
       weapons: ['木棒', '匕首', '飞镖', '标枪', '硬头锤', '木棍', '弯刀', '镰刀', '投石索', '矛'],
@@ -153,7 +156,7 @@ export const CLASSES = [
     primaryAbility: ['力量', '敏捷'],
     savingThrows: ['力量', '体质'],
     skillChoices: 2,
-    availableSkills: ['杂技', '动物驯养', '竞技', '历史', '洞悉', '威吓', '察觉', '生存'],
+    availableSkills: ['特技', '驯兽', '运动', '历史', '洞悉', '威吓', '察觉', '求生'],
     proficiencies: {
       armor: ['所有护甲', '盾牌'],
       weapons: ['简易武器', '军用武器'],
@@ -226,7 +229,7 @@ export const CLASSES = [
     primaryAbility: ['敏捷', '感知'],
     savingThrows: ['力量', '敏捷'],
     skillChoices: 2,
-    availableSkills: ['杂技', '竞技', '历史', '洞悉', '宗教', '隐匿'],
+    availableSkills: ['特技', '运动', '历史', '洞悉', '宗教', '隐匿'],
     proficiencies: {
       armor: [],
       weapons: ['简易武器', '短剑'],
@@ -242,7 +245,7 @@ export const CLASSES = [
     primaryAbility: ['力量', '魅力'],
     savingThrows: ['感知', '魅力'],
     skillChoices: 2,
-    availableSkills: ['竞技', '洞悉', '威吓', '医药', '说服', '宗教'],
+    availableSkills: ['运动', '洞悉', '威吓', '医药', '游说', '宗教'],
     proficiencies: {
       armor: ['所有护甲', '盾牌'],
       weapons: ['简易武器', '军用武器'],
@@ -258,7 +261,7 @@ export const CLASSES = [
     primaryAbility: ['敏捷', '感知'],
     savingThrows: ['力量', '敏捷'],
     skillChoices: 3,
-    availableSkills: ['动物驯养', '竞技', '洞悉', '调查', '自然', '察觉', '隐匿', '生存'],
+    availableSkills: ['驯兽', '运动', '洞悉', '调查', '自然', '察觉', '隐匿', '求生'],
     proficiencies: {
       armor: ['轻甲', '中甲', '盾牌'],
       weapons: ['简易武器', '军用武器'],
@@ -274,7 +277,7 @@ export const CLASSES = [
     primaryAbility: ['敏捷'],
     savingThrows: ['敏捷', '智力'],
     skillChoices: 4,
-    availableSkills: ['杂技', '竞技', '欺瞒', '洞悉', '威吓', '调查', '察觉', '表演', '说服', '巧手', '隐匿'],
+    availableSkills: ['特技', '运动', '欺瞒', '洞悉', '威吓', '调查', '察觉', '表演', '游说', '巧手', '隐匿'],
     proficiencies: {
       armor: ['轻甲'],
       weapons: ['简易武器', '手弩', '长剑', '细剑', '短剑'],
@@ -290,7 +293,7 @@ export const CLASSES = [
     primaryAbility: ['魅力'],
     savingThrows: ['体质', '魅力'],
     skillChoices: 2,
-    availableSkills: ['奥秘', '欺瞒', '洞悉', '威吓', '说服', '宗教'],
+    availableSkills: ['奥秘', '欺瞒', '洞悉', '威吓', '游说', '宗教'],
     proficiencies: {
       armor: [],
       weapons: ['匕首', '飞镖', '投石索', '木棍', '轻弩'],
@@ -400,7 +403,7 @@ export const CLASSES = [
     primaryAbility: ['智力'],
     savingThrows: ['智力', '感知'],
     skillChoices: 2,
-    availableSkills: ['奥秘', '历史', '洞悉', '调查', '医药', '宗教'],
+    availableSkills: ['奥秘', '历史', '洞悉', '调查', '医药', '自然', '宗教'],
     proficiencies: {
       armor: [],
       weapons: ['匕首', '飞镖', '投石索', '木棍', '轻弩'],
@@ -442,10 +445,10 @@ export const SPECIES = [
         id: 'skill',
         name: '技能选择',
         options: [
-          '杂技（敏捷）- 平衡、翻滚、跳跃等灵活动作',
-          '动物驯养（感知）- 安抚和控制动物',
+          '特技（敏捷）- 平衡、翻滚、跳跃等灵活动作',
+          '驯兽（感知）- 安抚和控制动物',
           '奥秘（智力）- 魔法和神秘知识',
-          '竞技（力量）- 攀爬、跳跃、游泳等运动',
+          '运动（力量）- 攀爬、跳跃、游泳等运动',
           '欺瞒（魅力）- 说谎和伪装',
           '历史（智力）- 历史事件和传说',
           '洞悉（感知）- 判断意图和情绪',
@@ -455,11 +458,11 @@ export const SPECIES = [
           '自然（智力）- 自然环境和生物知识',
           '察觉（感知）- 注意周围环境',
           '表演（魅力）- 音乐、舞蹈等艺术表演',
-          '说服（魅力）- 外交和谈判',
+          '游说（魅力）- 外交和谈判',
           '宗教（智力）- 神祗和宗教仪式',
           '巧手（敏捷）- 扒窃和精细操作',
           '隐匿（敏捷）- 隐藏和潜行',
-          '生存（感知）- 追踪、狩猎、野外生存'
+          '求生（感知）- 追踪、狩猎、野外生存'
         ]
       }
     ]
@@ -486,7 +489,7 @@ export const SPECIES = [
       },
       {
         name: '敏锐感官',
-        description: '获得洞悉、察觉或生存技能熟练'
+        description: '获得洞悉、察觉或求生技能熟练'
       },
       {
         name: '出神状态',
@@ -509,7 +512,7 @@ export const SPECIES = [
         options: [
           '洞悉（感知）- 判断意图和情绪，看穿谎言',
           '察觉（感知）- 注意周围环境，发现隐藏的事物',
-          '生存（感知）- 追踪、狩猎、野外生存技巧'
+          '求生（感知）- 追踪、狩猎、野外生存技巧'
         ]
       }
     ]
@@ -757,7 +760,7 @@ export const BACKGROUNDS = [
     nameEn: 'Artisan',
     description: '技艺精湛的手工艺者',
     narrative: '你在作坊中度过了大量时间，学习你的手艺。你可能是一位铁匠、木匠、织工或珠宝匠。你的技能使你在社区中受到尊重，你的作品为你带来了稳定的收入。',
-    skills: ['调查', '说服'],
+    skills: ['调查', '游说'],
     toolProficiency: '一种工匠工具',
     abilityBonus: 3,
     abilityChoices: ['力量', '敏捷', '智力'],
@@ -795,8 +798,8 @@ export const BACKGROUNDS = [
     name: '艺人',
     nameEn: 'Entertainer',
     description: '通过表演娱乐大众的艺术家',
-    narrative: '你在舞台上表演，用音乐、舞蹈、杂技或其他娱乐形式取悦观众。你可能是一个游吟诗人、小丑、音乐家或演员。你的才华为你赢得了名声和粉丝。',
-    skills: ['杂技', '表演'],
+    narrative: '你在舞台上表演，用音乐、舞蹈、特技或其他娱乐形式取悦观众。你可能是一个游吟诗人、小丑、音乐家或演员。你的才华为你赢得了名声和粉丝。',
+    skills: ['特技', '表演'],
     toolProficiency: '一种乐器',
     abilityBonus: 3,
     abilityChoices: ['敏捷', '感知', '魅力'],
@@ -809,7 +812,7 @@ export const BACKGROUNDS = [
     nameEn: 'Farmer',
     description: '辛勤劳作的乡村劳动者',
     narrative: '你在田野和农场中长大，学会了耕作、照料动物和修理工具。你了解大自然的循环和农村生活的艰辛。你可能离开农场去寻找更好的生活，或是去保护你的家园。',
-    skills: ['动物驯养', '自然'],
+    skills: ['驯兽', '自然'],
     toolProficiency: '木匠工具',
     abilityBonus: 3,
     abilityChoices: ['力量', '体质', '感知'],
@@ -822,7 +825,7 @@ export const BACKGROUNDS = [
     nameEn: 'Guard',
     description: '维护秩序的守护者',
     narrative: '你曾在城镇、城堡或商队中担任守卫，保护人员和财产的安全。你接受过基本的战斗训练，也学会了如何保持警惕和识别可疑行为。',
-    skills: ['竞技', '察觉'],
+    skills: ['运动', '察觉'],
     toolProficiency: '一种游戏工具',
     abilityBonus: 3,
     abilityChoices: ['力量', '智力', '感知'],
@@ -835,7 +838,7 @@ export const BACKGROUNDS = [
     nameEn: 'Guide',
     description: '熟悉荒野的经验丰富的旅行者',
     narrative: '你在荒野中长大或花费大量时间探索未知之地。你学会了如何追踪、寻找食物和水源，以及在危险的环境中生存。你可能曾带领旅行者穿越险境。',
-    skills: ['隐匿', '生存'],
+    skills: ['隐匿', '求生'],
     toolProficiency: '制图工具',
     abilityBonus: 3,
     abilityChoices: ['敏捷', '体质', '感知'],
@@ -861,7 +864,7 @@ export const BACKGROUNDS = [
     nameEn: 'Merchant',
     description: '精于买卖的生意人',
     narrative: '你在商业世界中摸爬滚打，无论是在繁华的城市市场还是遥远地区之间的贸易路线。你学会了讨价还价、评估商品价值，以及与各种人打交道。',
-    skills: ['动物驯养', '说服'],
+    skills: ['驯兽', '游说'],
     toolProficiency: '领航工具',
     abilityBonus: 3,
     abilityChoices: ['智力', '感知', '魅力'],
@@ -874,7 +877,7 @@ export const BACKGROUNDS = [
     nameEn: 'Noble',
     description: '出身上流社会的特权阶层',
     narrative: '你出身于有权势的家族，从小就享有财富、特权和良好的教育。你了解上流社会的礼仪和政治，可能继承了家族的头衔和责任，或者选择了不同的道路。',
-    skills: ['历史', '说服'],
+    skills: ['历史', '游说'],
     toolProficiency: '一种游戏工具',
     abilityBonus: 3,
     abilityChoices: ['智力', '感知', '魅力'],
@@ -900,7 +903,7 @@ export const BACKGROUNDS = [
     nameEn: 'Sailor',
     description: '在海上讨生活的航海者',
     narrative: '你在船上度过了大量时间，可能是在商船、渔船或战船上。你学会了绳结、航海和应对暴风雨。你见识过不同的港口和文化，习惯了海上生活的危险和自由。',
-    skills: ['竞技', '察觉'],
+    skills: ['运动', '察觉'],
     toolProficiency: '领航工具',
     abilityBonus: 3,
     abilityChoices: ['力量', '敏捷', '感知'],
@@ -913,7 +916,7 @@ export const BACKGROUNDS = [
     nameEn: 'Scribe',
     description: '记录文字和知识的文书',
     narrative: '你曾在图书馆、法庭或宗教机构中工作，抄写文件、记录信息和整理知识。你的工作让你接触到各种信息，也培养了你细致和专注的品质。',
-    skills: ['调查', '历史'],
+    skills: ['调查', '察觉'],
     toolProficiency: '书法工具',
     abilityBonus: 3,
     abilityChoices: ['敏捷', '智力', '感知'],
@@ -926,7 +929,7 @@ export const BACKGROUNDS = [
     nameEn: 'Soldier',
     description: '受过军事训练的战士',
     narrative: '你一成年就开始接受战争训练，对参军前的生活几乎没有什么记忆。战斗融入你的血液。有时你会发现自己反射性地进行最初学会的基本战斗练习。最终，你在战场上运用这些训练，通过发动战争来保卫领土。',
-    skills: ['竞技', '威吓'],
+    skills: ['运动', '威吓'],
     toolProficiency: '一种游戏工具',
     abilityBonus: 3,
     abilityChoices: ['力量', '敏捷', '体质'],
@@ -963,10 +966,10 @@ export const ALIGNMENTS = [
 
 // 技能列表
 export const SKILLS = [
-  { id: 'acrobatics', name: '杂技', ability: 'dexterity' },
-  { id: 'animal-handling', name: '动物驯养', ability: 'wisdom' },
+  { id: 'acrobatics', name: '特技', ability: 'dexterity' },
+  { id: 'animal-handling', name: '驯兽', ability: 'wisdom' },
   { id: 'arcana', name: '奥秘', ability: 'intelligence' },
-  { id: 'athletics', name: '竞技', ability: 'strength' },
+  { id: 'athletics', name: '运动', ability: 'strength' },
   { id: 'deception', name: '欺瞒', ability: 'charisma' },
   { id: 'history', name: '历史', ability: 'intelligence' },
   { id: 'insight', name: '洞悉', ability: 'wisdom' },
@@ -976,11 +979,11 @@ export const SKILLS = [
   { id: 'nature', name: '自然', ability: 'intelligence' },
   { id: 'perception', name: '察觉', ability: 'wisdom' },
   { id: 'performance', name: '表演', ability: 'charisma' },
-  { id: 'persuasion', name: '说服', ability: 'charisma' },
+  { id: 'persuasion', name: '游说', ability: 'charisma' },
   { id: 'religion', name: '宗教', ability: 'intelligence' },
   { id: 'sleight-of-hand', name: '巧手', ability: 'dexterity' },
   { id: 'stealth', name: '隐匿', ability: 'dexterity' },
-  { id: 'survival', name: '生存', ability: 'wisdom' }
+  { id: 'survival', name: '求生', ability: 'wisdom' }
 ];
 
 // 属性分配方法

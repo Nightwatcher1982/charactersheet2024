@@ -6,12 +6,15 @@ import { CLASSES } from '@/lib/dnd-data';
 import { Check } from 'lucide-react';
 import ClassSkillSelector from '@/components/ClassSkillSelector';
 import ClassFeatureSelector from '@/components/ClassFeatureSelector';
+import { getClassStartingEquipment } from '@/lib/class-starting-equipment-data';
 
 export default function StepClass() {
   const { currentCharacter, updateCurrentCharacter } = useCharacterStore();
   const [showSkillSelector, setShowSkillSelector] = useState(false);
   const [showFeatureSelector, setShowFeatureSelector] = useState(false);
+  const [showEquipmentSelector, setShowEquipmentSelector] = useState(false);
   const [skillsCompleted, setSkillsCompleted] = useState(false);
+  const [equipmentCompleted, setEquipmentCompleted] = useState(false);
 
   useEffect(() => {
     // 如果已经选择了职业，显示技能选择器
@@ -51,17 +54,48 @@ export default function StepClass() {
     const classData = CLASSES.find(c => c.name === currentCharacter.class);
     if (classData && (classData as any).featureChoices && (classData as any).featureChoices.length > 0) {
       setShowFeatureSelector(true);
+    } else {
+      // 如果没有职业特性选择，直接显示装备选择
+      const startingEquipment = getClassStartingEquipment(classData?.id || '');
+      if (startingEquipment && startingEquipment.options.length > 0) {
+        setShowEquipmentSelector(true);
+      }
     }
   };
 
   const handleFeatureComplete = (featureId: string, selectedOption: string) => {
     const currentChoices = currentCharacter.classFeatureChoices || {};
+    const updatedChoices = {
+      ...currentChoices,
+      [featureId]: selectedOption
+    };
+    
     updateCurrentCharacter({
-      classFeatureChoices: {
-        ...currentChoices,
-        [featureId]: selectedOption
-      }
+      classFeatureChoices: updatedChoices
     });
+    
+    // 检查是否所有特性都已选择
+    const classData = CLASSES.find(c => c.name === currentCharacter.class);
+    const featureChoices = (classData as any)?.featureChoices || [];
+    const allFeaturesSelected = featureChoices.every((feature: any) => {
+      return updatedChoices[feature.id];
+    });
+    
+    // 如果所有特性都已选择，显示装备选择
+    if (allFeaturesSelected) {
+      const startingEquipment = getClassStartingEquipment(classData?.id || '');
+      if (startingEquipment && startingEquipment.options.length > 0) {
+        setShowFeatureSelector(false);
+        setShowEquipmentSelector(true);
+      }
+    }
+  };
+  
+  const handleEquipmentComplete = (equipmentOptionId: string) => {
+    updateCurrentCharacter({
+      classStartingEquipment: equipmentOptionId
+    });
+    setEquipmentCompleted(true);
   };
 
   return (
@@ -196,22 +230,118 @@ export default function StepClass() {
                 const classData = CLASSES.find(c => c.name === currentCharacter.class);
                 const featureChoices = (classData as any)?.featureChoices || [];
                 
-                return featureChoices.map((feature: any) => (
-                  <div key={feature.id} className="mb-6">
-                    <ClassFeatureSelector
-                      featureName={feature.name}
-                      options={feature.options}
-                      onComplete={(selectedId) => handleFeatureComplete(feature.id, selectedId)}
-                      initialSelection={currentCharacter.classFeatureChoices?.[feature.id]}
-                    />
-                  </div>
-                ));
+                // 检查是否所有特性都已选择
+                const allFeaturesSelected = featureChoices.every((feature: any) => {
+                  return currentCharacter.classFeatureChoices?.[feature.id];
+                });
+                
+                return (
+                  <>
+                    {featureChoices.map((feature: any) => (
+                      <div key={feature.id} className="mb-6">
+                        <ClassFeatureSelector
+                          featureName={feature.name}
+                          options={feature.options}
+                          onComplete={(selectedId) => handleFeatureComplete(feature.id, selectedId)}
+                          initialSelection={currentCharacter.classFeatureChoices?.[feature.id]}
+                        />
+                      </div>
+                    ))}
+                    {allFeaturesSelected && (
+                      <div className="mt-4 bg-blue-50 border-l-4 border-blue-500 p-3 rounded-r-lg">
+                        <div className="text-sm text-blue-800">
+                          <strong>提示：</strong>所有职业特性已选择，请继续选择起始装备。
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
               })()}
-              
-              <div className="mt-6 bg-green-50 border-2 border-green-500 rounded-lg p-4 text-center">
-                <div className="text-green-700 font-bold">✓ 职业设置完成！</div>
-                <div className="text-green-600 text-sm mt-1">可以继续下一步了</div>
-              </div>
+            </>
+          ) : showEquipmentSelector ? (
+            <>
+              {(() => {
+                const classData = CLASSES.find(c => c.name === currentCharacter.class);
+                const startingEquipment = getClassStartingEquipment(classData?.id || '');
+                
+                if (!startingEquipment || startingEquipment.options.length === 0) {
+                  return (
+                    <div className="bg-green-50 border-2 border-green-500 rounded-lg p-4 text-center">
+                      <div className="text-green-700 font-bold">✓ 职业设置完成！</div>
+                      <div className="text-green-600 text-sm mt-1">可以继续下一步了</div>
+                    </div>
+                  );
+                }
+                
+                return (
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900 mb-2">选择起始装备</h3>
+                      <p className="text-gray-600 mb-4">
+                        根据你的职业，选择一套起始装备。这些装备将在后续步骤中自动添加到你的物品栏。
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      {startingEquipment.options.map((option) => (
+                        <button
+                          key={option.id}
+                          onClick={() => handleEquipmentComplete(option.id)}
+                          className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
+                            currentCharacter.classStartingEquipment === option.id
+                              ? 'border-red-500 bg-red-50'
+                              : 'border-gray-200 hover:border-red-300 hover:shadow-md'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="font-bold text-gray-900 mb-2">{option.name}</div>
+                              {option.description && (
+                                <div className="text-sm text-gray-600 mb-3">{option.description}</div>
+                              )}
+                              <div className="space-y-1">
+                                {option.items && option.items.length > 0 && (
+                                  <div className="text-sm">
+                                    <span className="font-medium text-gray-700">装备：</span>
+                                    <span className="text-gray-600 ml-2">{option.items.join('、')}</span>
+                                  </div>
+                                )}
+                                {option.weapons && option.weapons.length > 0 && (
+                                  <div className="text-sm">
+                                    <span className="font-medium text-gray-700">武器：</span>
+                                    <span className="text-gray-600 ml-2">{option.weapons.length} 把</span>
+                                  </div>
+                                )}
+                                {option.armor && option.armor.length > 0 && (
+                                  <div className="text-sm">
+                                    <span className="font-medium text-gray-700">护甲：</span>
+                                    <span className="text-gray-600 ml-2">{option.armor.join('、')}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {currentCharacter.classStartingEquipment === option.id && (
+                              <div className="ml-4">
+                                <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                                  <Check className="w-5 h-5 text-white" />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    
+                    {equipmentCompleted && (
+                      <div className="mt-6 bg-green-50 border-2 border-green-500 rounded-lg p-4 text-center">
+                        <div className="text-green-700 font-bold">✓ 职业设置完成！</div>
+                        <div className="text-green-600 text-sm mt-1">可以继续下一步了</div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </>
           ) : (
             <div className="bg-green-50 border-2 border-green-500 rounded-lg p-4 text-center">

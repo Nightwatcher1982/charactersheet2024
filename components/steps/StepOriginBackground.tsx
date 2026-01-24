@@ -46,7 +46,7 @@ export default function StepOriginBackground() {
     updateCurrentCharacter({
       backgroundEquipmentChoice: choice
     });
-    // 装备选择完成后，显示属性加值选择
+    // 装备选择完成后，直接显示属性加值选择（武器选择移到装备步骤）
     setShowAbilityBonus(true);
   };
 
@@ -77,11 +77,11 @@ export default function StepOriginBackground() {
         </div>
 
         {/* 步骤1：装备选择 */}
-        {!currentCharacter.backgroundEquipmentChoice || !showAbilityBonus ? (
+        {showEquipmentSelector && (
           <>
             <div className="bg-blue-50 border-l-4 border-blue-500 p-3 rounded-r-lg">
               <div className="text-sm text-blue-800">
-                <strong>步骤 1/2:</strong> 选择起始装备
+                <strong>步骤 1/3:</strong> 选择起始装备
               </div>
             </div>
             <EquipmentSelector
@@ -91,9 +91,12 @@ export default function StepOriginBackground() {
               onComplete={handleEquipmentComplete}
             />
           </>
-        ) : (
+        )}
+
+        {/* 步骤2：属性加值选择 */}
+        {showAbilityBonus && (
           <>
-            {/* 步骤2：属性加值 */}
+            {/* 步骤3：属性加值 */}
             <div className="bg-orange-50 border-l-4 border-orange-500 p-3 rounded-r-lg">
               <div className="text-sm text-orange-800">
                 <strong>步骤 2/2:</strong> 分配背景属性加值

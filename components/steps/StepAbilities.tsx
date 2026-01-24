@@ -115,12 +115,12 @@ export default function StepAbilities() {
         {method === 'standard-array' ? (
           <ClickableAbilityScore 
             onComplete={handleScoresComplete}
-            initialScores={abilities}
+            initialScores={{}}
           />
         ) : method === 'point-buy' ? (
           <PointBuyAbilityScore
             onComplete={handleScoresComplete}
-            initialScores={abilities}
+            initialScores={{}}
           />
         ) : (
           <div className="space-y-3">

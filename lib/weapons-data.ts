@@ -11,6 +11,7 @@ export interface Weapon {
   range?: string; // 远程武器射程，如"30/120"
   mastery?: string; // 武器精通效果
   masteryDescription?: string; // 武器精通详细描述
+  price?: number; // 价格（金币）
 }
 
 export interface Armor {
@@ -22,6 +23,7 @@ export interface Armor {
   stealthDisadvantage?: boolean; // 是否对隐匿有劣势
   strengthRequirement?: number; // 力量需求
   weight?: number;
+  price?: number; // 价格（金币）
 }
 
 // 常见武器数据
@@ -499,4 +501,120 @@ export function calculateAC(
   }
   
   return ac;
+}
+
+// 价格数据（D&D 5e标准价格，单位：金币）
+const WEAPON_PRICES: Record<string, number> = {
+  // 简易近战武器
+  '木棒': 0.1,
+  '匕首': 2,
+  '巨棒': 0.2,
+  '手斧': 5,
+  '标枪': 0.5,
+  '轻锤': 2,
+  '钉头锤': 5,
+  '长杖': 0.2,
+  '短剑': 10,
+  '长矛': 1,
+  '硬头锤': 2,
+  '投石索': 0.1,
+  '长矛（双手）': 1,
+  '战锤': 15,
+  '战镐': 5,
+  '弯刀': 25,
+  '镰刀': 1,
+  '短棒': 0.1,
+  // 简易远程武器
+  '轻弩': 25,
+  '飞镖': 0.05,
+  '短弓': 25,
+  '投石索': 0.1,
+  // 军用近战武器
+  '战斧': 10,
+  '战锤': 15,
+  '长戟': 20,
+  '长矛': 1,
+  '长剑': 15,
+  '长鞭': 2,
+  '战镐': 5,
+  '弯刀': 25,
+  '短剑': 10,
+  '三叉戟': 5,
+  '战锤': 15,
+  '战斧': 10,
+  '巨斧': 30,
+  '巨剑': 50,
+  '长戟': 20,
+  '长矛': 1,
+  '长柄刀': 20,
+  '长鞭': 2,
+  '战锤': 15,
+  '战镐': 5,
+  '弯刀': 25,
+  '短剑': 10,
+  '三叉戟': 5,
+  '战锤': 15,
+  '战斧': 10,
+  // 军用远程武器
+  '吹箭筒': 10,
+  '手弩': 75,
+  '重弩': 50,
+  '长弓': 50,
+  '网': 1,
+};
+
+const ARMOR_PRICES: Record<string, number> = {
+  // 轻甲
+  '厚布甲': 5,
+  '皮甲': 10,
+  '镶钉皮甲': 45,
+  // 中甲
+  '兽皮甲': 10,
+  '链甲衫': 50,
+  '鳞甲': 50,
+  '胸甲': 400,
+  '半身板甲': 750,
+  // 重甲
+  '环甲': 30,
+  '链甲': 75,
+  '板条甲': 200,
+  '板甲': 1500,
+  // 盾牌
+  '盾牌': 10,
+};
+
+// 获取武器价格
+export function getWeaponPrice(weaponName: string): number {
+  return WEAPON_PRICES[weaponName] || 0;
+}
+
+// 获取护甲价格
+export function getArmorPrice(armorName: string): number {
+  return ARMOR_PRICES[armorName] || 0;
+}
+
+// 获取装备价格（通用函数，自动识别武器或护甲）
+export function getEquipmentPrice(itemName: string): number {
+  const weapon = getWeaponByName(itemName);
+  if (weapon) {
+    return weapon.price || getWeaponPrice(itemName);
+  }
+  const armor = getArmorByName(itemName);
+  if (armor) {
+    return armor.price || getArmorPrice(itemName);
+  }
+  // 默认价格（冒险装备等）
+  const defaultPrices: Record<string, number> = {
+    '背包': 2,
+    '睡袋': 0.1,
+    '绳索（50尺）': 1,
+    '火把（10支）': 0.1,
+    '口粮（10天）': 5,
+    '水袋': 0.2,
+    '盗贼工具': 25,
+    '医疗包': 5,
+    '撬棍': 2,
+    '铁钉（10个）': 0.1,
+  };
+  return defaultPrices[itemName] || 0;
 }

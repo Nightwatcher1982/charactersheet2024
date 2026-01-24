@@ -70,77 +70,8 @@ export default function StepSkills() {
     !speciesSkills.includes(skill)
   );
 
-  // 检查是否需要选择职业技能（职业特性选择已移到步骤1）
-  const needsClassSkills = classData && classData.skillChoices && classSkills.length < classData.skillChoices;
-
   // 早期返回检查
   if (!currentCharacter) return null;
-
-  // 处理职业技能选择完成
-  const handleClassSkillsComplete = (selectedSkills: string[]) => {
-    const currentSkills = currentCharacter.skills || [];
-    // 保留背景技能、物种技能和其他非职业技能
-    const nonClassSkills = currentSkills.filter(skill => 
-      backgroundData?.skills?.includes(skill) ||
-      speciesSkills.includes(skill) || 
-      !classData?.availableSkills?.includes(skill)
-    );
-    // 添加新选择的职业技能
-    updateCurrentCharacter({
-      skills: [...nonClassSkills, ...selectedSkills]
-    });
-  };
-
-  // 如果需要选择职业技能，显示选择器（职业特性选择已移到步骤1）
-  if (needsClassSkills) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="section-title">选择职业技能</h2>
-          <p className="text-gray-600 mb-6">
-            从您的职业可用技能中选择{classData?.skillChoices}项技能熟练。
-          </p>
-        </div>
-
-        {/* 显示已获得的背景技能 */}
-        {backgroundSkills.length > 0 && (
-          <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg">
-            <div className="flex items-start gap-3">
-              <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-bold text-green-900 mb-1">背景技能已获得</h3>
-                <p className="text-sm text-green-800 mb-2">
-                  来自背景：<strong>{currentCharacter.background}</strong>
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {backgroundSkills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="px-3 py-1 bg-green-500 text-white rounded-full text-sm font-medium"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <ClassSkillSelector
-          selectedClass={currentCharacter.class!}
-          onComplete={handleClassSkillsComplete}
-          initialSkills={classSkills}
-        />
-
-        <div className="info-box">
-          <p className="text-sm text-blue-800">
-            💡 <strong>提示：</strong>选择与您角色概念相符的技能。考虑队伍中其他角色的技能，确保有良好的技能覆盖。
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   // 按属性分组所有技能
   const skillsByAbility = SKILLS.reduce((acc, skill) => {
@@ -166,6 +97,7 @@ export default function StepSkills() {
         <h2 className="section-title">技能总览</h2>
         <p className="text-gray-600 mb-6">
           这是您角色的所有技能熟练项总结，包括从职业、背景和物种获得的技能。
+          技能选择已在之前的步骤中完成。
         </p>
       </div>
 

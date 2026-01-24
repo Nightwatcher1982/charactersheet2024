@@ -22,7 +22,7 @@ const STEPS = [
   { id: 2, title: '确定起源', shortTitle: '起源', component: StepOrigin, icon: '📜', hasSubsteps: true },
   { id: 3, title: '确定属性值', shortTitle: '属性', component: StepAbilities, icon: '💪' },
   { id: 4, title: '选择阵营', shortTitle: '阵营', component: StepAlignment, icon: '⚖️' },
-  { id: 5, title: '选择技能', shortTitle: '技能', component: StepSkills, icon: '🎯' },
+  { id: 5, title: '技能总览', shortTitle: '技能', component: StepSkills, icon: '🎯' },
   { id: 6, title: '选择装备', shortTitle: '装备', component: StepEquipment, icon: '🎒' },
   { id: 7, title: '审核完成', shortTitle: '完成', component: StepReview, icon: '✅' },
 ];

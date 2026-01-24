@@ -2,16 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { useCharacterStore } from '@/lib/character-store';
-import { SPECIES } from '@/lib/dnd-data';
+import { SPECIES, SKILLS } from '@/lib/dnd-data';
 import { Check } from 'lucide-react';
 import SpeciesTraitSelector from '@/components/SpeciesTraitSelector';
 import FeatSelector from '@/components/FeatSelector';
+import SkillSelectorModal from '@/components/SkillSelectorModal';
 
 export default function StepSpecies() {
   const { currentCharacter, updateCurrentCharacter } = useCharacterStore();
   const [showTraitSelector, setShowTraitSelector] = useState(false);
   const [showFeatSelector, setShowFeatSelector] = useState(false);
+  const [showSkillModal, setShowSkillModal] = useState(false);
   const [traitsCompleted, setTraitsCompleted] = useState(false);
+  const [pendingSkillChoice, setPendingSkillChoice] = useState<{choiceId: string, options: string[]} | null>(null);
 
   useEffect(() => {
     if (currentCharacter?.species) {
@@ -51,17 +54,50 @@ export default function StepSpecies() {
 
   const handleTraitsComplete = (selections: Record<string, string>) => {
     const currentChoices = currentCharacter.classFeatureChoices || {};
-    const currentSkills = currentCharacter.skills || [];
+    const speciesData = SPECIES.find(s => s.name === currentCharacter.species);
     
-    // 解析物种技能选择
-    let speciesSkills: string[] = [];
-    if (selections.skill) {
-      // 从选项文本中提取技能名称（格式："洞悉（感知）- 判断意图和情绪，看穿谎言"）
-      const skillMatch = selections.skill.match(/^([^（]+)/);
-      if (skillMatch) {
-        speciesSkills = [skillMatch[1]];
-      }
+    // 检查是否有技能选择项需要处理
+    const skillChoice = speciesData?.choices?.find(c => c.id === 'skill');
+    if (skillChoice && selections.skill) {
+      // 先保存其他选择（不包括技能）
+      const otherSelections = { ...selections };
+      delete otherSelections.skill;
+      
+      updateCurrentCharacter({
+        classFeatureChoices: {
+          ...currentChoices,
+          speciesChoices: JSON.stringify(otherSelections)
+        }
+      });
+      
+      // 显示技能选择弹窗，让用户从可用技能中选择
+      setPendingSkillChoice({
+        choiceId: 'skill',
+        options: skillChoice.options
+      });
+      setShowSkillModal(true);
+      return; // 等待技能选择完成
     }
+    
+    // 没有技能选择，直接完成
+    updateCurrentCharacter({
+      classFeatureChoices: {
+        ...currentChoices,
+        speciesChoices: JSON.stringify(selections)
+      }
+    });
+    setTraitsCompleted(true);
+    
+    // 如果是人类，显示专长选择
+    if (currentCharacter.species === '人类') {
+      setShowFeatSelector(true);
+    }
+  };
+  
+  const handleSpeciesSkillComplete = (skills: string[]) => {
+    const currentChoices = currentCharacter.classFeatureChoices || {};
+    const currentSkills = currentCharacter.skills || [];
+    const selections = currentChoices.speciesChoices ? JSON.parse(currentChoices.speciesChoices as string) : {};
     
     // 移除旧的物种技能（如果有的话）
     const oldSpeciesChoices = currentChoices.speciesChoices ? JSON.parse(currentChoices.speciesChoices as string) : {};
@@ -69,12 +105,12 @@ export default function StepSpecies() {
     if (oldSpeciesChoices.skill) {
       const oldSkillMatch = oldSpeciesChoices.skill.match(/^([^（]+)/);
       if (oldSkillMatch) {
-        skillsWithoutOldSpecies = skillsWithoutOldSpecies.filter(s => s !== oldSkillMatch[1]);
+        skillsWithoutOldSpecies = skillsWithoutOldSpecies.filter(s => s !== oldSkillMatch[1].trim());
       }
     }
     
     // 添加新选择的物种技能
-    const newSkills = [...skillsWithoutOldSpecies, ...speciesSkills];
+    const newSkills = [...skillsWithoutOldSpecies, ...skills];
     
     updateCurrentCharacter({
       classFeatureChoices: {
@@ -83,6 +119,7 @@ export default function StepSpecies() {
       },
       skills: newSkills
     });
+    setShowSkillModal(false);
     setTraitsCompleted(true);
     
     // 如果是人类，显示专长选择
@@ -101,8 +138,68 @@ export default function StepSpecies() {
     }
   };
 
+  // 获取物种技能选择选项
+  const speciesData = SPECIES.find(s => s.name === currentCharacter.species);
+  const skillChoice = speciesData?.choices?.find(c => c.id === 'skill');
+  const currentSpeciesChoices = currentCharacter.classFeatureChoices?.speciesChoices 
+    ? JSON.parse(currentCharacter.classFeatureChoices.speciesChoices as string) 
+    : {};
+  
+  // 获取当前物种技能（从已选技能中提取）
+  const currentSkills = currentCharacter.skills || [];
+  const classData = CLASSES.find(c => c.name === currentCharacter.class);
+  const backgroundData = BACKGROUNDS.find(b => b.name === currentCharacter.background);
+  
+  // 找出物种技能（不在职业和背景技能中的）
+  let currentSpeciesSkills: string[] = [];
+  if (currentSpeciesChoices.skill) {
+    const skillMatch = currentSpeciesChoices.skill.match(/^([^（]+)/);
+    if (skillMatch) {
+      const skillName = skillMatch[1].trim();
+      // 检查这个技能是否在已选技能中
+      if (currentSkills.includes(skillName)) {
+        currentSpeciesSkills = [skillName];
+      }
+    }
+  }
+  
+  // 获取所有可用技能（从SKILLS数据中）
+  const allAvailableSkills = SKILLS.map(s => s.name);
+  
+  // 如果是精灵，需要从特定技能中选择
+  let speciesSkillOptions: string[] = [];
+  if (speciesData?.name === '精灵') {
+    speciesSkillOptions = ['洞悉', '察觉', '求生'];
+  } else if (skillChoice) {
+    // 从选项文本中提取技能名称
+    speciesSkillOptions = skillChoice.options.map(opt => {
+      const match = opt.match(/^([^（]+)/);
+      return match ? match[1].trim() : '';
+    }).filter(Boolean);
+  }
+
   return (
-    <div className="space-y-6">
+    <>
+      {/* 物种技能选择弹窗 */}
+      {showSkillModal && pendingSkillChoice && speciesData && (
+        <SkillSelectorModal
+          isOpen={showSkillModal}
+          onClose={() => {
+            setShowSkillModal(false);
+            setPendingSkillChoice(null);
+          }}
+          title={`选择${currentCharacter.species}技能`}
+          description={speciesData.name === '精灵' 
+            ? "根据精灵的敏锐感官特性，从以下技能中选择一项技能熟练"
+            : "根据你的物种特性，选择一项技能熟练"}
+          availableSkills={speciesSkillOptions.length > 0 ? speciesSkillOptions : allAvailableSkills}
+          requiredCount={1}
+          onComplete={handleSpeciesSkillComplete}
+          initialSkills={currentSpeciesSkills}
+        />
+      )}
+      
+      <div className="space-y-6">
       {!showTraitSelector ? (
         <>
           <div>
@@ -243,7 +340,8 @@ export default function StepSpecies() {
           )}
         </>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 

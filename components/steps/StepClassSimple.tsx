@@ -1,15 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCharacterStore } from '@/lib/character-store';
 import { CLASSES } from '@/lib/dnd-data';
 import { Check, Info, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import ClassFeatureSelector from '@/components/ClassFeatureSelector';
+import { getClassStartingEquipment } from '@/lib/class-starting-equipment-data';
+import SkillSelectorModal from '@/components/SkillSelectorModal';
 
 export default function StepClassSimple() {
-  const { currentCharacter, updateCurrentCharacter } = useCharacterStore();
+  const { currentCharacter, updateCurrentCharacter, nextStep } = useCharacterStore();
   const [expandedClass, setExpandedClass] = useState<string | null>(null);
   const [showFeatureSelector, setShowFeatureSelector] = useState(false);
+  const [showEquipmentSelector, setShowEquipmentSelector] = useState(false);
+  const [showSkillModal, setShowSkillModal] = useState(false);
 
   if (!currentCharacter) return null;
 
@@ -30,7 +34,44 @@ export default function StepClassSimple() {
     // 检查新选择的职业是否有特性需要选择
     const newClassData = CLASSES.find(c => c.name === className);
     const newFeatureChoices = (newClassData as any)?.featureChoices || [];
-    setShowFeatureSelector(newFeatureChoices.length > 0);
+    
+    // 检查是否需要选择职业技能
+    if (newClassData && newClassData.skillChoices && newClassData.skillChoices > 0) {
+      setShowSkillModal(true);
+    } else {
+      setShowFeatureSelector(newFeatureChoices.length > 0);
+    }
+  };
+  
+  const handleClassSkillsComplete = (skills: string[]) => {
+    const currentSkills = currentCharacter.skills || [];
+    // 移除旧的职业技能
+    const classData = CLASSES.find(c => c.name === currentCharacter.class);
+    const nonClassSkills = currentSkills.filter(skill => 
+      !classData?.availableSkills?.includes(skill)
+    );
+    // 添加新选择的职业技能
+    updateCurrentCharacter({
+      skills: [...nonClassSkills, ...skills]
+    });
+    setShowSkillModal(false);
+    
+    // 检查是否有特性需要选择
+    const featureChoices = (classData as any)?.featureChoices || [];
+    if (featureChoices.length > 0) {
+      setShowFeatureSelector(true);
+    } else {
+      // 没有特性选择，检查是否需要选择起始装备
+      const startingEquipment = getClassStartingEquipment(classData?.id || '');
+      if (startingEquipment && startingEquipment.options.length > 0) {
+        setShowEquipmentSelector(true);
+      } else {
+        // 没有装备选择，自动进入下一步
+        setTimeout(() => {
+          nextStep();
+        }, 500);
+      }
+    }
   };
 
   const handleFeatureComplete = (featureId: string, selectedOptionId: string) => {
@@ -47,7 +88,29 @@ export default function StepClassSimple() {
     );
     if (remainingFeatures.length === 0) {
       setShowFeatureSelector(false);
+      // 所有特性选择完成，检查是否需要选择起始装备
+      const startingEquipment = getClassStartingEquipment(classData?.id || '');
+      if (startingEquipment && startingEquipment.options.length > 0) {
+        // 显示装备选择页面
+        setShowEquipmentSelector(true);
+      } else {
+        // 没有装备选择，直接进入下一步
+        setTimeout(() => {
+          nextStep();
+        }, 500);
+      }
     }
+  };
+  
+  const handleEquipmentComplete = (equipmentOptionId: string) => {
+    updateCurrentCharacter({
+      classStartingEquipment: equipmentOptionId
+    });
+    setShowEquipmentSelector(false);
+    // 装备选择完成，进入下一步
+    setTimeout(() => {
+      nextStep();
+    }, 500);
   };
 
   const getComplexityColor = (complexity: string) => {
@@ -68,6 +131,117 @@ export default function StepClassSimple() {
     if (highComplexity.includes(nameEn)) return '高';
     return '中等';
   };
+
+  // 职业技能选择弹窗
+  const classDataForSkills = CLASSES.find(c => c.name === currentCharacter.class);
+  const needsClassSkills = classDataForSkills && 
+    classDataForSkills.skillChoices && 
+    classDataForSkills.skillChoices > 0;
+  
+  const currentClassSkills = (currentCharacter.skills || []).filter(skill => 
+    classDataForSkills?.availableSkills?.includes(skill)
+  );
+  
+  if (showSkillModal && classDataForSkills && needsClassSkills) {
+    return (
+      <>
+        <SkillSelectorModal
+          isOpen={showSkillModal}
+          onClose={() => setShowSkillModal(false)}
+          title={`选择${classDataForSkills.name}职业技能`}
+          description={`从以下技能中选择 ${classDataForSkills.skillChoices} 项技能熟练`}
+          availableSkills={classDataForSkills.availableSkills}
+          requiredCount={classDataForSkills.skillChoices}
+          onComplete={handleClassSkillsComplete}
+          initialSkills={currentClassSkills}
+        />
+        {/* 显示背景内容，但被弹窗覆盖 */}
+        <div className="opacity-0 pointer-events-none">
+          <div className="space-y-6">
+            <div>
+              <h2 className="section-title">步骤 1：选择职业</h2>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // 如果需要选择起始装备，显示装备选择器
+  if (showEquipmentSelector && currentCharacter.class) {
+    const startingEquipment = getClassStartingEquipment(classData?.id || '');
+    
+    if (!startingEquipment || startingEquipment.options.length === 0) {
+      // 没有装备选择，直接进入下一步
+      setShowEquipmentSelector(false);
+      setTimeout(() => {
+        nextStep();
+      }, 100);
+      return null;
+    }
+    
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="section-title">选择起始装备</h2>
+          <p className="text-gray-600 mb-6">
+            根据你的职业，选择一套起始装备。这些装备将在后续步骤中自动添加到你的物品栏。
+          </p>
+        </div>
+        
+        <div className="space-y-3">
+          {startingEquipment.options.map((option) => (
+            <button
+              key={option.id}
+              onClick={() => handleEquipmentComplete(option.id)}
+              className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
+                currentCharacter.classStartingEquipment === option.id
+                  ? 'border-red-500 bg-red-50'
+                  : 'border-gray-200 hover:border-red-300 hover:shadow-md'
+              }`}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="font-bold text-gray-900 mb-2">{option.name}</div>
+                  {option.description && (
+                    <div className="text-sm text-gray-600 mb-3">{option.description}</div>
+                  )}
+                  <div className="space-y-1">
+                    {option.items && option.items.length > 0 && (
+                      <div className="text-sm">
+                        <span className="font-medium text-gray-700">装备：</span>
+                        <span className="text-gray-600 ml-2">{option.items.join('、')}</span>
+                      </div>
+                    )}
+                    {option.weapons && option.weapons.length > 0 && (
+                      <div className="text-sm">
+                        <span className="font-medium text-gray-700">武器：</span>
+                        <span className="text-gray-600 ml-2">{option.weapons.length} 把</span>
+                      </div>
+                    )}
+                    {option.armor && option.armor.length > 0 && (
+                      <div className="text-sm">
+                        <span className="font-medium text-gray-700">护甲：</span>
+                        <span className="text-gray-600 ml-2">{option.armor.join('、')}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {currentCharacter.classStartingEquipment === option.id && (
+                  <div className="ml-4">
+                    <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                      <Check className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   // 如果需要选择职业特性，显示特性选择器
   if (needsClassFeatures && showFeatureSelector && nextFeatureToChoose) {
