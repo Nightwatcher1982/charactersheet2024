@@ -68,7 +68,7 @@ export function calculateSpeciesSpeedBonus(character: Partial<Character>): numbe
   // 检查物种选择中的速度加成（如木精灵35尺已在基础speed中处理）
   // 这里处理其他可能的动态速度加成
   
-  // 检查巨人裔的大型形态（5级特性，暂时不考虑，因为需要等级判断）
+  // 检查歌利亚的大型形态（5级特性，暂时不考虑，因为需要等级判断）
   // 如果需要，可以在这里添加
   
   return speedBonus;
@@ -153,8 +153,8 @@ export function hasSpeciesResistance(character: Partial<Character>, damageType: 
     }
   }
   
-  // 检查魔人的炼狱遗产抗性
-  if (character.species === '魔人' && character.classFeatureChoices?.speciesChoices) {
+  // 检查提夫林的邪魔遗产抗性
+  if (character.species === '提夫林' && character.classFeatureChoices?.speciesChoices) {
     try {
       const speciesChoices = JSON.parse(character.classFeatureChoices.speciesChoices as string);
       if (speciesChoices.legacy) {

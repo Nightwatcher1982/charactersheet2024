@@ -95,8 +95,70 @@ export default function CreateCharacterPage() {
     currentCharacter.languages.length >= 3
   ) : true;
 
+  const hasAllAbilityScores = (raw: unknown): raw is Record<string, number> => {
+    if (!raw || typeof raw !== 'object') return false;
+    const obj = raw as Record<string, unknown>;
+    const keys = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'] as const;
+    return keys.every((k) => typeof obj[k] === 'number' && Number.isFinite(obj[k] as number));
+  };
+
+  const isStandardArray = (abilities: Record<string, number>): boolean => {
+    const expected = [15, 14, 13, 12, 10, 8].sort((a, b) => a - b);
+    const actual = [
+      abilities.strength,
+      abilities.dexterity,
+      abilities.constitution,
+      abilities.intelligence,
+      abilities.wisdom,
+      abilities.charisma,
+    ].slice().sort((a, b) => a - b);
+    return actual.length === expected.length && actual.every((v, i) => v === expected[i]);
+  };
+
+  const isPointBuyComplete = (abilities: Record<string, number>): boolean => {
+    const POINT_COST: Record<number, number> = {
+      8: 0,
+      9: 1,
+      10: 2,
+      11: 3,
+      12: 4,
+      13: 5,
+      14: 7,
+      15: 9,
+    };
+    const vals = [
+      abilities.strength,
+      abilities.dexterity,
+      abilities.constitution,
+      abilities.intelligence,
+      abilities.wisdom,
+      abilities.charisma,
+    ];
+    if (!vals.every((v) => Number.isFinite(v) && v >= 8 && v <= 15)) return false;
+    const cost = vals.reduce((sum, v) => sum + (POINT_COST[v] ?? 999), 0);
+    return cost === 27;
+  };
+
+  // 检查步骤3（属性）是否完成：避免 abilities 为空对象导致最终角色卡全空值
+  const isStep3Complete = (() => {
+    if (currentStep !== 3) return true;
+    const abilities = currentCharacter?.abilities;
+    if (!hasAllAbilityScores(abilities)) return false;
+
+    const method = currentCharacter?.abilityGenerationMethod;
+    // 兼容旧数据：如果没有保存生成方式，只要 6 项都是数值就放行（避免把旧角色卡死在这里）
+    if (!method) return true;
+
+    if (method === 'standard-array') return isStandardArray(abilities);
+    if (method === 'point-buy') return isPointBuyComplete(abilities);
+    // manual：只要求填了 6 项数值
+    return true;
+  })();
+
   // 禁用"下一步"按钮的条件
-  const isNextDisabled = currentStep === 2 && !isStep2Complete;
+  const isNextDisabled =
+    (currentStep === 2 && !isStep2Complete) ||
+    (currentStep === 3 && !isStep3Complete);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -170,6 +232,15 @@ export default function CreateCharacterPage() {
         <div className="card min-h-[500px]">
           <CurrentStepComponent />
         </div>
+
+        {currentStep === 3 && !isStep3Complete && (
+          <div className="mt-6 bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg">
+            <div className="font-bold text-yellow-900 mb-1">需要先完成属性分配</div>
+            <div className="text-sm text-yellow-800">
+              请先在本页完成属性值分配（标准数组需分配完 6 个数值；购点法需花完 27 点），才能进入下一步。
+            </div>
+          </div>
+        )}
 
         {/* 导航按钮 */}
         <div className="flex justify-between mt-8">

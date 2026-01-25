@@ -60,7 +60,7 @@ export const STANDARD_LANGUAGES: Language[] = [
     origin: '精灵',
     script: '精灵文',
     description: '流畅优美的语言，带有细微的音调变化和长元音',
-    typicalSpeakers: ['精灵', '半精灵', '卓尔']
+    typicalSpeakers: ['精灵', '卓尔']
   },
   {
     id: 'giant',
@@ -70,7 +70,7 @@ export const STANDARD_LANGUAGES: Language[] = [
     origin: '巨人',
     script: '矮人文',
     description: '巨人使用的古老语言，声音洪亮而简单',
-    typicalSpeakers: ['巨人', '巨人裔', '食人魔', '巨魔']
+    typicalSpeakers: ['巨人', '歌利亚', '食人魔', '巨魔']
   },
   {
     id: 'gnomish',
@@ -110,7 +110,7 @@ export const STANDARD_LANGUAGES: Language[] = [
     origin: '兽人',
     script: '矮人文',
     description: '粗犷的语言，充满咆哮和吼叫',
-    typicalSpeakers: ['兽人', '半兽人']
+    typicalSpeakers: ['兽人']
   }
 ];
 
@@ -124,7 +124,7 @@ export const RARE_LANGUAGES: Language[] = [
     origin: '无底深渊的恶魔',
     script: '炼狱文',
     description: '混乱邪恶的恶魔使用的语言，充满混乱和疯狂',
-    typicalSpeakers: ['恶魔', '魔人（深渊血统）']
+    typicalSpeakers: ['恶魔', '提夫林（深渊遗产）']
   },
   {
     id: 'celestial',
@@ -163,7 +163,7 @@ export const RARE_LANGUAGES: Language[] = [
     origin: '九层地狱的魔鬼',
     script: '炼狱文',
     description: '守序邪恶的魔鬼使用的语言',
-    typicalSpeakers: ['魔鬼', '魔人（炼狱血统）']
+    typicalSpeakers: ['魔鬼', '提夫林（炼狱遗产）']
   },
   {
     id: 'primordial',

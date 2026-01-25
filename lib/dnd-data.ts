@@ -17,6 +17,7 @@ export interface Character {
   background: string;
   level: number;
   abilities: Ability;
+  abilityGenerationMethod?: 'standard-array' | 'point-buy' | 'manual'; // 属性生成方式（用于创建流程校验）
   backgroundAbilityBonuses?: Record<string, number>; // 背景属性加值，如 {"力量": 2, "智力": 1}
   alignment: string;
   hitPoints: number;
@@ -416,6 +417,36 @@ export const CLASSES = [
 // DND 2024 物种列表 - 10个核心物种
 export const SPECIES = [
   {
+    id: 'aasimar',
+    name: '阿斯莫',
+    nameEn: 'Aasimar',
+    size: '中型或小型（可选）',
+    speed: 30,
+    description: '拥有上层位面火花的凡人，其灵魂中蕴藏着天界的光辉',
+    traits: [
+      {
+        name: '天界抗性',
+        description: '对光耀与死灵伤害具有抗性'
+      },
+      {
+        name: '黑暗视觉',
+        description: '60尺黑暗视觉'
+      },
+      {
+        name: '治愈之手',
+        description: '以魔法动作触摸一名生物，掷等于你熟练加值数量的d4，目标回复等于总和的生命值；每次长休后可用一次'
+      },
+      {
+        name: '光明使者',
+        description: '你知晓光亮术（Light）戏法'
+      },
+      {
+        name: '天界启示',
+        description: '从3级起，你可在战斗中短暂显露天界本相，获得持续1分钟的启示形态（具体效果以官方规则为准）'
+      }
+    ]
+  },
+  {
     id: 'human',
     name: '人类',
     nameEn: 'Human',
@@ -644,7 +675,7 @@ export const SPECIES = [
   },
   {
     id: 'goliath',
-    name: '巨人裔',
+    name: '歌利亚',
     nameEn: 'Goliath',
     size: '中型',
     speed: 35,
@@ -702,19 +733,19 @@ export const SPECIES = [
   },
   {
     id: 'tiefling',
-    name: '魔人',
+    name: '提夫林',
     nameEn: 'Tiefling',
     size: '中型或小型（可选）',
     speed: 30,
-    description: '拥有炼狱血统，与下层位面有血缘联系',
+    description: '与下层位面具有血缘联系的后裔，其邪魔遗产带来力量，但并不决定其道德倾向',
     traits: [
       {
         name: '黑暗视觉',
         description: '60尺黑暗视觉'
       },
       {
-        name: '炼狱遗产',
-        description: '选择深渊、冥界或炼狱遗产，获得戏法、抗性和法术'
+        name: '邪魔遗产',
+        description: '选择深渊、冥界或炼狱遗产，获得抗性、戏法，以及在3级与5级获得并始终准备的法术'
       },
       {
         name: '异界存在',
@@ -729,7 +760,7 @@ export const SPECIES = [
       },
       {
         id: 'legacy',
-        name: '炼狱遗产',
+        name: '邪魔遗产',
         options: [
           '深渊（毒素抗性，毒液喷射戏法，3级射线疾病，5级定身术）',
           '冥界（死灵抗性，冷触戏法，3级虚假生命，5级衰弱射线）',

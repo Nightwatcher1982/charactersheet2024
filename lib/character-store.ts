@@ -2,6 +2,28 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Character, Ability } from './dnd-data';
 
+const SPECIES_NAME_ALIASES: Record<string, string> = {
+  // 统一到 2024 物种中文命名
+  魔人: '提夫林',
+  巨人裔: '歌利亚',
+  半兽人: '兽人',
+  半精灵: '精灵',
+};
+
+function normalizeSpeciesName(species: unknown): unknown {
+  if (typeof species !== 'string') return species;
+  return SPECIES_NAME_ALIASES[species] ?? species;
+}
+
+function normalizeCharacterSpecies<T extends unknown>(character: T): T {
+  if (!character || typeof character !== 'object') return character;
+  const c = character as Record<string, unknown>;
+  if ('species' in c) {
+    c.species = normalizeSpeciesName(c.species);
+  }
+  return character;
+}
+
 function generateId(): string {
   // 优先：现代浏览器（含大多数桌面端/新移动端）
   if (globalThis.crypto && 'randomUUID' in globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function') {
@@ -48,6 +70,7 @@ const createEmptyCharacter = (): Partial<Character> => ({
   species: '',
   background: '',
   level: 1,
+  abilityGenerationMethod: 'standard-array',
   abilities: {
     strength: 10,
     dexterity: 10,
@@ -154,6 +177,20 @@ export const useCharacterStore = create<CharacterStore>()(
     }),
     {
       name: 'dnd-character-storage',
+      version: 1,
+      migrate: (persistedState) => {
+        // 兼容历史数据：把旧物种中文名映射到新版（不改动其它字段）
+        if (!persistedState || typeof persistedState !== 'object') return persistedState;
+        const s = persistedState as Record<string, unknown>;
+
+        if (Array.isArray(s.characters)) {
+          s.characters = s.characters.map((c) => normalizeCharacterSpecies(c)) as unknown;
+        }
+        if ('currentCharacter' in s) {
+          s.currentCharacter = normalizeCharacterSpecies(s.currentCharacter);
+        }
+        return s;
+      },
     }
   )
 );

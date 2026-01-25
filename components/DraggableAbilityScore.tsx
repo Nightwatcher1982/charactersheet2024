@@ -27,19 +27,8 @@ const ABILITIES = [
 ];
 
 export default function DraggableAbilityScore({ onComplete, initialScores }: DraggableAbilityScoreProps) {
-  const [availableScores, setAvailableScores] = useState<number[]>(() => {
-    if (initialScores) {
-      const usedScores = Object.values(initialScores);
-      return STANDARD_ARRAY.filter(score => !usedScores.includes(score));
-    }
-    return [...STANDARD_ARRAY];
-  });
-
   const [assignedScores, setAssignedScores] = useState<Record<string, number | null>>(() => {
-    if (initialScores) {
-      return initialScores as Record<string, number | null>;
-    }
-    return {
+    const normalized: Record<string, number | null> = {
       strength: null,
       dexterity: null,
       constitution: null,
@@ -47,16 +36,33 @@ export default function DraggableAbilityScore({ onComplete, initialScores }: Dra
       wisdom: null,
       charisma: null,
     };
+
+    if (!initialScores) return normalized;
+
+    const used = new Set<number>();
+    for (const { key } of ABILITIES) {
+      const raw = (initialScores as Record<string, unknown>)[key];
+      if (typeof raw !== 'number') continue;
+      if (!STANDARD_ARRAY.includes(raw)) continue;
+      if (used.has(raw)) continue;
+      normalized[key] = raw;
+      used.add(raw);
+    }
+    return normalized;
+  });
+
+  const [availableScores, setAvailableScores] = useState<number[]>(() => {
+    const usedScores = ABILITIES.map((a) => assignedScores[a.key]).filter((v): v is number => typeof v === 'number');
+    return STANDARD_ARRAY.filter((score) => !usedScores.includes(score));
   });
 
   const [selectingAbility, setSelectingAbility] = useState<string | null>(null);
 
   // 每次分配变化时通知父组件
   useEffect(() => {
-    const allAssigned = Object.values(assignedScores).every(score => score !== null);
-    if (allAssigned) {
-      onComplete(assignedScores as Record<string, number>);
-    }
+    const allAssigned = ABILITIES.every((a) => assignedScores[a.key] !== null);
+    if (!allAssigned) return;
+    onComplete(assignedScores as Record<string, number>);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assignedScores]);
 
@@ -169,7 +175,7 @@ export default function DraggableAbilityScore({ onComplete, initialScores }: Dra
     setDraggedFrom(null);
   };
 
-  const isComplete = Object.values(assignedScores).every(v => v !== null);
+  const isComplete = ABILITIES.every((a) => assignedScores[a.key] !== null);
 
   return (
     <div className="space-y-6">

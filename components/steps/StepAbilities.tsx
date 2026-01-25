@@ -8,18 +8,34 @@ import PointBuyAbilityScore from '@/components/PointBuyAbilityScore';
 
 export default function StepAbilities() {
   const { currentCharacter, updateCurrentCharacter } = useCharacterStore();
-  const [method, setMethod] = useState<string>('standard-array');
+  const [method, setMethod] = useState<string>(() => currentCharacter?.abilityGenerationMethod || 'standard-array');
 
   if (!currentCharacter) return null;
 
-  const abilities = currentCharacter.abilities || {
-    strength: 10,
-    dexterity: 10,
-    constitution: 10,
-    intelligence: 10,
-    wisdom: 10,
-    charisma: 10,
-  };
+  const abilities = (() => {
+    const raw = currentCharacter.abilities;
+    // 防御：避免出现 abilities 被写成 {} 导致后续全是空值
+    if (
+      !raw ||
+      typeof raw !== 'object' ||
+      !('strength' in raw) ||
+      !('dexterity' in raw) ||
+      !('constitution' in raw) ||
+      !('intelligence' in raw) ||
+      !('wisdom' in raw) ||
+      !('charisma' in raw)
+    ) {
+      return {
+        strength: 10,
+        dexterity: 10,
+        constitution: 10,
+        intelligence: 10,
+        wisdom: 10,
+        charisma: 10,
+      };
+    }
+    return raw as Ability;
+  })();
 
   const handleScoresComplete = (scores: Record<string, number>) => {
     updateCurrentCharacter({
@@ -30,6 +46,9 @@ export default function StepAbilities() {
   const handleMethodChange = (newMethod: string) => {
     setMethod(newMethod);
     // 切换方法时不重置数值，让用户保持选择
+    updateCurrentCharacter({
+      abilityGenerationMethod: newMethod as 'standard-array' | 'point-buy' | 'manual',
+    });
   };
 
   const handleAbilityChange = (ability: keyof Ability, value: number) => {
@@ -49,6 +68,23 @@ export default function StepAbilities() {
     { key: 'wisdom', name: '感知', abbr: 'WIS', description: '察觉力、洞察力、直觉' },
     { key: 'charisma', name: '魅力', abbr: 'CHA', description: '说服力、领导力、个人魅力' },
   ];
+
+  const isStandardArrayAbilities = (a: unknown): a is Ability => {
+    if (!a || typeof a !== 'object') return false;
+    const obj = a as Record<string, unknown>;
+    const vals = [
+      obj.strength,
+      obj.dexterity,
+      obj.constitution,
+      obj.intelligence,
+      obj.wisdom,
+      obj.charisma,
+    ];
+    if (!vals.every((v) => typeof v === 'number')) return false;
+    const sorted = (vals as number[]).slice().sort((x, y) => x - y);
+    const expected = [8, 10, 12, 13, 14, 15];
+    return sorted.length === expected.length && sorted.every((v, i) => v === expected[i]);
+  };
 
   return (
     <div className="space-y-6">
@@ -115,12 +151,12 @@ export default function StepAbilities() {
         {method === 'standard-array' ? (
           <ClickableAbilityScore 
             onComplete={handleScoresComplete}
-            initialScores={{}}
+            initialScores={isStandardArrayAbilities(currentCharacter.abilities) ? currentCharacter.abilities : undefined}
           />
         ) : method === 'point-buy' ? (
           <PointBuyAbilityScore
             onComplete={handleScoresComplete}
-            initialScores={{}}
+            initialScores={currentCharacter.abilities || undefined}
           />
         ) : (
           <div className="space-y-3">
