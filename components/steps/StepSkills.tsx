@@ -47,28 +47,66 @@ export default function StepSkills() {
 
   // 获取物种技能
   let speciesSkills: string[] = [];
+  
+  // 首先尝试从speciesChoices中获取
   if (currentCharacter?.classFeatureChoices?.speciesChoices) {
     try {
       const speciesChoices = JSON.parse(currentCharacter.classFeatureChoices.speciesChoices as string);
       if (speciesChoices.skill) {
         const skillMatch = speciesChoices.skill.match(/^([^（]+)/);
         if (skillMatch) {
-          speciesSkills = [skillMatch[1]];
+          const skillName = skillMatch[1].trim();
+          // 检查这个技能是否在已选技能中（确保它确实被添加了）
+          if (skills.includes(skillName)) {
+            speciesSkills = [skillName];
+          }
         }
       }
     } catch (e) {
-      // 解析失败
+      // 解析失败，继续下面的推断逻辑
     }
   }
   
-  // 分类技能
-  const backgroundSkills = skills.filter(skill => backgroundData?.skills?.includes(skill));
-  // 职业技能：在职业可用技能中，但不是背景技能，也不是物种技能
-  const classSkills = skills.filter(skill => 
-    classData?.availableSkills?.includes(skill) && 
-    !backgroundData?.skills?.includes(skill) &&
-    !speciesSkills.includes(skill)
-  );
+  // 如果从speciesChoices中没有找到，尝试从已选技能中推断
+  // 物种技能 = 所有技能 - 职业技能 - 背景技能
+  if (speciesSkills.length === 0) {
+    const allSkills = currentCharacter?.skills || [];
+    const possibleSpeciesSkills = allSkills.filter(skill =>
+      !classData?.availableSkills?.includes(skill) &&
+      !backgroundData?.skills?.includes(skill)
+    );
+    if (possibleSpeciesSkills.length > 0) {
+      speciesSkills = possibleSpeciesSkills;
+    }
+  }
+  
+  // 分类技能 - 按照来源显示
+  // 背景技能：显示所有来自背景数据的技能（固定列表）
+  const backgroundSkills = backgroundData?.skills || [];
+  
+  // 职业技能：优先从classFeatureChoices中获取用户选择的职业技能
+  // 如果没有保存，则从skills数组中推断（兼容旧数据）
+  let classSkills: string[] = [];
+  if (currentCharacter?.classFeatureChoices?.classSkills) {
+    try {
+      classSkills = JSON.parse(currentCharacter.classFeatureChoices.classSkills as string);
+    } catch (e) {
+      // 解析失败，使用推断逻辑
+      classSkills = skills.filter(skill => 
+        classData?.availableSkills?.includes(skill)
+      );
+    }
+  } else {
+    // 没有保存的职业技能，从skills数组中推断
+    classSkills = skills.filter(skill => 
+      classData?.availableSkills?.includes(skill)
+    );
+  }
+  
+  // 去重：如果技能数组中有重复的技能（比如"驯兽"出现了两次），只显示一次
+  const uniqueClassSkills = Array.from(new Set(classSkills));
+  
+  const finalClassSkills = uniqueClassSkills;
 
   // 早期返回检查
   if (!currentCharacter) return null;
@@ -112,15 +150,15 @@ export default function StepSkills() {
                   来自：<strong>{currentCharacter.class}</strong>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {classSkills.map((skill) => (
+                  {finalClassSkills.map((skill, index) => (
                     <span
-                      key={skill}
+                      key={`${skill}-${index}`}
                       className="px-3 py-1 bg-blue-500 text-white rounded-full text-sm font-medium"
                     >
                       {skill}
                     </span>
                   ))}
-                  {classSkills.length === 0 && (
+                  {finalClassSkills.length === 0 && (
                     <span className="text-gray-500 text-sm">尚未选择职业技能</span>
                   )}
                 </div>
@@ -136,9 +174,9 @@ export default function StepSkills() {
                   来自：<strong>{currentCharacter.background}</strong>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {backgroundSkills.map((skill) => (
+                  {backgroundSkills.map((skill, index) => (
                     <span
-                      key={skill}
+                      key={`${skill}-${index}`}
                       className="px-3 py-1 bg-green-500 text-white rounded-full text-sm font-medium"
                     >
                       {skill}
@@ -178,14 +216,14 @@ export default function StepSkills() {
         </div>
 
         <div className="mt-6 pt-6 border-t border-gray-300">
-          <div className="text-center">
-            <div className="text-3xl font-bold text-gray-900 mb-1">
-              {skills.length}
+            <div className="text-center">
+              <div className="text-3xl font-bold text-gray-900 mb-1">
+                {new Set(skills).size}
+              </div>
+              <div className="text-sm text-gray-600">
+                技能熟练总数
+              </div>
             </div>
-            <div className="text-sm text-gray-600">
-              技能熟练总数
-            </div>
-          </div>
         </div>
       </div>
 

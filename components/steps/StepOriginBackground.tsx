@@ -4,11 +4,15 @@ import { useState } from 'react';
 import { useCharacterStore } from '@/lib/character-store';
 import { BACKGROUNDS } from '@/lib/dnd-data';
 import { getFeatById } from '@/lib/feats-data';
-import { Check, ChevronDown, ChevronUp, Star, Scroll } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Star, Scroll, ArrowRight } from 'lucide-react';
 import EquipmentSelector from '@/components/EquipmentSelector';
 import BackgroundAbilityBonus from '@/components/BackgroundAbilityBonus';
 
-export default function StepOriginBackground() {
+interface StepOriginBackgroundProps {
+  onNextSubStep?: () => void;
+}
+
+export default function StepOriginBackground({ onNextSubStep }: StepOriginBackgroundProps) {
   const { currentCharacter, updateCurrentCharacter } = useCharacterStore();
   const [expandedBackground, setExpandedBackground] = useState<string | null>(null);
   const [showEquipmentSelector, setShowEquipmentSelector] = useState(false);
@@ -110,11 +114,24 @@ export default function StepOriginBackground() {
             {currentCharacter.backgroundAbilityBonuses && 
              Object.keys(currentCharacter.backgroundAbilityBonuses).length > 0 &&
              Object.values(currentCharacter.backgroundAbilityBonuses).reduce((a, b) => a + b, 0) === 3 && (
-              <div className="bg-green-50 border-2 border-green-500 rounded-lg p-4 text-center">
-                <div className="text-green-700 font-bold">✓ 背景设置完成！</div>
-                <div className="text-green-600 text-sm mt-1">
-                  你已完成装备选择和属性加值分配。点击子步骤导航继续选择物种。
+              <div className="space-y-4">
+                <div className="bg-green-50 border-2 border-green-500 rounded-lg p-4 text-center">
+                  <div className="text-green-700 font-bold">✓ 背景设置完成！</div>
+                  <div className="text-green-600 text-sm mt-1">
+                    你已完成装备选择和属性加值分配。
+                  </div>
                 </div>
+                
+                {/* 下一步按钮 */}
+                {onNextSubStep && (
+                  <button
+                    onClick={onNextSubStep}
+                    className="w-full py-3 px-6 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
+                  >
+                    <span>继续选择物种 (2.2)</span>
+                    <ArrowRight className="w-5 h-5" />
+                  </button>
+                )}
               </div>
             )}
           </>

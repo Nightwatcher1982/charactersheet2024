@@ -3,9 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCharacterStore } from '@/lib/character-store';
-import { Character } from '@/lib/dnd-data';
-import { Sword, Plus, Edit, Trash2, FileText } from 'lucide-react';
-import { generateCharacterPDF } from '@/lib/pdf-generator';
+import { Sword, Plus, Edit, Trash2 } from 'lucide-react';
 
 export default function HomePage() {
   const router = useRouter();
@@ -30,10 +28,6 @@ export default function HomePage() {
     if (confirm('确定要删除这个角色吗？')) {
       deleteCharacter(id);
     }
-  };
-
-  const handleExportPDF = (character: Character) => {
-    generateCharacterPDF(character);
   };
 
   if (!mounted) {
@@ -94,13 +88,6 @@ export default function HomePage() {
                       <Edit className="w-5 h-5" />
                     </button>
                     <button
-                      onClick={() => handleExportPDF(character)}
-                      className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition"
-                      title="导出 PDF"
-                    >
-                      <FileText className="w-5 h-5" />
-                    </button>
-                    <button
                       onClick={() => handleDelete(character.id)}
                       className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
                       title="删除"
@@ -143,44 +130,6 @@ export default function HomePage() {
           </p>
         </div>
       )}
-
-      {/* 功能说明 */}
-      <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="card text-center">
-          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-2xl">📝</span>
-          </div>
-          <h3 className="font-bold text-gray-900 mb-2">引导式创建</h3>
-          <p className="text-sm text-gray-600">
-            一步步引导你完成角色创建，从职业选择到属性分配
-          </p>
-        </div>
-
-        <div className="card text-center">
-          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-2xl">📱</span>
-          </div>
-          <h3 className="font-bold text-gray-900 mb-2">移动端友好</h3>
-          <p className="text-sm text-gray-600">
-            完美适配手机和平板，随时随地管理你的角色
-          </p>
-        </div>
-
-        <div className="card text-center">
-          <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-2xl">📄</span>
-          </div>
-          <h3 className="font-bold text-gray-900 mb-2">导出 PDF</h3>
-          <p className="text-sm text-gray-600">
-            一键导出精美的角色卡 PDF，方便打印和分享
-          </p>
-        </div>
-      </div>
-
-      {/* 页脚 */}
-      <footer className="mt-12 text-center text-sm text-gray-500">
-        <p>基于 D&D 2024 规则 | 非官方工具</p>
-      </footer>
     </div>
   );
 }

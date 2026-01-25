@@ -5,7 +5,8 @@ import { getFeatById } from '@/lib/feats-data';
 import { getLanguageById } from '@/lib/languages-data';
 import { getClassFeaturesByName } from '@/lib/class-features-data';
 import { BACKGROUND_EQUIPMENT } from '@/lib/equipment-packages-data';
-import { WEAPONS, getWeaponByName, calculateWeaponAttackBonus } from '@/lib/weapons-data';
+import { WEAPONS, getWeaponByName, calculateWeaponAttackBonus, ARMORS, getArmorByName, calculateAC } from '@/lib/weapons-data';
+import { calculateSpeciesHPBonus, getSpeciesBaseSpeed, calculateClassFeatureHPBonus } from '@/lib/species-traits-calculator';
 import { User, Shield, Heart, Zap, Award, Globe, Package, Star, Swords, BookOpen, Sword } from 'lucide-react';
 
 interface CharacterSheetSummaryProps {
@@ -52,25 +53,148 @@ export default function CharacterSheetSummary({ character }: CharacterSheetSumma
   const constitution = finalAbilities.constitution;
   const constitutionMod = getAbilityModifier(constitution);
   const hitDie = classData?.hitDie || 8;
-  const maxHP = hitDie + constitutionMod;
+  let maxHP = hitDie + constitutionMod;
+  
+  // 检查专长对生命值的影响
+  if (character.feats?.includes('tough')) {
+    const level = character.level || 1;
+    maxHP += level * 2;
+  }
+  
+  // 检查物种特性对生命值的影响
+  const speciesHPBonus = calculateSpeciesHPBonus(character);
+  maxHP += speciesHPBonus;
+  
+  // 检查职业特性对生命值的影响
+  const classFeatureHPBonus = calculateClassFeatureHPBonus(character);
+  maxHP += classFeatureHPBonus;
   
   const dexterity = finalAbilities.dexterity;
   const dexterityMod = getAbilityModifier(dexterity);
-  const baseAC = 10 + dexterityMod;
   
-  const initiative = dexterityMod;
+  // 计算AC，考虑护甲和职业特性
+  const equipment = character.equipment || [];
   
-  // 计算移动速度，考虑物种选择（如木精灵35尺）
-  let speed = (speciesData as any)?.speed || 30;
-  if (character.classFeatureChoices?.speciesChoices) {
-    try {
-      const speciesChoices = JSON.parse(character.classFeatureChoices.speciesChoices as string);
-      if (speciesChoices.lineage && speciesChoices.lineage.includes('木精灵')) {
-        speed = 35;
+  // 查找装备中的护甲和盾牌
+  let equippedArmor: typeof ARMORS[0] | null = null;
+  let hasShield = false;
+  
+  for (const item of equipment) {
+    const armor = getArmorByName(item);
+    if (armor) {
+      if (armor.category === '盾牌') {
+        hasShield = true;
+      } else if (!equippedArmor) {
+        equippedArmor = armor;
       }
-    } catch (e) {
-      // 解析失败，使用默认速度
     }
+  }
+  
+  // 获取实际的护甲熟练项
+  const getActualArmorProficiencies = (): string[] => {
+    if (!classData) return [];
+    let armorProfs = [...(classData.proficiencies.armor || [])];
+    
+    if (character.classFeatureChoices) {
+      const divineOrder = character.classFeatureChoices.divineOrder;
+      if (divineOrder === 'protector' && character.class === '牧师') {
+        if (!armorProfs.includes('重甲')) {
+          armorProfs.push('重甲');
+        }
+      }
+    }
+    
+    return armorProfs;
+  };
+  
+  const armorProficiencies = getActualArmorProficiencies();
+  let isProficientWithArmor = false;
+  
+  if (equippedArmor) {
+    const armorCategory = equippedArmor.category;
+    isProficientWithArmor = armorProficiencies.some(prof => {
+      if (prof === '轻甲' && armorCategory === '轻甲') return true;
+      if (prof === '中甲' && armorCategory === '中甲') return true;
+      if (prof === '重甲' && armorCategory === '重甲') return true;
+      if (prof === '盾牌' && armorCategory === '盾牌') return true;
+      return false;
+    });
+  }
+  
+  // 获取职业特性（用于AC计算和显示）
+  const classFeatures = classData ? getClassFeaturesByName(classData.name) : null;
+  
+  // 检查职业特性对AC的影响
+  let unarmoredDefenseBonus: number | undefined = undefined;
+  let fightingStyleDefense = false;
+  let featACBonus = 0;
+  let mediumArmorMaster = false;
+  
+  // 检查术士龙裔血统：未穿护甲时AC = 13 + 敏捷调整值
+  let draconicResilience = false;
+  if (character.class === '术士' && !equippedArmor && character.classFeatureChoices?.sorcerousOrigin === 'draconicBloodline') {
+    draconicResilience = true;
+  }
+  
+  // 检查无甲防御（野蛮人：体质调整值，武僧：感知调整值）
+  if (classFeatures && !equippedArmor && !draconicResilience) {
+    const unarmoredDefense = classFeatures.level1Features?.find(f => f.id === 'unarmored-defense');
+    if (unarmoredDefense) {
+      if (character.class === '野蛮人') {
+        unarmoredDefenseBonus = constitutionMod;
+      } else if (character.class === '武僧') {
+        if (!hasShield) {
+          const wisdomMod = getAbilityModifier(finalAbilities.wisdom);
+          unarmoredDefenseBonus = wisdomMod;
+        }
+      }
+    }
+  }
+  
+  // 检查战士的防御战斗风格
+  if (character.class === '战士' && equippedArmor && character.classFeatureChoices?.fightingStyle === 'defense') {
+    fightingStyleDefense = true;
+  }
+  
+  // 检查专长对AC的影响
+  if (character.feats) {
+    if (character.feats.includes('medium-armor-master')) {
+      mediumArmorMaster = true;
+    }
+    // 双持武器者：当双持武器时，AC+1
+    if (character.feats.includes('dual-wielder')) {
+      // 需要检查是否双持武器，这里简化处理
+      // 实际应该检查equippedWeapons.length >= 2
+      // 暂时不在这里处理，因为CharacterSheetSummary可能没有equippedWeapons信息
+    }
+  }
+  
+  // 使用calculateAC函数计算最终AC
+  const baseAC = calculateAC(
+    10 + dexterityMod,
+    equippedArmor,
+    hasShield,
+    dexterityMod,
+    isProficientWithArmor,
+    unarmoredDefenseBonus,
+    fightingStyleDefense,
+    featACBonus,
+    mediumArmorMaster,
+    draconicResilience
+  );
+  
+  // 计算先攻，考虑专长影响
+  let initiative = dexterityMod;
+  if (character.feats?.includes('alert')) {
+    initiative += profBonus;
+  }
+  
+  // 计算移动速度，考虑物种选择（如木精灵35尺）和专长
+  let speed = getSpeciesBaseSpeed(character);
+  
+  // 检查专长对速度的影响
+  if (character.feats?.includes('mobile')) {
+    speed += 10;
   }
   
   // 获取物种子类型显示（如"精灵 - 木精灵"）
@@ -92,9 +216,6 @@ export default function CharacterSheetSummary({ character }: CharacterSheetSumma
   // 获取技能熟练
   const skills = character.skills || [];
 
-  // 获取职业特性
-  const classFeatures = classData ? getClassFeaturesByName(classData.name) : null;
-
   // 获取装备信息
   const equipmentData = backgroundData ? BACKGROUND_EQUIPMENT.find(e => e.backgroundId === backgroundData.id) : null;
   const selectedEquipment = character.backgroundEquipmentChoice === 'A' ? equipmentData?.optionA : 
@@ -113,11 +234,18 @@ export default function CharacterSheetSummary({ character }: CharacterSheetSumma
     }
   }
   // 如果没有用户选择的武器，从背景装备中提取
-  else if (selectedEquipment && 'items' in selectedEquipment) {
-    for (const item of selectedEquipment.items) {
-      const weapon = getWeaponByName(item.name);
-      if (weapon) {
-        equippedWeapons.push({ weapon, quantity: item.quantity });
+  else if (selectedEquipment && typeof selectedEquipment === 'object' && 'items' in selectedEquipment) {
+    const items = (selectedEquipment as { items?: unknown }).items;
+    if (Array.isArray(items)) {
+      for (const rawItem of items) {
+        if (!rawItem || typeof rawItem !== 'object') continue;
+        const name = (rawItem as { name?: unknown }).name;
+        const quantity = (rawItem as { quantity?: unknown }).quantity;
+        if (typeof name !== 'string') continue;
+        const weapon = getWeaponByName(name);
+        if (weapon) {
+          equippedWeapons.push({ weapon, quantity: typeof quantity === 'number' ? quantity : 1 });
+        }
       }
     }
   }
@@ -372,10 +500,15 @@ export default function CharacterSheetSummary({ character }: CharacterSheetSumma
             装备详情（选项 {character.backgroundEquipmentChoice}）
           </h3>
           <div className="bg-orange-50 border border-orange-200 rounded p-4">
-            {character.backgroundEquipmentChoice === 'A' && 'items' in selectedEquipment ? (
+            {character.backgroundEquipmentChoice === 'A' &&
+            selectedEquipment &&
+            typeof selectedEquipment === 'object' &&
+            'items' in selectedEquipment &&
+            Array.isArray((selectedEquipment as { items?: unknown }).items) ? (
               <>
                 <div className="space-y-2 mb-3">
-                  {selectedEquipment.items.map((item, index) => (
+                  {((selectedEquipment as { items?: unknown }).items as Array<{ name: string; nameEn?: string; quantity: number }>).map(
+                    (item, index) => (
                     <div key={index} className="flex items-center gap-2 text-sm">
                       <span className="w-6 h-6 bg-orange-200 rounded-full flex items-center justify-center text-xs font-bold">
                         {item.quantity}
@@ -383,7 +516,8 @@ export default function CharacterSheetSummary({ character }: CharacterSheetSumma
                       <span className="font-medium text-orange-900">{item.name}</span>
                       <span className="text-orange-600 text-xs">({item.nameEn})</span>
                     </div>
-                  ))}
+                    )
+                  )}
                 </div>
                 <div className="border-t border-orange-300 pt-2">
                   <span className="text-sm text-orange-800">

@@ -30,7 +30,10 @@ export default function SpeciesTraitSelector({
   useEffect(() => {
     if (isComplete && !hasCalledRef.current) {
       hasCalledRef.current = true;
-      onComplete(selections);
+      // 使用setTimeout避免重复调用
+      setTimeout(() => {
+        onComplete(selections);
+      }, 0);
     } else if (!isComplete) {
       hasCalledRef.current = false;
     }
@@ -64,6 +67,11 @@ export default function SpeciesTraitSelector({
       </div>
 
       {choices.map((choice) => {
+        // 如果是技能选择，不在这里显示，应该由父组件通过弹窗处理
+        if (choice.id === 'skill') {
+          return null;
+        }
+        
         const selected = selections[choice.id];
 
         return (

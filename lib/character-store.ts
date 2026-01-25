@@ -2,6 +2,27 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Character, Ability } from './dnd-data';
 
+function generateId(): string {
+  // 优先：现代浏览器（含大多数桌面端/新移动端）
+  if (globalThis.crypto && 'randomUUID' in globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID();
+  }
+
+  // 兼容：部分移动端 Safari 只有 getRandomValues
+  if (globalThis.crypto && typeof globalThis.crypto.getRandomValues === 'function') {
+    const bytes = new Uint8Array(16);
+    globalThis.crypto.getRandomValues(bytes);
+    // RFC 4122 v4
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  }
+
+  // 最后兜底：极老环境/非安全上下文（不影响功能，只是ID随机性较弱）
+  return `id-${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}${Math.random().toString(16).slice(2)}`;
+}
+
 interface CharacterStore {
   characters: Character[];
   currentCharacter: Partial<Character> | null;
@@ -21,7 +42,7 @@ interface CharacterStore {
 }
 
 const createEmptyCharacter = (): Partial<Character> => ({
-  id: crypto.randomUUID(),
+  id: generateId(),
   name: '',
   class: '',
   species: '',

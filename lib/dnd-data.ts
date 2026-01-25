@@ -26,7 +26,7 @@ export interface Character {
   equipment: string[];
   spells: string[];
   features: string[];
-  classFeatureChoices?: Record<string, string>; // 职业和物种特性选择，如 {"divineOrder": "protector", "speciesChoices": "..."}
+  classFeatureChoices?: Record<string, string>; // 职业和物种特性选择，如 {"divineOrder": "protector", "speciesChoices": "...", "classSkills": "[\"驯兽\",\"运动\"]"}
   backstory: string;
   createdAt: string;
   updatedAt: string;
@@ -38,6 +38,7 @@ export interface Character {
   avatar?: string; // 头像（base64编码的图片数据）
   remainingGold?: number; // 剩余金币（购买装备后）
   classStartingEquipment?: string; // 职业起始装备选择ID，如 "option1"
+  equippedWeapons?: string[]; // 用户选择的武器（武器ID数组）
 }
 
 export interface ClassFeatureChoice {
@@ -143,7 +144,7 @@ export const CLASSES = [
     availableSkills: ['奥秘', '驯兽', '洞悉', '医药', '自然', '察觉', '宗教', '求生'],
     proficiencies: {
       armor: ['轻甲', '中甲', '盾牌（非金属）'],
-      weapons: ['木棒', '匕首', '飞镖', '标枪', '硬头锤', '木棍', '弯刀', '镰刀', '投石索', '矛'],
+      weapons: ['简易武器'],
       tools: ['草药工具']
     }
   },
@@ -296,7 +297,7 @@ export const CLASSES = [
     availableSkills: ['奥秘', '欺瞒', '洞悉', '威吓', '游说', '宗教'],
     proficiencies: {
       armor: [],
-      weapons: ['匕首', '飞镖', '投石索', '木棍', '轻弩'],
+      weapons: ['简易武器'],
       tools: []
     },
     featureChoices: [
@@ -406,7 +407,7 @@ export const CLASSES = [
     availableSkills: ['奥秘', '历史', '洞悉', '调查', '医药', '自然', '宗教'],
     proficiencies: {
       armor: [],
-      weapons: ['匕首', '飞镖', '投石索', '木棍', '轻弩'],
+      weapons: ['简易武器'],
       tools: []
     }
   }
@@ -740,7 +741,22 @@ export const SPECIES = [
 ];
 
 // DND 2024 背景列表 - 16个背景
-export const BACKGROUNDS = [
+export interface Background {
+  id: string;
+  name: string;
+  nameEn: string;
+  description: string;
+  narrative: string;
+  skills: string[];
+  toolProficiency: string;
+  abilityBonus: number;
+  abilityChoices: string[];
+  featId?: string; // 2024：背景提供的专长
+  feats?: string[]; // 兼容旧数据：背景提供的专长数组
+  equipmentChoice: boolean; // 是否有A/B装备选项
+}
+
+export const BACKGROUNDS: Background[] = [
   {
     id: 'acolyte',
     name: '侍僧',

@@ -22,10 +22,10 @@ export default function StepEquipment() {
   const { currentCharacter, updateCurrentCharacter } = useCharacterStore();
   const [customItem, setCustomItem] = useState('');
   const [showWeaponSelector, setShowWeaponSelector] = useState(false);
-
-  if (!currentCharacter) return null;
-
-  const classData = CLASSES.find(c => c.name === currentCharacter.class);
+  const classData = useMemo(() => {
+    if (!currentCharacter?.class) return undefined;
+    return CLASSES.find(c => c.name === currentCharacter.class);
+  }, [currentCharacter?.class]);
   
   // 获取实际的武器和护甲熟练项（考虑职业特性选择）
   const getActualWeaponProficiencies = (): string[] => {
@@ -33,7 +33,7 @@ export default function StepEquipment() {
     let weaponProfs = [...(classData.proficiencies.weapons || [])];
     
     // 检查职业特性选择（如守护者获得军用武器）
-    if (currentCharacter.classFeatureChoices) {
+    if (currentCharacter?.classFeatureChoices) {
       const divineOrder = currentCharacter.classFeatureChoices.divineOrder;
       if (divineOrder === 'protector' && currentCharacter.class === '牧师') {
         // 守护者获得军用武器熟练
@@ -51,7 +51,7 @@ export default function StepEquipment() {
     let armorProfs = [...(classData.proficiencies.armor || [])];
     
     // 检查职业特性选择（如守护者获得重甲熟练）
-    if (currentCharacter.classFeatureChoices) {
+    if (currentCharacter?.classFeatureChoices) {
       const divineOrder = currentCharacter.classFeatureChoices.divineOrder;
       if (divineOrder === 'protector' && currentCharacter.class === '牧师') {
         // 守护者获得重甲熟练
@@ -64,10 +64,13 @@ export default function StepEquipment() {
     return armorProfs;
   };
 
-  const equipment = currentCharacter.equipment || [];
+  const equipment = useMemo(() => currentCharacter?.equipment || [], [currentCharacter?.equipment]);
+  const equippedWeapons = useMemo(() => currentCharacter?.equippedWeapons || [], [currentCharacter?.equippedWeapons]);
   
   // 加载职业起始装备（如果已选择但未加载）
   useEffect(() => {
+    if (!currentCharacter?.class || !currentCharacter.classStartingEquipment) return;
+
     if (currentCharacter.class && currentCharacter.classStartingEquipment) {
       const classData = CLASSES.find(c => c.name === currentCharacter.class);
       const startingEquipment = getClassStartingEquipment(classData?.id || '');
@@ -114,11 +117,17 @@ export default function StepEquipment() {
         }
       }
     }
-  }, [currentCharacter.class, currentCharacter.classStartingEquipment]);
+  }, [
+    currentCharacter?.class,
+    currentCharacter?.classStartingEquipment,
+    currentCharacter?.equipment,
+    currentCharacter?.equippedWeapons,
+    updateCurrentCharacter
+  ]);
   
   // 获取起始金币
   const startingGold = useMemo(() => {
-    if (!currentCharacter.background || !currentCharacter.backgroundEquipmentChoice) {
+    if (!currentCharacter?.background || !currentCharacter.backgroundEquipmentChoice) {
       return 0;
     }
     const backgroundData = BACKGROUNDS.find(b => b.name === currentCharacter.background);
@@ -132,7 +141,7 @@ export default function StepEquipment() {
     } else {
       return bgEquipment.optionB.gold;
     }
-  }, [currentCharacter.background, currentCharacter.backgroundEquipmentChoice]);
+  }, [currentCharacter?.background, currentCharacter?.backgroundEquipmentChoice]);
   
   // 计算已选装备总价
   const totalCost = useMemo(() => {
@@ -142,8 +151,8 @@ export default function StepEquipment() {
       cost += getEquipmentPrice(item);
     });
     // 计算武器价格
-    if (currentCharacter.equippedWeapons) {
-      currentCharacter.equippedWeapons.forEach(weaponId => {
+    if (equippedWeapons.length > 0) {
+      equippedWeapons.forEach(weaponId => {
         const weapon = getWeaponByName(weaponId) || WEAPONS.find(w => w.id === weaponId);
         if (weapon) {
           cost += weapon.price || getEquipmentPrice(weapon.name);
@@ -151,28 +160,32 @@ export default function StepEquipment() {
       });
     }
     return cost;
-  }, [equipment, currentCharacter.equippedWeapons]);
+  }, [equipment, equippedWeapons]);
   
   // 剩余金币
   const remainingGold = startingGold - totalCost;
   
   // 初始化剩余金币（如果还没有设置）
   useEffect(() => {
+    if (!currentCharacter) return;
     if (currentCharacter.remainingGold === undefined && startingGold > 0) {
       updateCurrentCharacter({
         remainingGold: startingGold
       });
     }
-  }, [startingGold, currentCharacter.remainingGold, updateCurrentCharacter]);
+  }, [startingGold, currentCharacter?.remainingGold, updateCurrentCharacter]);
   
   // 更新剩余金币
   useEffect(() => {
+    if (!currentCharacter) return;
     if (startingGold > 0) {
       updateCurrentCharacter({
         remainingGold: remainingGold
       });
     }
   }, [remainingGold, startingGold, updateCurrentCharacter]);
+
+  if (!currentCharacter) return null;
 
   const addEquipment = (item: string) => {
     const itemPrice = getEquipmentPrice(item);
@@ -343,7 +356,7 @@ export default function StepEquipment() {
             </div>
           </div>
           <WeaponSelector
-            selectedClass={currentCharacter.class}
+            selectedClass={currentCharacter.class || ''}
             onComplete={(weaponIds) => {
               updateCurrentCharacter({
                 equippedWeapons: weaponIds

@@ -7,6 +7,10 @@ import { Check, Info, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import ClassFeatureSelector from '@/components/ClassFeatureSelector';
 import { getClassStartingEquipment } from '@/lib/class-starting-equipment-data';
 import SkillSelectorModal from '@/components/SkillSelectorModal';
+import WeaponSelectorModal from '@/components/WeaponSelectorModal';
+import SpellSelectorModal from '@/components/SpellSelectorModal';
+import { WEAPONS, getWeaponById, ARMORS, getArmorByName } from '@/lib/weapons-data';
+import { hasSpellcasting } from '@/lib/spells-data';
 
 export default function StepClassSimple() {
   const { currentCharacter, updateCurrentCharacter, nextStep } = useCharacterStore();
@@ -14,6 +18,14 @@ export default function StepClassSimple() {
   const [showFeatureSelector, setShowFeatureSelector] = useState(false);
   const [showEquipmentSelector, setShowEquipmentSelector] = useState(false);
   const [showSkillModal, setShowSkillModal] = useState(false);
+  const [showWeaponModal, setShowWeaponModal] = useState(false);
+  const [showSpellModal, setShowSpellModal] = useState(false);
+  const [pendingWeaponSelection, setPendingWeaponSelection] = useState<{
+    weaponType: '简易武器' | '军用武器';
+    requiredCount: number;
+    selectedOption: any;
+    equipmentOptionId: string;
+  } | null>(null);
 
   if (!currentCharacter) return null;
 
@@ -50,26 +62,35 @@ export default function StepClassSimple() {
     const nonClassSkills = currentSkills.filter(skill => 
       !classData?.availableSkills?.includes(skill)
     );
+    
     // 添加新选择的职业技能
+    const finalSkills = [...nonClassSkills, ...skills];
+    
+    // 保存用户选择的职业技能到classFeatureChoices中
+    const currentChoices = currentCharacter.classFeatureChoices || {};
     updateCurrentCharacter({
-      skills: [...nonClassSkills, ...skills]
+      skills: finalSkills,
+      classFeatureChoices: {
+        ...currentChoices,
+        classSkills: JSON.stringify(skills)
+      }
     });
     setShowSkillModal(false);
     
     // 检查是否有特性需要选择
     const featureChoices = (classData as any)?.featureChoices || [];
+    
     if (featureChoices.length > 0) {
       setShowFeatureSelector(true);
     } else {
       // 没有特性选择，检查是否需要选择起始装备
       const startingEquipment = getClassStartingEquipment(classData?.id || '');
+      
       if (startingEquipment && startingEquipment.options.length > 0) {
         setShowEquipmentSelector(true);
       } else {
-        // 没有装备选择，自动进入下一步
-        setTimeout(() => {
-          nextStep();
-        }, 500);
+        // 没有装备选择，检查是否需要选择法术
+        checkAndShowSpellSelector();
       }
     }
   };
@@ -94,23 +115,190 @@ export default function StepClassSimple() {
         // 显示装备选择页面
         setShowEquipmentSelector(true);
       } else {
-        // 没有装备选择，直接进入下一步
-        setTimeout(() => {
-          nextStep();
-        }, 500);
+        // 没有装备选择，检查是否需要选择法术
+        checkAndShowSpellSelector();
       }
     }
   };
   
-  const handleEquipmentComplete = (equipmentOptionId: string) => {
-    updateCurrentCharacter({
-      classStartingEquipment: equipmentOptionId
-    });
+  const checkAndShowSpellSelector = () => {
+    // 确保装备选择器已关闭
     setShowEquipmentSelector(false);
-    // 装备选择完成，进入下一步
+    
+    if (currentCharacter.class && hasSpellcasting(currentCharacter.class)) {
+      // 检查是否已经选择过法术（通过classFeatureChoices检查，更可靠）
+      const hasSelectedCantrips = currentCharacter.classFeatureChoices?.selectedCantrips;
+      const hasSelectedFirstLevelSpells = currentCharacter.classFeatureChoices?.selectedFirstLevelSpells;
+      const hasSelectedSpells = hasSelectedCantrips || hasSelectedFirstLevelSpells;
+      
+      if (!hasSelectedSpells) {
+        // 使用 setTimeout 确保状态更新后组件重新渲染
+        setTimeout(() => {
+          setShowSpellModal(true);
+        }, 100);
+      } else {
+        // 已经选择过法术，直接进入下一步
+        setTimeout(() => {
+          nextStep();
+        }, 500);
+      }
+    } else {
+      // 不是施法职业，直接进入下一步
+      setTimeout(() => {
+        nextStep();
+      }, 500);
+    }
+  };
+  
+  const handleSpellSelectionComplete = (cantrips: string[], firstLevelSpells: string[], preparedSpells?: string[]) => {
+    // 保存选择的法术
+    const allSpells = [...cantrips, ...(preparedSpells || firstLevelSpells)];
+    const updatedChoices: Record<string, string> = {
+      ...currentChoices,
+      selectedCantrips: JSON.stringify(cantrips),
+      selectedFirstLevelSpells: JSON.stringify(firstLevelSpells)
+    };
+    
+    // 如果是法师，保存准备的法术
+    if (preparedSpells && currentCharacter.class === '法师') {
+      updatedChoices.selectedPreparedSpells = JSON.stringify(preparedSpells);
+    }
+    
+    updateCurrentCharacter({
+      spells: allSpells,
+      classFeatureChoices: updatedChoices
+    });
+    setShowSpellModal(false);
+    // 法术选择完成，进入下一步
     setTimeout(() => {
       nextStep();
     }, 500);
+  };
+  
+  const handleEquipmentComplete = (equipmentOptionId: string) => {
+    // 获取选中的装备选项
+    const classData = CLASSES.find(c => c.name === currentCharacter.class);
+    const startingEquipment = getClassStartingEquipment(classData?.id || '');
+    const selectedOption = startingEquipment?.options.find(opt => opt.id === equipmentOptionId);
+    
+    if (!selectedOption) {
+      // 如果没有找到选项，只保存选择ID
+      updateCurrentCharacter({
+        classStartingEquipment: equipmentOptionId
+      });
+      setShowEquipmentSelector(false);
+      // 检查是否需要选择法术
+      checkAndShowSpellSelector();
+      return;
+    }
+
+    // 检查是否有"简易武器（任意）"或"军用武器（任意）"
+    const hasSimpleWeaponAny = selectedOption.items?.some((item: string) => 
+      item.includes('简易武器（任意）') || item.includes('简易武器(任意)')
+    );
+    const hasMartialWeaponAny = selectedOption.items?.some((item: string) => 
+      item.includes('军用武器（任意）') || item.includes('军用武器(任意)')
+    );
+
+    // 检查是否有"军用武器（任二）"
+    const hasMartialWeaponTwo = selectedOption.items?.some((item: string) => 
+      item.includes('军用武器（任二）') || item.includes('军用武器(任二)')
+    );
+
+    if (hasSimpleWeaponAny || hasMartialWeaponAny || hasMartialWeaponTwo) {
+      // 需要选择武器，显示武器选择器
+      const weaponType = hasSimpleWeaponAny ? '简易武器' : '军用武器';
+      const requiredCount = hasMartialWeaponTwo ? 2 : 1;
+      
+      setPendingWeaponSelection({
+        weaponType,
+        requiredCount,
+        selectedOption,
+        equipmentOptionId
+      });
+      // 隐藏装备选择器，让武器选择模态框显示
+      setShowEquipmentSelector(false);
+      setShowWeaponModal(true);
+    } else {
+      // 没有"任意"武器选项，直接处理装备
+      processEquipmentSelection(selectedOption, equipmentOptionId, []);
+    }
+  };
+
+  const processEquipmentSelection = (
+    selectedOption: any,
+    equipmentOptionId: string,
+    additionalWeapons: string[] = []
+  ) => {
+    const currentEquipment = currentCharacter.equipment || [];
+    const currentWeapons = currentCharacter.equippedWeapons || [];
+    
+    // 添加装备物品
+    const newEquipment: string[] = [];
+    
+    // 添加所有物品
+    // 但排除"任意"武器选项，因为已经用具体武器替换了
+    selectedOption.items?.forEach((item: string) => {
+      if (
+        !item.includes('简易武器（任意）') &&
+        !item.includes('简易武器(任意)') &&
+        !item.includes('军用武器（任意）') &&
+        !item.includes('军用武器(任意)') &&
+        !item.includes('军用武器（任二）') &&
+        !item.includes('军用武器(任二)') &&
+        !currentEquipment.includes(item)
+      ) {
+        newEquipment.push(item);
+      }
+    });
+
+    // 单独添加护甲/盾牌到物品栏（用于AC/盾牌检测）
+    selectedOption.armor?.forEach((armorName: string) => {
+      if (armorName && !currentEquipment.includes(armorName) && !newEquipment.includes(armorName)) {
+        newEquipment.push(armorName);
+      }
+    });
+    
+    // 添加武器到equippedWeapons
+    const newWeapons: string[] = [];
+    
+    // 添加预设的武器
+    selectedOption.weapons?.forEach((weaponId: string) => {
+      const weapon = getWeaponById(weaponId);
+      if (weapon && !currentWeapons.includes(weaponId)) {
+        newWeapons.push(weaponId);
+      }
+    });
+    
+    // 添加用户选择的"任意"武器
+    additionalWeapons.forEach((weaponId: string) => {
+      if (!currentWeapons.includes(weaponId)) {
+        newWeapons.push(weaponId);
+      }
+    });
+    
+    // 更新角色数据，同时保存装备选择和装备的物品
+    updateCurrentCharacter({
+      classStartingEquipment: equipmentOptionId,
+      equipment: [...currentEquipment, ...newEquipment],
+      equippedWeapons: [...currentWeapons, ...newWeapons],
+    });
+    
+    setShowEquipmentSelector(false);
+    // 装备选择完成，检查是否需要选择法术
+    checkAndShowSpellSelector();
+  };
+
+  const handleWeaponSelectionComplete = (weaponIds: string[]) => {
+    if (pendingWeaponSelection) {
+      processEquipmentSelection(
+        pendingWeaponSelection.selectedOption,
+        pendingWeaponSelection.equipmentOptionId,
+        weaponIds
+      );
+      setPendingWeaponSelection(null);
+      setShowWeaponModal(false);
+    }
   };
 
   const getComplexityColor = (complexity: string) => {
@@ -141,7 +329,7 @@ export default function StepClassSimple() {
   const currentClassSkills = (currentCharacter.skills || []).filter(skill => 
     classDataForSkills?.availableSkills?.includes(skill)
   );
-  
+
   if (showSkillModal && classDataForSkills && needsClassSkills) {
     return (
       <>
@@ -154,6 +342,64 @@ export default function StepClassSimple() {
           requiredCount={classDataForSkills.skillChoices}
           onComplete={handleClassSkillsComplete}
           initialSkills={currentClassSkills}
+        />
+        {/* 显示背景内容，但被弹窗覆盖 */}
+        <div className="opacity-0 pointer-events-none">
+          <div className="space-y-6">
+            <div>
+              <h2 className="section-title">步骤 1：选择职业</h2>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // 武器选择模态框（必须在装备选择器之前检查，否则会被提前返回阻止）
+  if (showWeaponModal && pendingWeaponSelection && currentCharacter.class) {
+    return (
+      <>
+        <WeaponSelectorModal
+          isOpen={showWeaponModal}
+          onClose={() => {
+            setShowWeaponModal(false);
+            setPendingWeaponSelection(null);
+          }}
+          weaponType={pendingWeaponSelection.weaponType}
+          requiredCount={pendingWeaponSelection.requiredCount}
+          onComplete={handleWeaponSelectionComplete}
+          selectedClass={currentCharacter.class}
+        />
+        {/* 显示背景内容，但被弹窗覆盖 */}
+        <div className="opacity-0 pointer-events-none">
+          <div className="space-y-6">
+            <div>
+              <h2 className="section-title">步骤 1：选择职业</h2>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // 法术选择弹窗（必须在其他弹窗之前检查，确保显示在最上层）
+  if (showSpellModal && currentCharacter.class) {
+    const currentCantrips = currentCharacter.classFeatureChoices?.selectedCantrips 
+      ? JSON.parse(currentCharacter.classFeatureChoices.selectedCantrips as string)
+      : [];
+    const currentFirstLevelSpells = currentCharacter.classFeatureChoices?.selectedFirstLevelSpells
+      ? JSON.parse(currentCharacter.classFeatureChoices.selectedFirstLevelSpells as string)
+      : [];
+    
+    return (
+      <>
+        <SpellSelectorModal
+          isOpen={showSpellModal}
+          onClose={() => setShowSpellModal(false)}
+          selectedClass={currentCharacter.class}
+          onComplete={handleSpellSelectionComplete}
+          initialCantrips={currentCantrips}
+          initialFirstLevelSpells={currentFirstLevelSpells}
         />
         {/* 显示背景内容，但被弹窗覆盖 */}
         <div className="opacity-0 pointer-events-none">
@@ -211,6 +457,12 @@ export default function StepClassSimple() {
                       <div className="text-sm">
                         <span className="font-medium text-gray-700">装备：</span>
                         <span className="text-gray-600 ml-2">{option.items.join('、')}</span>
+                      </div>
+                    )}
+                    {typeof option.gold === 'number' && (
+                      <div className="text-sm">
+                        <span className="font-medium text-gray-700">金币：</span>
+                        <span className="text-gray-600 ml-2">{option.gold} GP</span>
                       </div>
                     )}
                     {option.weapons && option.weapons.length > 0 && (

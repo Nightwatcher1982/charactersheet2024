@@ -24,8 +24,11 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body className={inter.className}>
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-          {children}
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col">
+          <main className="flex-1">{children}</main>
+          <footer className="py-6 text-center text-xs text-gray-400 print:hidden">
+            Dimvision 出品
+          </footer>
         </div>
       </body>
     </html>

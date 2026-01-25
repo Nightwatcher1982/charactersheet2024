@@ -467,11 +467,34 @@ export function calculateAC(
   armor: Armor | null,
   shield: boolean,
   dexterityMod: number,
-  isProficientWithArmor: boolean
+  isProficientWithArmor: boolean,
+  unarmoredDefenseBonus?: number, // 无甲防御加值（如野蛮人的体质调整值、武僧的感知调整值）
+  fightingStyleDefense?: boolean, // 战士的防御战斗风格（穿着护甲时AC+1）
+  featACBonus?: number, // 专长提供的AC加值
+  mediumArmorMaster?: boolean, // 中甲大师专长（中甲时最多+3敏捷调整值）
+  draconicResilience?: boolean // 术士龙裔血统：未穿护甲时AC = 13 + 敏捷调整值
 ): number {
   if (!armor) {
-    // 无甲AC = 10 + 敏捷调整值
-    return 10 + dexterityMod;
+    // 术士龙裔血统：未穿护甲时AC = 13 + 敏捷调整值
+    if (draconicResilience) {
+      let ac = 13 + dexterityMod;
+      // 加盾牌（术士可以持盾）
+      if (shield) {
+        ac += 2;
+      }
+      return ac;
+    }
+    
+    // 无甲AC = 10 + 敏捷调整值 + 无甲防御加值（如果有）
+    let ac = 10 + dexterityMod;
+    if (unarmoredDefenseBonus !== undefined) {
+      ac += unarmoredDefenseBonus;
+    }
+    // 加盾牌（野蛮人可以持盾，武僧不能）
+    if (shield) {
+      ac += 2;
+    }
+    return ac;
   }
   
   // 如果不熟练护甲，无法获得AC加值（使用基础AC）
@@ -488,7 +511,9 @@ export function calculateAC(
     if (armor.category === '轻甲') {
       ac = baseValue + dexterityMod;
     } else if (armor.category === '中甲') {
-      ac = baseValue + Math.min(dexterityMod, 2);
+      // 中甲：基础值 + 敏捷调整值（最多+2，如果有中甲大师专长则最多+3）
+      const maxDexBonus = mediumArmorMaster ? 3 : 2;
+      ac = baseValue + Math.min(dexterityMod, maxDexBonus);
     }
   } else {
     // 重甲
@@ -500,68 +525,80 @@ export function calculateAC(
     ac += 2;
   }
   
+  // 战士的防御战斗风格（穿着护甲时AC+1）
+  if (fightingStyleDefense) {
+    ac += 1;
+  }
+  
+  // 专长提供的AC加值
+  if (featACBonus) {
+    ac += featACBonus;
+  }
+  
   return ac;
 }
 
 // 价格数据（D&D 5e标准价格，单位：金币）
-const WEAPON_PRICES: Record<string, number> = {
+const WEAPON_PRICE_ENTRIES: Array<[string, number]> = [
   // 简易近战武器
-  '木棒': 0.1,
-  '匕首': 2,
-  '巨棒': 0.2,
-  '手斧': 5,
-  '标枪': 0.5,
-  '轻锤': 2,
-  '钉头锤': 5,
-  '长杖': 0.2,
-  '短剑': 10,
-  '长矛': 1,
-  '硬头锤': 2,
-  '投石索': 0.1,
-  '长矛（双手）': 1,
-  '战锤': 15,
-  '战镐': 5,
-  '弯刀': 25,
-  '镰刀': 1,
-  '短棒': 0.1,
+  ['木棒', 0.1],
+  ['匕首', 2],
+  ['巨棒', 0.2],
+  ['手斧', 5],
+  ['标枪', 0.5],
+  ['轻锤', 2],
+  ['钉头锤', 5],
+  ['长杖', 0.2],
+  ['短剑', 10],
+  ['长矛', 1],
+  ['硬头锤', 2],
+  ['投石索', 0.1],
+  ['长矛（双手）', 1],
+  ['战锤', 15],
+  ['战镐', 5],
+  ['弯刀', 25],
+  ['镰刀', 1],
+  ['短棒', 0.1],
   // 简易远程武器
-  '轻弩': 25,
-  '飞镖': 0.05,
-  '短弓': 25,
-  '投石索': 0.1,
+  ['轻弩', 25],
+  ['飞镖', 0.05],
+  ['短弓', 25],
+  ['投石索', 0.1],
   // 军用近战武器
-  '战斧': 10,
-  '战锤': 15,
-  '长戟': 20,
-  '长矛': 1,
-  '长剑': 15,
-  '长鞭': 2,
-  '战镐': 5,
-  '弯刀': 25,
-  '短剑': 10,
-  '三叉戟': 5,
-  '战锤': 15,
-  '战斧': 10,
-  '巨斧': 30,
-  '巨剑': 50,
-  '长戟': 20,
-  '长矛': 1,
-  '长柄刀': 20,
-  '长鞭': 2,
-  '战锤': 15,
-  '战镐': 5,
-  '弯刀': 25,
-  '短剑': 10,
-  '三叉戟': 5,
-  '战锤': 15,
-  '战斧': 10,
+  ['战斧', 10],
+  ['战锤', 15],
+  ['长戟', 20],
+  ['长矛', 1],
+  ['长剑', 15],
+  ['长鞭', 2],
+  ['战镐', 5],
+  ['弯刀', 25],
+  ['短剑', 10],
+  ['三叉戟', 5],
+  ['战锤', 15],
+  ['战斧', 10],
+  ['巨斧', 30],
+  ['巨剑', 50],
+  ['长戟', 20],
+  ['长矛', 1],
+  ['长柄刀', 20],
+  ['长鞭', 2],
+  ['战锤', 15],
+  ['战镐', 5],
+  ['弯刀', 25],
+  ['短剑', 10],
+  ['三叉戟', 5],
+  ['战锤', 15],
+  ['战斧', 10],
   // 军用远程武器
-  '吹箭筒': 10,
-  '手弩': 75,
-  '重弩': 50,
-  '长弓': 50,
-  '网': 1,
-};
+  ['吹箭筒', 10],
+  ['手弩', 75],
+  ['重弩', 50],
+  ['长弓', 50],
+  ['网', 1],
+];
+
+const WEAPON_PRICES: Record<string, number> = Object.fromEntries(WEAPON_PRICE_ENTRIES);
 
 const ARMOR_PRICES: Record<string, number> = {
   // 轻甲

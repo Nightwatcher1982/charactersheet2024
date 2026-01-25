@@ -6,6 +6,25 @@
 .pnp.js
 .yarn/install-state.gz
 .npm-cache
+.cursor/
+
+# local notes / work logs (not committed)
+修复*.md
+快速测试*.md
+快速验证*.md
+当前*.md
+今日*.md
+更新说明*.md
+最终*.md
+重构*.md
+测试指南*.md
+用户反馈*.md
+立即测试*.md
+全部任务完成报告.md
+已完成修复*.md
+一环法术.md
+戏法.md
+README_v2.0_重构版.md
 
 # testing
 /coverage

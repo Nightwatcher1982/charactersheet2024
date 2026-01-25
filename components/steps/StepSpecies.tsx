@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useCharacterStore } from '@/lib/character-store';
-import { SPECIES, SKILLS } from '@/lib/dnd-data';
+import { SPECIES, SKILLS, CLASSES, BACKGROUNDS } from '@/lib/dnd-data';
 import { Check } from 'lucide-react';
 import SpeciesTraitSelector from '@/components/SpeciesTraitSelector';
 import FeatSelector from '@/components/FeatSelector';
@@ -15,6 +15,7 @@ export default function StepSpecies() {
   const [showSkillModal, setShowSkillModal] = useState(false);
   const [traitsCompleted, setTraitsCompleted] = useState(false);
   const [pendingSkillChoice, setPendingSkillChoice] = useState<{choiceId: string, options: string[]} | null>(null);
+  const [skillModalCalled, setSkillModalCalled] = useState(false);
 
   useEffect(() => {
     if (currentCharacter?.species) {
@@ -39,9 +40,39 @@ export default function StepSpecies() {
             setShowFeatSelector(true);
           }
         }
+      } else if (speciesData && (speciesData as any).choices) {
+        // 如果有选择项，检查是否有技能选择需要处理
+        const skillChoice = (speciesData as any).choices.find((c: any) => c.id === 'skill');
+        if (skillChoice && !skillModalCalled && !traitsCompleted) {
+          // 检查是否已经选择了技能
+          const currentChoices = currentCharacter.classFeatureChoices?.speciesChoices;
+          if (currentChoices) {
+            try {
+              const parsed = JSON.parse(currentChoices);
+              if (parsed.skill) {
+                // 已经选择了技能，不需要再显示弹窗
+                return;
+              }
+            } catch (e) {
+              // 解析失败，继续
+            }
+          }
+          
+          // 延迟显示技能选择弹窗，让其他选择先完成
+          setTimeout(() => {
+            if (!skillModalCalled) {
+              setSkillModalCalled(true);
+              setPendingSkillChoice({
+                choiceId: 'skill',
+                options: skillChoice.options
+              });
+              setShowSkillModal(true);
+            }
+          }, 100);
+        }
       }
     }
-  }, [currentCharacter?.species, traitsCompleted, currentCharacter, updateCurrentCharacter]);
+  }, [currentCharacter?.species, traitsCompleted, currentCharacter, updateCurrentCharacter, skillModalCalled]);
 
   if (!currentCharacter) return null;
 
@@ -50,32 +81,52 @@ export default function StepSpecies() {
     setShowTraitSelector(true);
     setTraitsCompleted(false);
     setShowFeatSelector(false);
+    setSkillModalCalled(false); // 重置技能弹窗状态
   };
 
   const handleTraitsComplete = (selections: Record<string, string>) => {
     const currentChoices = currentCharacter.classFeatureChoices || {};
     const speciesData = SPECIES.find(s => s.name === currentCharacter.species);
+    const existingSelections = (() => {
+      const raw = currentCharacter.classFeatureChoices?.speciesChoices;
+      if (!raw) return {};
+      try {
+        return JSON.parse(raw as string) as Record<string, string>;
+      } catch {
+        return {};
+      }
+    })();
+    const mergedSelections: Record<string, string> = { ...existingSelections, ...selections };
     
     // 检查是否有技能选择项需要处理
     const skillChoice = speciesData?.choices?.find(c => c.id === 'skill');
-    if (skillChoice && selections.skill) {
-      // 先保存其他选择（不包括技能）
-      const otherSelections = { ...selections };
-      delete otherSelections.skill;
-      
+    if (skillChoice) {
+      // 先把当前已选（例如血统 lineage）合并保存，避免覆盖掉已选技能导致重复弹窗
       updateCurrentCharacter({
         classFeatureChoices: {
           ...currentChoices,
-          speciesChoices: JSON.stringify(otherSelections)
+          speciesChoices: JSON.stringify(mergedSelections)
         }
       });
-      
-      // 显示技能选择弹窗，让用户从可用技能中选择
-      setPendingSkillChoice({
-        choiceId: 'skill',
-        options: skillChoice.options
-      });
-      setShowSkillModal(true);
+
+      // 如果已经有技能（例如之前已选过敏锐感官），则直接完成，不再重复弹窗
+      if (mergedSelections.skill) {
+        setTraitsCompleted(true);
+        if (currentCharacter.species === '人类') {
+          setShowFeatSelector(true);
+        }
+        return;
+      }
+
+      // 否则弹出技能选择弹窗
+      if (!skillModalCalled) {
+        setSkillModalCalled(true);
+        setPendingSkillChoice({
+          choiceId: 'skill',
+          options: skillChoice.options
+        });
+        setShowSkillModal(true);
+      }
       return; // 等待技能选择完成
     }
     
@@ -83,7 +134,7 @@ export default function StepSpecies() {
     updateCurrentCharacter({
       classFeatureChoices: {
         ...currentChoices,
-        speciesChoices: JSON.stringify(selections)
+        speciesChoices: JSON.stringify(mergedSelections)
       }
     });
     setTraitsCompleted(true);
@@ -105,21 +156,44 @@ export default function StepSpecies() {
     if (oldSpeciesChoices.skill) {
       const oldSkillMatch = oldSpeciesChoices.skill.match(/^([^（]+)/);
       if (oldSkillMatch) {
-        skillsWithoutOldSpecies = skillsWithoutOldSpecies.filter(s => s !== oldSkillMatch[1].trim());
+        const oldSkillName = oldSkillMatch[1].trim();
+        skillsWithoutOldSpecies = skillsWithoutOldSpecies.filter(s => s !== oldSkillName);
       }
     }
     
     // 添加新选择的物种技能
     const newSkills = [...skillsWithoutOldSpecies, ...skills];
     
+    // 更新选择，添加技能选择（使用原始格式）
+    const speciesData = SPECIES.find(s => s.name === currentCharacter.species);
+    const skillChoice = speciesData?.choices?.find(c => c.id === 'skill');
+    let skillSelectionText = '';
+    if (skillChoice && skills.length > 0) {
+      // 找到匹配的选项文本
+      const selectedSkill = skills[0];
+      const matchingOption = skillChoice.options.find(opt => {
+        const match = opt.match(/^([^（]+)/);
+        return match && match[1].trim() === selectedSkill;
+      });
+      skillSelectionText = matchingOption || `${selectedSkill}（已选择）`;
+    }
+    
+    // 确保保存完整的物种选择，包括技能
+    const updatedSelections = {
+      ...selections,
+      skill: skillSelectionText
+    };
+    
     updateCurrentCharacter({
       classFeatureChoices: {
         ...currentChoices,
-        speciesChoices: JSON.stringify(selections)
+        speciesChoices: JSON.stringify(updatedSelections)
       },
       skills: newSkills
     });
     setShowSkillModal(false);
+    setPendingSkillChoice(null);
+    setSkillModalCalled(false);
     setTraitsCompleted(true);
     
     // 如果是人类，显示专长选择
@@ -187,6 +261,7 @@ export default function StepSpecies() {
           onClose={() => {
             setShowSkillModal(false);
             setPendingSkillChoice(null);
+            setSkillModalCalled(false);
           }}
           title={`选择${currentCharacter.species}技能`}
           description={speciesData.name === '精灵' 
@@ -294,18 +369,53 @@ export default function StepSpecies() {
             const hasChoices = (speciesData as any).choices && (speciesData as any).choices.length > 0;
             
             if (hasChoices) {
-              return (
-                <SpeciesTraitSelector
-                  speciesName={speciesData.name}
-                  choices={(speciesData as any).choices}
-                  onComplete={handleTraitsComplete}
-                  initialSelections={
-                    currentCharacter.classFeatureChoices?.speciesChoices 
-                      ? JSON.parse(currentCharacter.classFeatureChoices.speciesChoices)
-                      : {}
-                  }
-                />
-              );
+              // 过滤掉技能选择，技能选择应该通过弹窗处理
+              const nonSkillChoices = (speciesData as any).choices.filter((c: any) => c.id !== 'skill');
+              const skillChoice = (speciesData as any).choices.find((c: any) => c.id === 'skill');
+              
+              // 如果有非技能选择，显示选择器
+              if (nonSkillChoices.length > 0) {
+                return (
+                  <SpeciesTraitSelector
+                    speciesName={speciesData.name}
+                    choices={nonSkillChoices}
+                    onComplete={handleTraitsComplete}
+                    initialSelections={
+                      currentCharacter.classFeatureChoices?.speciesChoices 
+                        ? (() => {
+                            try {
+                              const parsed = JSON.parse(currentCharacter.classFeatureChoices.speciesChoices);
+                              // 移除技能选择
+                              const { skill, ...rest } = parsed;
+                              return rest;
+                            } catch {
+                              return {};
+                            }
+                          })()
+                        : {}
+                    }
+                  />
+                );
+              } else if (skillChoice) {
+                // 只有技能选择，直接触发弹窗
+                if (!skillModalCalled && !showSkillModal) {
+                  setTimeout(() => {
+                    setSkillModalCalled(true);
+                    setPendingSkillChoice({
+                      choiceId: 'skill',
+                      options: skillChoice.options
+                    });
+                    setShowSkillModal(true);
+                  }, 100);
+                }
+                return (
+                  <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                    <p className="text-sm text-blue-800">
+                      正在打开技能选择窗口...
+                    </p>
+                  </div>
+                );
+              }
             } else {
               // 没有特性选择的物种 - 显示完成状态
               return (

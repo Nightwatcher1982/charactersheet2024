@@ -18,7 +18,10 @@ export default function StepOrigin() {
   // 检查每个子步骤是否完成
   const isBackgroundComplete = Boolean(
     currentCharacter.background && 
-    currentCharacter.backgroundEquipmentChoice
+    currentCharacter.backgroundEquipmentChoice &&
+    currentCharacter.backgroundAbilityBonuses &&
+    Object.keys(currentCharacter.backgroundAbilityBonuses).length > 0 &&
+    Object.values(currentCharacter.backgroundAbilityBonuses).reduce((a: number, b: number) => a + b, 0) === 3
   );
   const isSpeciesComplete = Boolean(currentCharacter.species);
   const isLanguagesComplete = Boolean(
@@ -107,7 +110,15 @@ export default function StepOrigin() {
 
       {/* 当前子步骤内容 */}
       <div className="bg-gray-50 rounded-xl p-6 border-2 border-gray-200">
-        {currentSubStep === 'background' && <StepOriginBackground />}
+        {currentSubStep === 'background' && (
+          <StepOriginBackground 
+            onNextSubStep={() => {
+              if (isBackgroundComplete) {
+                setCurrentSubStep('species');
+              }
+            }}
+          />
+        )}
         {currentSubStep === 'species' && <StepSpecies />}
         {currentSubStep === 'languages' && (
           <div className="space-y-4">
