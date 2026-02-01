@@ -13,6 +13,10 @@ const nextConfig = {
   eslint: { ignoreDuringBuilds: true },
   trailingSlash: true,
   ...(normalizedBasePath ? { basePath: normalizedBasePath } : {}),
+  images: {
+    // 启用 WebP/AVIF 等格式，减小体积、加快加载
+    formats: ['image/avif', 'image/webp'],
+  },
 };
 
 module.exports = nextConfig;

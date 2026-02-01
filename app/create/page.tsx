@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useCharacterStore } from '@/lib/character-store';
-import { getAssetPath } from '@/lib/asset-path';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 // 步骤组件 - 按照 DND 2024 官方流程
@@ -202,12 +202,26 @@ export default function CreateCharacterPage() {
 
   return (
     <div className="min-h-screen relative">
-      {/* 全屏固定背景层 - 步骤0 用桌案图，其余用原背景 */}
-      <div
-        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: isWelcomeStep ? `url(${getAssetPath('/pic/create-welcome-bg.png')})` : `url(${getAssetPath('/pic/create-page-bg.png')})` }}
-        aria-hidden
-      />
+      {/* 全屏固定背景层 - 使用 next/image 自动优化，按需加载 */}
+      <div className="fixed inset-0 z-0" aria-hidden>
+        {isWelcomeStep ? (
+          <Image
+            src="/pic/create-welcome-bg.png"
+            alt=""
+            fill
+            className="object-cover object-center"
+            sizes="100vw"
+          />
+        ) : (
+          <Image
+            src="/pic/create-page-bg.png"
+            alt=""
+            fill
+            className="object-cover object-center"
+            sizes="100vw"
+          />
+        )}
+      </div>
       <div className={`fixed inset-0 z-0 pointer-events-none ${isWelcomeStep ? 'bg-black/15' : 'bg-black/20'}`} aria-hidden />
 
       {/* 顶部导航 - 步骤0 不显示，整页露背景；其余步骤显示 */}

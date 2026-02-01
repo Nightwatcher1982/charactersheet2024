@@ -577,10 +577,12 @@ export default function StepClassSimple() {
             >
               {/* 职业图标 */}
               <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100">
-                <img 
-                  src={classIconPath} 
+                <img
+                  src={classIconPath}
                   alt={classOption.name}
                   className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
                   onError={(e) => {
                     // 图片加载失败时显示职业首字
                     const target = e.target as HTMLImageElement;

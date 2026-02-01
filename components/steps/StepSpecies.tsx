@@ -503,10 +503,12 @@ export default function StepSpecies({ onComplete }: StepSpeciesProps = {}) {
                   <div className="w-full aspect-[3/4] rounded-lg overflow-hidden bg-gray-100 relative">
                     {iconPath ? (
                       <>
-                        <img 
-                          src={iconPath} 
+                        <img
+                          src={iconPath}
                           alt={species.name}
                           className="w-full h-full object-cover"
+                          loading="lazy"
+                          decoding="async"
                           onError={(e) => {
                             // 图片加载失败时显示备用内容
                             const target = e.target as HTMLImageElement;
