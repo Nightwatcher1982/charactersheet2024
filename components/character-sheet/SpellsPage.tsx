@@ -194,6 +194,9 @@ export default function SpellsPage({ character, onUpdate }: SpellsPageProps) {
     );
   }
 
+  // 此处必为施法职业，供 TypeScript 收窄类型
+  if (!spellInfo) return null;
+
   // 计算施法属性
   const abilities = character.abilities || {
     strength: 10,
