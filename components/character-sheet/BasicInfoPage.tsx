@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Character, getAbilityModifier, getProficiencyBonus, SKILLS, CLASSES } from '@/lib/dnd-data';
 import { computeArmorClass } from '@/lib/ac-calculator';
-import { Heart, Shield, Dices, Edit3, Save } from 'lucide-react';
+import { Heart, Shield, Dices, Edit3, Minus, Plus, X } from 'lucide-react';
 import { calculateSpeciesHPBonus, calculateClassFeatureHPBonus } from '@/lib/species-traits-calculator';
 
 interface BasicInfoPageProps {
@@ -12,8 +13,9 @@ interface BasicInfoPageProps {
 }
 
 export default function BasicInfoPage({ character, onUpdate }: BasicInfoPageProps) {
-  const [currentHP, setCurrentHP] = useState(character.hitPoints || 0);
-  const [isEditingHP, setIsEditingHP] = useState(false);
+  const [currentHP, setCurrentHP] = useState(character.hitPoints ?? 0);
+  const [showHPModal, setShowHPModal] = useState(false);
+  const [pendingHP, setPendingHP] = useState(0);
 
   const abilities = character.abilities || {
     strength: 10,
@@ -71,10 +73,35 @@ export default function BasicInfoPage({ character, onUpdate }: BasicInfoPageProp
     onUpdate({ hitPoints: maxHP });
   }
 
-  const handleSaveHP = () => {
-    onUpdate({ hitPoints: currentHP });
-    setIsEditingHP(false);
+  const openHPModal = () => {
+    setPendingHP(Math.max(0, Math.min(maxHP, currentHP)));
+    setShowHPModal(true);
   };
+
+  const closeHPModal = () => {
+    setShowHPModal(false);
+  };
+
+  const applyHPChange = (delta: number) => {
+    setPendingHP((prev) => Math.max(0, Math.min(maxHP, prev + delta)));
+  };
+
+  const confirmHP = () => {
+    const value = Math.max(0, Math.min(maxHP, pendingHP));
+    setCurrentHP(value);
+    onUpdate({ hitPoints: value });
+    closeHPModal();
+  };
+
+  // 弹窗打开时禁止背景滚动
+  useEffect(() => {
+    if (showHPModal) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = 'unset';
+      };
+    }
+  }, [showHPModal]);
 
   // 计算先攻和被动感知
   const dexterityMod = getAbilityModifier(finalAbilities.dexterity);
@@ -110,57 +137,109 @@ export default function BasicInfoPage({ character, onUpdate }: BasicInfoPageProp
         
         {/* 核心战斗数据 - 大字号突出显示 */}
         <div className="grid grid-cols-3 gap-6 mb-6">
-          {/* 生命值 - 放大 */}
+          {/* 生命值 - 点击编辑打开 +/- 弹窗 */}
           <div className="flex flex-col bg-red-50 rounded-lg p-4 border-2 border-red-300">
             <div className="flex items-center justify-between mb-3">
               <div className="flex flex-col items-center gap-1 flex-1">
                 <Heart className="w-7 h-7 text-red-600" />
                 <span className="text-sm font-bold text-gray-700 whitespace-nowrap">生命值</span>
               </div>
-              {!isEditingHP ? (
-                <button
-                  onClick={() => setIsEditingHP(true)}
-                  className="p-1 hover:bg-red-200 rounded transition-colors self-start"
-                >
-                  <Edit3 className="w-4 h-4 text-red-600" />
-                </button>
-              ) : (
-                <button
-                  onClick={handleSaveHP}
-                  className="p-1 hover:bg-green-200 rounded transition-colors self-start"
-                >
-                  <Save className="w-4 h-4 text-green-600" />
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={openHPModal}
+                className="p-1 hover:bg-red-200 rounded transition-colors self-start"
+                aria-label="调整生命值"
+              >
+                <Edit3 className="w-4 h-4 text-red-600" />
+              </button>
             </div>
-            
-            {isEditingHP ? (
-              <div className="flex items-center gap-2 justify-center">
-                <input
-                  type="number"
-                  value={currentHP}
-                  onChange={(e) => setCurrentHP(Number(e.target.value))}
-                  min={0}
-                  max={maxHP}
-                  className="w-20 px-2 py-1 border-2 border-red-400 rounded text-center font-bold text-2xl focus:border-red-600 focus:ring-2 focus:ring-red-200"
+            <div>
+              <div className="text-center text-3xl font-bold text-red-600 mb-2">
+                {currentHP} <span className="text-xl text-gray-600">/ {maxHP}</span>
+              </div>
+              <div className="w-full bg-red-200 rounded-full h-3">
+                <div
+                  className="bg-red-600 h-3 rounded-full transition-all"
+                  style={{ width: `${Math.max(0, Math.min(100, (currentHP / maxHP) * 100))}%` }}
                 />
-                <span className="text-2xl font-bold text-gray-600">/</span>
-                <span className="text-2xl font-bold text-leather-dark">{maxHP}</span>
               </div>
-            ) : (
-              <div>
-                <div className="text-center text-3xl font-bold text-red-600 mb-2">
-                  {currentHP} <span className="text-xl text-gray-600">/ {maxHP}</span>
-                </div>
-                <div className="w-full bg-red-200 rounded-full h-3">
-                  <div
-                    className="bg-red-600 h-3 rounded-full transition-all"
-                    style={{ width: `${Math.max(0, Math.min(100, (currentHP / maxHP) * 100))}%` }}
-                  />
-                </div>
-              </div>
-            )}
+            </div>
           </div>
+
+          {/* 生命值调整弹窗 */}
+          {showHPModal && typeof document !== 'undefined' && createPortal(
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-6" onClick={(e) => e.target === e.currentTarget && closeHPModal()}>
+              <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full flex flex-col border-2 border-red-200" onClick={(e) => e.stopPropagation()}>
+                <div className="bg-red-600 text-white p-4 flex items-center justify-between rounded-t-xl flex-shrink-0">
+                  <h3 className="font-bold text-lg font-cinzel">调整生命值</h3>
+                  <button type="button" onClick={closeHPModal} className="p-1 hover:bg-red-500 rounded transition-colors" aria-label="关闭">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="p-6 flex flex-col items-center gap-6 flex-shrink-0">
+                  <div className="text-4xl font-bold text-red-600">
+                    <span id="hp-modal-value">{pendingHP}</span>
+                    <span className="text-2xl text-gray-500 font-normal"> / {maxHP}</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <button
+                      type="button"
+                      onClick={() => applyHPChange(-5)}
+                      disabled={pendingHP <= 0}
+                      className="w-12 h-12 rounded-full bg-red-100 hover:bg-red-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center font-bold text-red-700 text-lg transition-colors"
+                      aria-label="减 5"
+                    >
+                      -5
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyHPChange(-1)}
+                      disabled={pendingHP <= 0}
+                      className="w-12 h-12 rounded-full bg-red-200 hover:bg-red-300 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center font-bold text-red-700 transition-colors"
+                      aria-label="减 1"
+                    >
+                      <Minus className="w-5 h-5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyHPChange(1)}
+                      disabled={pendingHP >= maxHP}
+                      className="w-12 h-12 rounded-full bg-green-200 hover:bg-green-300 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center font-bold text-green-700 transition-colors"
+                      aria-label="加 1"
+                    >
+                      <Plus className="w-5 h-5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyHPChange(5)}
+                      disabled={pendingHP >= maxHP}
+                      className="w-12 h-12 rounded-full bg-green-100 hover:bg-green-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center font-bold text-green-700 text-lg transition-colors"
+                      aria-label="加 5"
+                    >
+                      +5
+                    </button>
+                  </div>
+                </div>
+                <div className="p-4 border-t-2 border-gray-200 flex gap-3 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={closeHPModal}
+                    className="flex-1 py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-semibold transition-colors border border-gray-300"
+                  >
+                    取消
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmHP}
+                    className="flex-1 py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors"
+                  >
+                    确认
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )}
 
           {/* 先攻 - 放大 */}
           <div className="flex flex-col bg-yellow-50 rounded-lg p-4 border-2 border-yellow-300 items-center justify-center">

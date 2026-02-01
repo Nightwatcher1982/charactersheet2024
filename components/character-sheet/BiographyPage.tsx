@@ -73,10 +73,12 @@ export default function BiographyPage({ character, onUpdate }: BiographyPageProp
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
             <Upload className="w-16 h-16 text-gray-400 mx-auto mb-3" />
             <p className="text-gray-600 mb-4">上传角色立绘图片</p>
-            <label className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg cursor-pointer transition-colors font-bold">
+            <label htmlFor="biography-page-avatar" className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg cursor-pointer transition-colors font-bold">
               <Upload className="w-4 h-4" />
               选择图片
               <input
+                id="biography-page-avatar"
+                name="biographyAvatar"
                 type="file"
                 accept="image/*"
                 onChange={handleAvatarUpload}
@@ -116,6 +118,8 @@ export default function BiographyPage({ character, onUpdate }: BiographyPageProp
 
         {isEditingBio ? (
           <textarea
+            id="biography-page-backstory"
+            name="biographyBackstory"
             value={bioText}
             onChange={(e) => setBioText(e.target.value)}
             className="w-full h-64 p-4 border-2 border-purple-300 rounded-lg focus:border-purple-600 focus:ring-2 focus:ring-purple-200 transition-all resize-none"
@@ -150,6 +154,8 @@ export default function BiographyPage({ character, onUpdate }: BiographyPageProp
         {/* 添加新日志 */}
         <div className="mb-6">
           <textarea
+            id="biography-page-journal-entry"
+            name="journalEntry"
             value={newEntry}
             onChange={(e) => setNewEntry(e.target.value)}
             className="w-full h-32 p-4 border-2 border-blue-300 rounded-lg focus:border-blue-600 focus:ring-2 focus:ring-blue-200 transition-all resize-none"

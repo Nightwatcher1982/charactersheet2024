@@ -64,6 +64,9 @@ export default function EquipmentSelector({
 
       {/* 选项A：装备包 */}
       <button
+        type="button"
+        id="background-equipment-option-a"
+        name="backgroundEquipment"
         onClick={() => handleSelect('A')}
         className={`w-full p-5 rounded-lg border-2 transition-all text-left bg-white ${
           selectedOption === 'A'
@@ -113,6 +116,9 @@ export default function EquipmentSelector({
 
       {/* 选项B：金币 */}
       <button
+        type="button"
+        id="background-equipment-option-b"
+        name="backgroundEquipment"
         onClick={() => handleSelect('B')}
         className={`w-full p-5 rounded-lg border-2 transition-all text-left bg-white ${
           selectedOption === 'B'
@@ -172,6 +178,8 @@ export default function EquipmentSelector({
       {/* 确认按钮 - 只在非自动确认且设置显示时才显示 */}
       {!autoConfirm && showConfirmButton && selectedOption && (
         <button
+          type="button"
+          id="background-equipment-confirm"
           onClick={handleConfirm}
           className="w-full py-2.5 px-6 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 shadow-md"
         >

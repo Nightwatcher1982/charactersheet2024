@@ -90,6 +90,8 @@ export default function FeatSelector({
         <div className="relative">
           <Filter className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <select
+            id="feat-filter-category"
+            name="featFilterCategory"
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
             className="pl-8 pr-3 py-1.5 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none text-sm appearance-none bg-white cursor-pointer min-w-[120px]"

@@ -161,8 +161,10 @@ export default function StepOriginBackground({ onNextSubStep }: StepOriginBackgr
                 </h3>
               </div>
               <button
+                type="button"
                 onClick={() => setShowAbilityBonus(false)}
                 className="hover:bg-leather-base rounded-full p-1 transition-colors"
+                aria-label="关闭"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -188,6 +190,7 @@ export default function StepOriginBackground({ onNextSubStep }: StepOriginBackgr
             {/* 底部按钮 */}
             <div className="p-4 border-t-2 border-gray-200 bg-white flex gap-3 flex-shrink-0">
               <button
+                type="button"
                 onClick={() => setShowAbilityBonus(false)}
                 className="flex-1 py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-semibold transition-colors border border-gray-300"
               >
@@ -246,8 +249,10 @@ export default function StepOriginBackground({ onNextSubStep }: StepOriginBackgr
                 </h3>
               </div>
               <button
+                type="button"
                 onClick={() => setShowEquipmentSelector(false)}
                 className="hover:bg-leather-base rounded-full p-1 transition-colors"
+                aria-label="关闭"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -273,6 +278,7 @@ export default function StepOriginBackground({ onNextSubStep }: StepOriginBackgr
             {/* 底部按钮 */}
             <div className="p-4 border-t-2 border-gray-200 bg-white flex gap-3 flex-shrink-0">
               <button
+                type="button"
                 onClick={() => {
                   setShowEquipmentSelector(false);
                   setTempEquipmentChoice(null);
@@ -282,6 +288,7 @@ export default function StepOriginBackground({ onNextSubStep }: StepOriginBackgr
                 取消
               </button>
               <button
+                type="button"
                 onClick={handleEquipmentComplete}
                 disabled={!tempEquipmentChoice}
                 className={`flex-1 py-2.5 px-4 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 ${
@@ -324,6 +331,7 @@ export default function StepOriginBackground({ onNextSubStep }: StepOriginBackgr
           
           return (
             <button
+              type="button"
               key={background.id}
               onClick={() => handleSelectBackground(background.name)}
               className={`w-fit p-0 rounded-xl transition-all flex flex-col items-center gap-2 relative ${

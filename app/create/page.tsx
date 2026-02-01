@@ -286,6 +286,7 @@ export default function CreateCharacterPage() {
             {/* 导航按钮 - 羊皮纸风格 */}
             <div className="flex justify-between mt-10 pt-6 border-t border-gold-light/40">
               <button
+                type="button"
                 onClick={handlePrev}
                 disabled={currentStep === 0}
                 className={`group flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all duration-300 font-medieval ${
@@ -300,6 +301,7 @@ export default function CreateCharacterPage() {
 
               {currentStep < STEPS.length - 1 ? (
                 <button
+                  type="button"
                   onClick={handleNext}
                   disabled={isNextDisabled}
                   className={`group flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all duration-300 font-medieval ${
@@ -313,6 +315,7 @@ export default function CreateCharacterPage() {
                 </button>
               ) : (
                 <button
+                  type="button"
                   onClick={handleFinish}
                   className="group flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 border-2 border-green-700 rounded-xl font-bold text-white text-sm shadow-lg hover:shadow-xl transition-all duration-300 font-medieval hover:scale-105"
                 >

@@ -333,6 +333,8 @@ export default function EquipmentPage({ character, onUpdate }: EquipmentPageProp
               {/* 添加新物品 */}
               <div className="flex gap-2 mb-4">
                 <input
+                  id="equipment-new-item"
+                  name="newItem"
                   type="text"
                   value={newItem}
                   onChange={(e) => setNewItem(e.target.value)}

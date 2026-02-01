@@ -144,6 +144,8 @@ export default function BackgroundAbilityBonus({
         <label className="text-sm font-semibold text-leather-dark mb-2 block font-cinzel">选择分配方式</label>
         <div className="grid grid-cols-2 gap-3">
           <button
+            type="button"
+            id="ability-bonus-mode-2-1"
             onClick={() => handleModeChange('2-1')}
             className={`p-3 rounded-lg border-2 transition-all ${
               distributionMode === '2-1'
@@ -157,6 +159,8 @@ export default function BackgroundAbilityBonus({
             </div>
           </button>
           <button
+            type="button"
+            id="ability-bonus-mode-1-1-1"
             onClick={() => handleModeChange('1-1-1')}
             className={`p-3 rounded-lg border-2 transition-all ${
               distributionMode === '1-1-1'
@@ -212,6 +216,7 @@ export default function BackgroundAbilityBonus({
 
               <div className="flex items-center justify-center gap-2">
                 <button
+                  type="button"
                   onClick={() => handleDecrement(ability)}
                   disabled={bonus === 0}
                   className={`w-7 h-7 rounded-full flex items-center justify-center transition-all text-sm ${
@@ -219,6 +224,7 @@ export default function BackgroundAbilityBonus({
                       ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                       : 'bg-purple-500 text-white hover:bg-purple-600'
                   }`}
+                  aria-label={`${ability} 减一`}
                 >
                   -
                 </button>
@@ -228,6 +234,7 @@ export default function BackgroundAbilityBonus({
                   </span>
                 </div>
                 <button
+                  type="button"
                   onClick={() => handleIncrement(ability)}
                   disabled={!canIncrement}
                   className={`w-7 h-7 rounded-full flex items-center justify-center transition-all text-sm ${
@@ -235,6 +242,7 @@ export default function BackgroundAbilityBonus({
                       ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                       : 'bg-purple-500 text-white hover:bg-purple-600'
                   }`}
+                  aria-label={`${ability} 加一`}
                 >
                   +
                 </button>
@@ -248,6 +256,8 @@ export default function BackgroundAbilityBonus({
       {isComplete && (
         <div className="pt-2">
           <button
+            type="button"
+            id="ability-bonus-confirm"
             onClick={handleConfirm}
             className="w-full py-2.5 px-6 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 shadow-md"
           >

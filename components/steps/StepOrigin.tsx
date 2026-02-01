@@ -53,7 +53,7 @@ export default function StepOrigin() {
     { id: 'languages' as OriginSubStep, name: '语言', completed: isLanguagesComplete }
   ];
 
-  // 监听主流程「下一步」：在起源步骤时由 create 页派发
+  // 监听主流程「下一步」：在起源步骤时由 create 页派发（依赖含 currentCharacter?.background，避免选中背景后闭包陈旧导致无反应）
   useEffect(() => {
     const handleOriginNext = () => {
       if (currentSubStep === 'species') {
@@ -77,7 +77,7 @@ export default function StepOrigin() {
     };
     window.addEventListener('triggerOriginNext', handleOriginNext);
     return () => window.removeEventListener('triggerOriginNext', handleOriginNext);
-  }, [currentSubStep, currentCharacter?.species, isBackgroundComplete, isLanguagesComplete, nextStep]);
+  }, [currentSubStep, currentCharacter?.species, currentCharacter?.background, isBackgroundComplete, isLanguagesComplete, nextStep]);
 
   // 监听主流程「上一步」：在起源步骤时回到上一子步骤，物种子步骤才退回步骤1
   useEffect(() => {
