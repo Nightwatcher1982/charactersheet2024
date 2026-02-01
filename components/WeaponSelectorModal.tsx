@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Check, Sword } from 'lucide-react';
 import { WEAPONS, Weapon } from '@/lib/weapons-data';
 import { CLASSES } from '@/lib/dnd-data';
@@ -30,8 +31,20 @@ export default function WeaponSelectorModal({
   useEffect(() => {
     if (isOpen) {
       setSelectedWeapons([]);
+      // 禁用body滚动
+      document.body.style.overflow = 'hidden';
+    } else {
+      // 恢复body滚动
+      document.body.style.overflow = 'unset';
     }
   }, [isOpen]);
+
+  // 清理函数 - 只在组件卸载时执行
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
 
   if (!isOpen) return null;
 
@@ -112,39 +125,44 @@ export default function WeaponSelectorModal({
     return acc;
   }, {} as Record<string, Weapon[]>);
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">
-              选择{weaponType}
-            </h2>
-            <p className="text-sm text-gray-600 mt-1">
-              请选择 {requiredCount} 把{weaponType}。已选择 {selectedWeapons.length} / {requiredCount}
-            </p>
+  const modalContent = (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-6">
+      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[85vh] flex flex-col">
+        {/* 头部 */}
+        <div className="bg-leather-dark text-white p-4 flex items-center justify-between border-b-2 border-gold-dark flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <Sword className="w-6 h-6 text-gold-light" />
+            <div>
+              <h2 className="text-xl font-bold font-cinzel">
+                选择{weaponType}
+              </h2>
+              <p className="text-sm text-gray-200 mt-0.5">
+                请选择 {requiredCount} 把武器 · 已选择 {selectedWeapons.length} / {requiredCount}
+              </p>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="hover:bg-leather-base rounded-full p-1 transition-colors"
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        <div className="p-6">
+        {/* 内容区 - 可滚动 */}
+        <div className="p-6 overflow-y-auto flex-1 min-h-0">
           {availableWeapons.length === 0 ? (
-            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg">
-              <p className="text-yellow-800">
-                警告：你的职业不熟练{weaponType}，无法选择此类武器。
+            <div className="bg-yellow-50 border-2 border-yellow-300 p-6 rounded-lg">
+              <p className="text-yellow-800 font-semibold">
+                ⚠️ 警告：你的职业不熟练{weaponType}，无法选择此类武器。
               </p>
             </div>
           ) : (
             <div className="space-y-4">
               {Object.entries(weaponsByCategory).map(([category, weapons]) => (
-                <div key={category} className="border-2 border-gray-200 rounded-lg p-4">
-                  <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                    <Sword className="w-5 h-5 text-gray-600" />
+                <div key={category} className="bg-white border-2 border-gray-200 rounded-lg p-4 shadow-sm">
+                  <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2 text-base font-cinzel">
+                    <Sword className="w-5 h-5 text-leather-dark" />
                     {category}
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -158,11 +176,11 @@ export default function WeaponSelectorModal({
                           onClick={() => toggleWeapon(weapon.id)}
                           disabled={!canSelect && !isSelected}
                           className={`
-                            p-3 rounded-lg border-2 text-left transition-all
+                            p-3 rounded-lg border-2 text-left transition-all bg-white
                             ${isSelected
-                              ? 'border-blue-500 bg-blue-50'
+                              ? 'border-purple-600 bg-purple-50'
                               : canSelect
-                              ? 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                              ? 'border-gray-200 hover:border-purple-300 hover:bg-purple-50'
                               : 'border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed'
                             }
                           `}
@@ -177,7 +195,7 @@ export default function WeaponSelectorModal({
                               </div>
                             </div>
                             {isSelected && (
-                              <Check className="w-5 h-5 text-blue-600 flex-shrink-0 ml-2" />
+                              <Check className="w-5 h-5 text-purple-600 flex-shrink-0 ml-2" />
                             )}
                           </div>
                         </button>
@@ -190,8 +208,9 @@ export default function WeaponSelectorModal({
           )}
         </div>
 
-        <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-6 flex items-center justify-between">
-          <div className="text-sm text-gray-600">
+        {/* 底部按钮 - 固定显示 */}
+        <div className="bg-white border-t-2 border-gray-200 p-4 flex items-center justify-between flex-shrink-0">
+          <div className="text-sm font-semibold">
             {remaining > 0 ? (
               <span className="text-orange-600">还需选择 {remaining} 把武器</span>
             ) : (
@@ -201,20 +220,18 @@ export default function WeaponSelectorModal({
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+              className="px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors font-semibold"
             >
               取消
             </button>
             <button
               onClick={handleConfirm}
               disabled={!isComplete}
-              className={`
-                px-6 py-2 rounded-lg font-semibold transition-colors
-                ${isComplete
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+              className={`px-4 py-2 rounded transition-colors ${
+                isComplete
+                  ? 'bg-purple-600 text-white hover:bg-purple-700'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }
-              `}
+              }`}
             >
               确认选择
             </button>
@@ -223,4 +240,8 @@ export default function WeaponSelectorModal({
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined'
+    ? createPortal(modalContent, document.body)
+    : null;
 }

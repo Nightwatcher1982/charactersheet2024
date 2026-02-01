@@ -226,7 +226,7 @@ export const CLASS_FEATURES: ClassFeaturesData[] = [
     level1Features: [
       {
         id: 'expertise',
-        name: '专长',
+        name: '专精',
         nameEn: 'Expertise',
         level: 1,
         description: '选择两项你熟练的技能或工具。你对这些技能或工具的熟练加值翻倍。',

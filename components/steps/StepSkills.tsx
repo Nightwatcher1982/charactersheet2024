@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useCharacterStore } from '@/lib/character-store';
-import { SKILLS, CLASSES, BACKGROUNDS, SPECIES } from '@/lib/dnd-data';
-import { Check, AlertCircle, Sparkles } from 'lucide-react';
+import { SKILLS, CLASSES, BACKGROUNDS, SPECIES, getAbilityModifier, getProficiencyBonus } from '@/lib/dnd-data';
+import { AlertCircle, Sparkles } from 'lucide-react';
 import ClassSkillSelector from '@/components/ClassSkillSelector';
 import ClassFeatureSelector from '@/components/ClassFeatureSelector';
 
@@ -111,165 +111,146 @@ export default function StepSkills() {
   // 早期返回检查
   if (!currentCharacter) return null;
 
-  // 按属性分组所有技能
-  const skillsByAbility = SKILLS.reduce((acc, skill) => {
-    if (!acc[skill.ability]) {
-      acc[skill.ability] = [];
-    }
-    acc[skill.ability].push(skill);
-    return acc;
-  }, {} as Record<string, typeof SKILLS>);
-
-  const abilityNames: Record<string, string> = {
-    strength: '力量',
-    dexterity: '敏捷',
-    constitution: '体质',
-    intelligence: '智力',
-    wisdom: '感知',
-    charisma: '魅力',
+  // 与角色卡一致：最终属性（含背景加值）、熟练加值，用于显示技能 + 值
+  const abilities = currentCharacter.abilities || {
+    strength: 10,
+    dexterity: 10,
+    constitution: 10,
+    intelligence: 10,
+    wisdom: 10,
+    charisma: 10,
   };
+  const finalAbilities = { ...abilities };
+  if (currentCharacter.backgroundAbilityBonuses) {
+    const abilityMap: Record<string, keyof typeof abilities> = {
+      '力量': 'strength',
+      '敏捷': 'dexterity',
+      '体质': 'constitution',
+      '智力': 'intelligence',
+      '感知': 'wisdom',
+      '魅力': 'charisma',
+    };
+    Object.entries(currentCharacter.backgroundAbilityBonuses).forEach(([abilityName, bonus]) => {
+      const key = abilityMap[abilityName];
+      if (key) finalAbilities[key] += bonus;
+    });
+  }
+  const profBonus = getProficiencyBonus(currentCharacter.level || 1);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
         <h2 className="section-title">技能总览</h2>
-        <p className="text-gray-600 mb-6">
-          这是您角色的所有技能熟练项总结，包括从职业、背景和物种获得的技能。
-          技能选择已在之前的步骤中完成。
+        <p className="text-gray-600 text-sm mb-3">
+          职业、背景与物种技能总结；选择已在前面步骤完成。
         </p>
       </div>
 
-      {/* 技能总结 */}
-      <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-lg p-6 border-2 border-blue-200">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* 技能总结 - 紧凑布局 */}
+      <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-lg p-4 border-2 border-blue-200">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <h3 className="font-bold text-lg text-blue-900 mb-3">职业技能</h3>
-            {classData && (
-              <>
-                <div className="text-sm text-gray-700 mb-2">
-                  来自：<strong>{currentCharacter.class}</strong>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {finalClassSkills.map((skill, index) => (
-                    <span
-                      key={`${skill}-${index}`}
-                      className="px-3 py-1 bg-blue-500 text-white rounded-full text-sm font-medium"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                  {finalClassSkills.length === 0 && (
-                    <span className="text-gray-500 text-sm">尚未选择职业技能</span>
-                  )}
-                </div>
-              </>
-            )}
+            <h3 className="font-bold text-sm text-blue-900 mb-1">
+              职业技能{classData && <span className="text-gray-600 font-normal"> · {currentCharacter.class}</span>}
+            </h3>
+            {classData ? (
+              <div className="flex flex-wrap gap-1.5">
+                {finalClassSkills.map((skill, index) => (
+                  <span
+                    key={`${skill}-${index}`}
+                    className="px-2 py-0.5 bg-blue-500 text-white rounded text-xs font-medium"
+                  >
+                    {skill}
+                  </span>
+                ))}
+                {finalClassSkills.length === 0 && (
+                  <span className="text-gray-500 text-xs">尚未选择</span>
+                )}
+              </div>
+            ) : null}
           </div>
 
           <div>
-            <h3 className="font-bold text-lg text-green-900 mb-3">背景技能</h3>
-            {backgroundData && (
-              <>
-                <div className="text-sm text-gray-700 mb-2">
-                  来自：<strong>{currentCharacter.background}</strong>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {backgroundSkills.map((skill, index) => (
-                    <span
-                      key={`${skill}-${index}`}
-                      className="px-3 py-1 bg-green-500 text-white rounded-full text-sm font-medium"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                  {backgroundSkills.length === 0 && (
-                    <span className="text-gray-500 text-sm">尚未选择背景技能</span>
-                  )}
-                </div>
-              </>
-            )}
+            <h3 className="font-bold text-sm text-green-900 mb-1">
+              背景技能{backgroundData && <span className="text-gray-600 font-normal"> · {currentCharacter.background}</span>}
+            </h3>
+            {backgroundData ? (
+              <div className="flex flex-wrap gap-1.5">
+                {backgroundSkills.map((skill, index) => (
+                  <span
+                    key={`${skill}-${index}`}
+                    className="px-2 py-0.5 bg-green-500 text-white rounded text-xs font-medium"
+                  >
+                    {skill}
+                  </span>
+                ))}
+                {backgroundSkills.length === 0 && (
+                  <span className="text-gray-500 text-xs">无</span>
+                )}
+              </div>
+            ) : null}
           </div>
 
           <div>
-            <h3 className="font-bold text-lg text-teal-900 mb-3">物种技能</h3>
-            {speciesData && (
-              <>
-                <div className="text-sm text-gray-700 mb-2">
-                  来自：<strong>{currentCharacter.species}</strong>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {speciesSkills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="px-3 py-1 bg-teal-500 text-white rounded-full text-sm font-medium"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                  {speciesSkills.length === 0 && (
-                    <span className="text-gray-500 text-sm">该物种无技能选择</span>
-                  )}
-                </div>
-              </>
-            )}
+            <h3 className="font-bold text-sm text-teal-900 mb-1">
+              物种技能{speciesData && <span className="text-gray-600 font-normal"> · {currentCharacter.species}</span>}
+            </h3>
+            {speciesData ? (
+              <div className="flex flex-wrap gap-1.5">
+                {speciesSkills.map((skill) => (
+                  <span
+                    key={skill}
+                    className="px-2 py-0.5 bg-teal-500 text-white rounded text-xs font-medium"
+                  >
+                    {skill}
+                  </span>
+                ))}
+                {speciesSkills.length === 0 && (
+                  <span className="text-gray-500 text-xs">该物种无技能</span>
+                )}
+              </div>
+            ) : null}
           </div>
         </div>
 
-        <div className="mt-6 pt-6 border-t border-gray-300">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-gray-900 mb-1">
-                {new Set(skills).size}
-              </div>
-              <div className="text-sm text-gray-600">
-                技能熟练总数
-              </div>
-            </div>
+        <div className="mt-3 pt-3 border-t border-gray-300 flex items-center justify-center gap-2">
+          <span className="text-sm text-gray-600">技能熟练总数</span>
+          <span className="text-xl font-bold text-gray-900">{new Set(skills).size}</span>
         </div>
       </div>
 
-      {/* 所有技能详细列表（按属性分组） */}
+      {/* 完整技能列表 - 与角色卡技能展示一致：紧凑网格 + 显示 + 值 */}
       <div>
         <h3 className="text-lg font-bold text-gray-900 mb-4">完整技能列表</h3>
-        <div className="space-y-4">
-          {Object.entries(skillsByAbility).map(([ability, abilitySkills]) => (
-            <div key={ability}>
-              <h4 className="text-md font-bold text-gray-800 mb-2 flex items-center gap-2">
-                <span>{abilityNames[ability]} 技能</span>
-                <span className="text-xs text-gray-500">
-                  ({abilitySkills.filter(s => skills.includes(s.name)).length}/{abilitySkills.length} 熟练)
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+          {SKILLS.map((skill) => {
+            const isProficient = skills.includes(skill.name);
+            const abilityKey = skill.ability.toLowerCase() as keyof typeof finalAbilities;
+            const abilityValue = finalAbilities[abilityKey];
+            const modifier = getAbilityModifier(abilityValue);
+            const total = modifier + (isProficient ? profBonus : 0);
+
+            return (
+              <div
+                key={skill.name}
+                className={`flex items-center justify-between px-2 py-1.5 rounded ${
+                  isProficient
+                    ? 'bg-purple-50 border border-purple-300'
+                    : 'bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                  {isProficient && (
+                    <div className="w-2 h-2 rounded-full bg-purple-600 flex-shrink-0" />
+                  )}
+                  <span className="text-sm font-medium truncate">{skill.name}</span>
+                </div>
+                <span className="text-sm font-bold text-leather-dark ml-2">
+                  {total >= 0 ? '+' : ''}{total}
                 </span>
-              </h4>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                {abilitySkills.map((skill) => {
-                  const isProficient = skills.includes(skill.name);
-                  
-                  return (
-                    <div
-                      key={skill.id}
-                      className={`p-3 rounded-lg border-2 ${
-                        isProficient
-                          ? 'border-green-500 bg-green-50'
-                          : 'border-gray-200 bg-gray-50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className={`text-sm font-medium ${
-                          isProficient ? 'text-green-900' : 'text-gray-600'
-                        }`}>
-                          {skill.name}
-                        </span>
-                        {isProficient && (
-                          <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                            <Check className="w-3 h-3 text-white" />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

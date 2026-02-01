@@ -97,7 +97,24 @@ const createEmptyCharacter = (): Partial<Character> => ({
   backgroundEquipmentChoice: undefined, // 背景装备选择
   backgroundAbilityBonuses: {}, // 背景属性加值
   classFeatureChoices: {}, // 职业和物种特性选择
-  equippedWeapons: [] // 用户选择的武器（武器ID数组）
+  equippedWeapons: [], // 用户选择的武器（武器ID数组）
+  
+  // ⭐ 角色档案集字段初始化
+  biography: {
+    appearance: '',
+    personality: '',
+    relationships: '',
+    timeline: []
+  },
+  journal: [],
+  highlights: [],
+  portraits: [],
+  currentHitPoints: 0,
+  temporaryHitPoints: 0,
+  hitDiceUsed: 0,
+  deathSaves: { successes: 0, failures: 0 },
+  conditions: [],
+  notes: ''
 });
 
 export const useCharacterStore = create<CharacterStore>()(

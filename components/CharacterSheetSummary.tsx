@@ -3,9 +3,9 @@
 import { Character, getAbilityModifier, getProficiencyBonus, CLASSES, BACKGROUNDS, SPECIES, SKILLS } from '@/lib/dnd-data';
 import { getFeatById } from '@/lib/feats-data';
 import { getLanguageById } from '@/lib/languages-data';
-import { getClassFeaturesByName } from '@/lib/class-features-data';
 import { BACKGROUND_EQUIPMENT } from '@/lib/equipment-packages-data';
-import { WEAPONS, getWeaponByName, calculateWeaponAttackBonus, ARMORS, getArmorByName, calculateAC } from '@/lib/weapons-data';
+import { WEAPONS, getWeaponByName, calculateWeaponAttackBonus } from '@/lib/weapons-data';
+import { computeArmorClass } from '@/lib/ac-calculator';
 import { calculateSpeciesHPBonus, getSpeciesBaseSpeed, calculateClassFeatureHPBonus } from '@/lib/species-traits-calculator';
 import { User, Shield, Heart, Zap, Award, Globe, Package, Star, Swords, BookOpen, Sword } from 'lucide-react';
 
@@ -71,118 +71,10 @@ export default function CharacterSheetSummary({ character }: CharacterSheetSumma
   
   const dexterity = finalAbilities.dexterity;
   const dexterityMod = getAbilityModifier(dexterity);
-  
-  // 计算AC，考虑护甲和职业特性
-  const equipment = character.equipment || [];
-  
-  // 查找装备中的护甲和盾牌
-  let equippedArmor: typeof ARMORS[0] | null = null;
-  let hasShield = false;
-  
-  for (const item of equipment) {
-    const armor = getArmorByName(item);
-    if (armor) {
-      if (armor.category === '盾牌') {
-        hasShield = true;
-      } else if (!equippedArmor) {
-        equippedArmor = armor;
-      }
-    }
-  }
-  
-  // 获取实际的护甲熟练项
-  const getActualArmorProficiencies = (): string[] => {
-    if (!classData) return [];
-    let armorProfs = [...(classData.proficiencies.armor || [])];
-    
-    if (character.classFeatureChoices) {
-      const divineOrder = character.classFeatureChoices.divineOrder;
-      if (divineOrder === 'protector' && character.class === '牧师') {
-        if (!armorProfs.includes('重甲')) {
-          armorProfs.push('重甲');
-        }
-      }
-    }
-    
-    return armorProfs;
-  };
-  
-  const armorProficiencies = getActualArmorProficiencies();
-  let isProficientWithArmor = false;
-  
-  if (equippedArmor) {
-    const armorCategory = equippedArmor.category;
-    isProficientWithArmor = armorProficiencies.some(prof => {
-      if (prof === '轻甲' && armorCategory === '轻甲') return true;
-      if (prof === '中甲' && armorCategory === '中甲') return true;
-      if (prof === '重甲' && armorCategory === '重甲') return true;
-      if (prof === '盾牌' && armorCategory === '盾牌') return true;
-      return false;
-    });
-  }
-  
-  // 获取职业特性（用于AC计算和显示）
-  const classFeatures = classData ? getClassFeaturesByName(classData.name) : null;
-  
-  // 检查职业特性对AC的影响
-  let unarmoredDefenseBonus: number | undefined = undefined;
-  let fightingStyleDefense = false;
-  let featACBonus = 0;
-  let mediumArmorMaster = false;
-  
-  // 检查术士龙裔血统：未穿护甲时AC = 13 + 敏捷调整值
-  let draconicResilience = false;
-  if (character.class === '术士' && !equippedArmor && character.classFeatureChoices?.sorcerousOrigin === 'draconicBloodline') {
-    draconicResilience = true;
-  }
-  
-  // 检查无甲防御（野蛮人：体质调整值，武僧：感知调整值）
-  if (classFeatures && !equippedArmor && !draconicResilience) {
-    const unarmoredDefense = classFeatures.level1Features?.find(f => f.id === 'unarmored-defense');
-    if (unarmoredDefense) {
-      if (character.class === '野蛮人') {
-        unarmoredDefenseBonus = constitutionMod;
-      } else if (character.class === '武僧') {
-        if (!hasShield) {
-          const wisdomMod = getAbilityModifier(finalAbilities.wisdom);
-          unarmoredDefenseBonus = wisdomMod;
-        }
-      }
-    }
-  }
-  
-  // 检查战士的防御战斗风格
-  if (character.class === '战士' && equippedArmor && character.classFeatureChoices?.fightingStyle === 'defense') {
-    fightingStyleDefense = true;
-  }
-  
-  // 检查专长对AC的影响
-  if (character.feats) {
-    if (character.feats.includes('medium-armor-master')) {
-      mediumArmorMaster = true;
-    }
-    // 双持武器者：当双持武器时，AC+1
-    if (character.feats.includes('dual-wielder')) {
-      // 需要检查是否双持武器，这里简化处理
-      // 实际应该检查equippedWeapons.length >= 2
-      // 暂时不在这里处理，因为CharacterSheetSummary可能没有equippedWeapons信息
-    }
-  }
-  
-  // 使用calculateAC函数计算最终AC
-  const baseAC = calculateAC(
-    10 + dexterityMod,
-    equippedArmor,
-    hasShield,
-    dexterityMod,
-    isProficientWithArmor,
-    unarmoredDefenseBonus,
-    fightingStyleDefense,
-    featACBonus,
-    mediumArmorMaster,
-    draconicResilience
-  );
-  
+
+  // AC：护甲/盾牌 + 职业特性（防御战斗风格、无甲防御、龙裔体魄等）+ 专长（ac-calculator 统一逻辑）
+  const baseAC = computeArmorClass(character, finalAbilities);
+
   // 计算先攻，考虑专长影响
   let initiative = dexterityMod;
   if (character.feats?.includes('alert')) {

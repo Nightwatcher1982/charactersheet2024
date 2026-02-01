@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,6 +8,12 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 250, 250, 250;
   --background-end-rgb: 255, 255, 255;
+  
+  /* DND 主题颜色 */
+  --dnd-parchment: #f9f7f1;
+  --dnd-leather: #8b7355;
+  --dnd-gold: #d97706;
+  --dnd-border: #d4cabe;
 }
 
 body {
@@ -19,12 +27,13 @@ body {
 }
 
 @layer components {
+  /* 基础按钮 */
   .btn {
     @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
   }
   
   .btn-primary {
-    @apply btn bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+    @apply btn bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 shadow-dnd hover:shadow-dnd-lg;
   }
   
   .btn-secondary {
@@ -35,28 +44,115 @@ body {
     @apply btn border-2 border-red-600 text-red-600 hover:bg-red-50 focus:ring-red-500;
   }
   
+  /* DND 风格按钮 */
+  .btn-dnd {
+    @apply btn bg-gradient-to-b from-gold-500 to-gold-600 text-white border-2 border-gold-700 hover:from-gold-600 hover:to-gold-700 shadow-dnd hover:shadow-dnd-lg font-cinzel;
+  }
+  
+  /* 卡片样式 */
   .card {
     @apply bg-white rounded-xl shadow-lg p-6 border border-gray-100;
   }
   
+  /* DND 风格卡片 - 羊皮纸效果 */
+  .card-dnd {
+    @apply bg-parchment-50 rounded-lg shadow-dnd-lg p-6 border-2 border-leather-300 relative;
+    background-image: 
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E"),
+      linear-gradient(to bottom, #fefce8, #fef9c3);
+  }
+  
+  .card-dnd::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 0.5rem;
+    padding: 2px;
+    background: linear-gradient(135deg, #d97706, #92400e);
+    -webkit-mask: 
+      linear-gradient(#fff 0 0) content-box, 
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.3;
+    pointer-events: none; /* 防止伪元素阻止点击事件 */
+  }
+  
+  /* 标题样式 */
+  .dnd-title {
+    @apply font-cinzel text-3xl font-bold text-leather-800 mb-4 tracking-wide;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  }
+  
+  .dnd-subtitle {
+    @apply font-cinzel text-xl font-semibold text-leather-700 mb-3;
+  }
+  
+  /* 输入框 */
   .input {
     @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all;
   }
   
+  .input-dnd {
+    @apply w-full px-4 py-2 border-2 border-leather-300 rounded-lg bg-parchment-50 focus:ring-2 focus:ring-gold-500 focus:border-gold-500 transition-all;
+  }
+  
+  /* 标签 */
   .label {
     @apply block text-sm font-medium text-gray-700 mb-2;
   }
   
+  .label-dnd {
+    @apply block text-sm font-semibold text-leather-700 mb-2 font-medieval;
+  }
+  
+  /* 章节标题 */
   .section-title {
     @apply text-2xl font-bold text-gray-900 mb-4;
   }
   
+  .section-title-dnd {
+    @apply dnd-title border-b-2 border-gold-600 pb-2;
+  }
+  
+  /* 信息框 */
   .info-box {
     @apply bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg;
   }
   
+  .info-box-dnd {
+    @apply bg-parchment-100 border-l-4 border-gold-600 p-4 rounded-r-lg shadow-dnd;
+  }
+  
+  /* 属性值框 */
   .stat-box {
     @apply bg-gradient-to-br from-red-50 to-red-100 p-4 rounded-lg text-center border-2 border-red-200;
+  }
+  
+  .stat-box-dnd {
+    @apply bg-gradient-to-br from-parchment-50 to-parchment-100 p-4 rounded-lg text-center border-2 border-leather-400 shadow-dnd;
+  }
+  
+  /* 徽章 */
+  .badge-dnd {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-gold-500 text-white border border-gold-700 shadow-sm;
+  }
+  
+  /* 分隔线 */
+  .divider-dnd {
+    @apply border-t-2 border-gold-600 my-6 relative;
+  }
+  
+  .divider-dnd::before {
+    content: '⚔';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 0 1rem;
+    color: #d97706;
+    font-size: 1.25rem;
   }
 }
 
@@ -74,7 +170,7 @@ body {
     page-break-after: always;
   }
   
-  .card {
+  .card, .card-dnd {
     box-shadow: none;
     border: 1px solid #ddd;
   }
@@ -82,11 +178,45 @@ body {
 
 /* 移动端优化 */
 @media (max-width: 640px) {
-  .card {
+  .card, .card-dnd {
     @apply p-4;
   }
   
-  .section-title {
+  .section-title, .section-title-dnd {
     @apply text-xl;
   }
+  
+  .dnd-title {
+    @apply text-2xl;
+  }
+}
+
+/* 自定义滚动条（DND风格） */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--dnd-parchment);
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--dnd-leather);
+  border-radius: 6px;
+  border: 2px solid var(--dnd-parchment);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--dnd-gold);
+}
+
+/* 隐藏滚动条（但保持可滚动） */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
 }

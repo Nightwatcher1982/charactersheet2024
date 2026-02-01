@@ -12,17 +12,23 @@ import StepOrigin from '@/components/steps/StepOrigin';
 import StepAbilities from '@/components/steps/StepAbilities';
 import StepAlignment from '@/components/steps/StepAlignment';
 import StepSkills from '@/components/steps/StepSkills';
-import StepReview from '@/components/steps/StepReview';
+import StepBiography from '@/components/steps/StepBiography';
 
-// 新的步骤结构 - 完全遵循官方流程
+// 导入新的步骤组件
+import StepEquipmentCheck from '@/components/steps/StepEquipmentCheck';
+import StepSpellCheck from '@/components/steps/StepSpellCheck';
+
+// 步骤结构 - 传记为最后一步（无单独「确认完成」步骤）
 const STEPS = [
   { id: 0, title: '欢迎', shortTitle: '开始', component: StepWelcome, icon: '👋' },
   { id: 1, title: '选择职业', shortTitle: '职业', component: StepClassSimple, icon: '⚔️' },
   { id: 2, title: '确定起源', shortTitle: '起源', component: StepOrigin, icon: '📜', hasSubsteps: true },
   { id: 3, title: '确定属性值', shortTitle: '属性', component: StepAbilities, icon: '💪' },
   { id: 4, title: '选择阵营', shortTitle: '阵营', component: StepAlignment, icon: '⚖️' },
-  { id: 5, title: '技能总览', shortTitle: '技能', component: StepSkills, icon: '🎯' },
-  { id: 6, title: '审核完成', shortTitle: '完成', component: StepReview, icon: '✅' },
+  { id: 5, title: '技能检查', shortTitle: '技能检查', component: StepSkills, icon: '🎯' },
+  { id: 6, title: '装备检查', shortTitle: '装备检查', component: StepEquipmentCheck, icon: '🛡️' },
+  { id: 7, title: '法术检查', shortTitle: '法术检查', component: StepSpellCheck, icon: '✨' },
+  { id: 8, title: '传记', shortTitle: '传记', component: StepBiography, icon: '📖' },
 ];
 
 export default function CreateCharacterPage() {
@@ -42,6 +48,16 @@ export default function CreateCharacterPage() {
   }, [currentCharacter, mounted, router]);
 
   const handleNext = () => {
+    // 步骤1：职业选择 - 只要选了职业就派发，由 StepClassSimple 决定弹窗或进入下一步
+    if (currentStep === 1 && currentCharacter?.class) {
+      window.dispatchEvent(new CustomEvent('triggerClassConfiguration'));
+      return;
+    }
+    // 步骤2：起源 - 由 StepOrigin 处理（物种配置 / 子步骤 / 进入下一步）
+    if (currentStep === 2) {
+      window.dispatchEvent(new CustomEvent('triggerOriginNext'));
+      return;
+    }
     if (currentStep < STEPS.length - 1) {
       nextStep();
       window.scrollTo(0, 0);
@@ -49,6 +65,11 @@ export default function CreateCharacterPage() {
   };
 
   const handlePrev = () => {
+    // 步骤2（起源）：先回到上一子步骤，仅在物种子步骤时才退回步骤1
+    if (currentStep === 2) {
+      window.dispatchEvent(new CustomEvent('triggerOriginPrev'));
+      return;
+    }
     if (currentStep > 0) {
       prevStep();
       window.scrollTo(0, 0);
@@ -61,10 +82,15 @@ export default function CreateCharacterPage() {
   };
 
   const handleFinish = () => {
+    // 若当前在传记步骤（最后一步），先派发事件让 StepBiography 把未失焦的传记内容写入 store
+    if (currentStep === 8) {
+      window.dispatchEvent(new CustomEvent('flushBiography'));
+    }
     saveCharacter();
-    // 保存一份临时数据给网页版角色卡读取（同页跳转，不开新窗口）
+    // 保存一份临时数据给网页版角色卡读取（使用 store 最新状态，含刚刷新的传记）
+    const char = useCharacterStore.getState().currentCharacter ?? currentCharacter;
     try {
-      localStorage.setItem('temp-character-for-sheet', JSON.stringify(currentCharacter));
+      localStorage.setItem('temp-character-for-sheet', JSON.stringify(char));
     } catch {
       // 忽略：极端环境下 localStorage 不可用
     }
@@ -82,6 +108,14 @@ export default function CreateCharacterPage() {
   }
 
   const CurrentStepComponent = STEPS[currentStep].component;
+
+  // 检查步骤1（职业）是否完成
+  const isStep1Complete = currentStep === 1 ? Boolean(
+    currentCharacter?.class &&
+    currentCharacter?.skills &&
+    currentCharacter.skills.length > 0 &&
+    currentCharacter?.classStartingEquipment
+  ) : true;
 
   // 检查步骤2（起源）的所有子步骤是否完成
   const isStep2Complete = currentStep === 2 ? Boolean(
@@ -156,46 +190,46 @@ export default function CreateCharacterPage() {
   })();
 
   // 禁用"下一步"按钮的条件
+  // 步骤1：选了职业即可点下一步（点下一步会触发配置弹窗或进入下一步）
+  // 步骤2：选了物种即可点下一步（点下一步会触发物种配置弹窗或子步骤/进入下一步）
   const isNextDisabled =
-    (currentStep === 2 && !isStep2Complete) ||
+    (currentStep === 1 && !currentCharacter?.class) ||
+    (currentStep === 2 && !currentCharacter?.species) ||
     (currentStep === 3 && !isStep3Complete);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* 顶部导航 */}
-      <div className="bg-white shadow-md sticky top-0 z-10">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50 to-amber-100 relative">
+      {/* 背景羊皮纸纹理 */}
+      <div className="absolute inset-0 opacity-5 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-64 h-64 bg-amber-300 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-orange-300 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/3 w-48 h-48 bg-yellow-300 rounded-full blur-3xl"></div>
+      </div>
+
+      {/* 顶部导航 - fixed 固定在上方，滚动时始终可见 */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-amber-100/95 via-orange-100/95 to-amber-100/95 backdrop-blur-md border-b-2 border-gold-dark/40 shadow-lg">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-3">
             <button
               onClick={handleGoHome}
-              className="btn-secondary flex items-center gap-2"
+              className="group flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white border border-gold-dark/40 hover:border-gold-dark rounded-lg transition-all duration-300 text-leather-dark hover:text-leather-dark text-sm font-medieval shadow-md hover:shadow-lg"
             >
-              <Home className="w-4 h-4" />
-              返回首页
+              <Home className="w-4 h-4 group-hover:scale-110 transition-transform" />
+              <span>返回首页</span>
             </button>
 
             <button
               onClick={handleSave}
-              className="btn-outline flex items-center gap-2"
+              className="group flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 border border-amber-800/50 rounded-lg transition-all duration-300 text-white text-sm font-medieval shadow-md hover:shadow-lg hover:scale-105"
             >
-              <Save className="w-4 h-4" />
-              保存进度
+              <Save className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+              <span>保存进度</span>
             </button>
           </div>
 
-          {/* 横向流程引导（从第2步开始显示） */}
+          {/* 横向步骤标签（无子页描述） */}
           {currentStep > 0 && (
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-sm font-medium text-gray-700">
-                  当前步骤：{STEPS[currentStep].title}
-                </div>
-                <div className="text-sm text-gray-500">
-                  {currentStep + 1} / {STEPS.length}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
                 {STEPS.map((step, index) => {
                   const isActive = index === currentStep;
                   const isCompleted = index < currentStep;
@@ -206,79 +240,88 @@ export default function CreateCharacterPage() {
                       key={step.id}
                       onClick={() => isAccessible && setStep(index)}
                       disabled={!isAccessible}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-full border text-xs font-medium whitespace-nowrap transition ${
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-xs font-medieval whitespace-nowrap transition-all duration-300 ${
                         isActive
-                          ? 'bg-red-500 text-white border-red-500'
+                          ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white border-purple-800 shadow-lg scale-105'
                           : isCompleted
-                          ? 'bg-green-50 text-green-800 border-green-200 hover:bg-green-100'
+                          ? 'bg-white text-green-700 border-green-500 hover:bg-green-50 hover:scale-105'
                           : isAccessible
-                          ? 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
-                          : 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed'
+                          ? 'bg-white/80 text-leather-dark border-gold-dark/30 hover:bg-white hover:border-gold-dark/60'
+                          : 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
                       }`}
                     >
-                      <span>{step.icon}</span>
+                      <span className="text-base">{step.icon}</span>
                       <span>{step.shortTitle}</span>
+                      {isCompleted && <span className="text-green-600">✓</span>}
                     </button>
                   );
                 })}
               </div>
-            </div>
           )}
         </div>
-      </div>
+      </header>
 
-      {/* 主要内容 */}
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="card min-h-[500px]">
-          <CurrentStepComponent />
-        </div>
+      {/* 主要内容 - 预留固定导航栏高度(pt-40)，避免被遮挡 */}
+      <div className="pt-40 container mx-auto px-4 py-8 max-w-4xl relative z-10">
+        <div className="relative bg-white/90 backdrop-blur-sm border-2 border-gold-dark/40 rounded-3xl p-8 shadow-xl min-h-[500px]">
+          {/* 卡片装饰 */}
+          <div className="absolute top-0 left-1/4 w-32 h-32 bg-amber-200 rounded-full blur-3xl opacity-10"></div>
+          <div className="absolute bottom-0 right-1/4 w-32 h-32 bg-orange-200 rounded-full blur-3xl opacity-10"></div>
+          
+          <div className="relative z-10">
+            <CurrentStepComponent />
 
-        {currentStep === 3 && !isStep3Complete && (
-          <div className="mt-6 bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg">
-            <div className="font-bold text-yellow-900 mb-1">需要先完成属性分配</div>
-            <div className="text-sm text-yellow-800">
-              请先在本页完成属性值分配（标准数组需分配完 6 个数值；购点法需花完 27 点），才能进入下一步。
+            {currentStep === 3 && !isStep3Complete && (
+              <div className="mt-6 bg-gradient-to-r from-amber-100 to-orange-100 border-l-4 border-amber-600 p-5 rounded-r-xl shadow-md">
+                <div className="font-bold text-amber-900 mb-2 font-medieval flex items-center gap-2">
+                  <span className="text-xl">⚠️</span>
+                  <span>需要先完成属性分配</span>
+                </div>
+                <div className="text-sm text-amber-800">
+                  请先在本页完成属性值分配（标准数组需分配完 6 个数值；购点法需花完 27 点），才能进入下一步。
+                </div>
+              </div>
+            )}
+
+            {/* 导航按钮 - 羊皮纸风格 */}
+            <div className="flex justify-between mt-10 pt-6 border-t border-gold-light/40">
+              <button
+                onClick={handlePrev}
+                disabled={currentStep === 0}
+                className={`group flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all duration-300 font-medieval ${
+                  currentStep === 0
+                    ? 'bg-gray-100 text-gray-400 border-2 border-gray-300 cursor-not-allowed'
+                    : 'bg-white hover:bg-amber-50 text-leather-dark border-2 border-gold-dark/40 hover:border-gold-dark shadow-md hover:shadow-lg hover:scale-105'
+                }`}
+              >
+                <ArrowLeft className={`w-5 h-5 ${currentStep !== 0 && 'group-hover:-translate-x-1 transition-transform'}`} />
+                <span>上一步</span>
+              </button>
+
+              {currentStep < STEPS.length - 1 ? (
+                <button
+                  onClick={handleNext}
+                  disabled={isNextDisabled}
+                  className={`group flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all duration-300 font-medieval ${
+                    isNextDisabled
+                      ? 'bg-gray-100 text-gray-400 border-2 border-gray-300 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white border-2 border-purple-800 shadow-lg hover:shadow-xl hover:scale-105'
+                  }`}
+                >
+                  <span>下一步</span>
+                  <ArrowRight className={`w-5 h-5 ${!isNextDisabled && 'group-hover:translate-x-1 transition-transform'}`} />
+                </button>
+              ) : (
+                <button
+                  onClick={handleFinish}
+                  className="group flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 border-2 border-green-700 rounded-xl font-bold text-white text-sm shadow-lg hover:shadow-xl transition-all duration-300 font-medieval hover:scale-105"
+                >
+                  <Save className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                  <span>完成角色创建</span>
+                </button>
+              )}
             </div>
           </div>
-        )}
-
-        {/* 导航按钮 */}
-        <div className="flex justify-between mt-8">
-          <button
-            onClick={handlePrev}
-            disabled={currentStep === 0}
-            className={`btn flex items-center gap-2 ${
-              currentStep === 0
-                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                : 'btn-secondary'
-            }`}
-          >
-            <ArrowLeft className="w-5 h-5" />
-            上一步
-          </button>
-
-          {currentStep < STEPS.length - 1 ? (
-            <button
-              onClick={handleNext}
-              disabled={isNextDisabled}
-              className={`btn flex items-center gap-2 ${
-                isNextDisabled
-                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  : 'btn-primary'
-              }`}
-            >
-              下一步
-              <ArrowRight className="w-5 h-5" />
-            </button>
-          ) : (
-            <button
-              onClick={handleFinish}
-              className="btn-primary flex items-center gap-2"
-            >
-              <Save className="w-5 h-5" />
-              完成角色
-            </button>
-          )}
         </div>
       </div>
     </div>

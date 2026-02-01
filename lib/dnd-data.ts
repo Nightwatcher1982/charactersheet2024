@@ -9,6 +9,38 @@ export interface Ability {
   charisma: number;
 }
 
+// 日志条目
+export interface JournalEntry {
+  id: string;
+  title: string;
+  content: string;
+  occurredAt: string; // ISO 8601 日期
+  location?: string;
+  participants?: string[];
+  tags?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 高光时刻条目
+export interface HighlightEntry {
+  id: string;
+  title: string;
+  content: string;
+  occurredAt: string; // ISO 8601 日期
+  isPinned?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 人物传记结构化字段
+export interface Biography {
+  appearance?: string; // 外观描述
+  personality?: string; // 性格/信念
+  relationships?: string; // 关系网
+  timeline?: { date: string; event: string }[]; // 重要事件年表
+}
+
 export interface Character {
   id: string;
   name: string;
@@ -39,7 +71,22 @@ export interface Character {
   avatar?: string; // 头像（base64编码的图片数据）
   remainingGold?: number; // 剩余金币（购买装备后）
   classStartingEquipment?: string; // 职业起始装备选择ID，如 "option1"
-  equippedWeapons?: string[]; // 用户选择的武器（武器ID数组）
+  equippedWeapons?: string[]; // 当前装备的武器（武器ID数组）
+  ownedWeapons?: string[]; // 拥有的全部武器（武器ID数组），卸下后仍保留在此列表
+  equippedArmor?: string; // 当前装备的护甲名称
+  equippedShield?: boolean; // 是否装备盾牌
+  
+  // ⭐ 角色档案集新增字段（阶段A+C）
+  biography?: Biography; // 结构化传记
+  journal?: JournalEntry[]; // 日志条目列表
+  highlights?: HighlightEntry[]; // 高光时刻列表
+  portraits?: string[]; // 立绘列表（暂时使用base64，未来改为URL）
+  currentHitPoints?: number; // 当前生命值（用于战斗追踪）
+  temporaryHitPoints?: number; // 临时生命值
+  hitDiceUsed?: number; // 已使用的生命骰数量
+  deathSaves?: { successes: number; failures: number }; // 死亡豁免记录
+  conditions?: string[]; // 当前状态（中毒、魅惑等）
+  notes?: string; // 自由备注
 }
 
 export interface ClassFeatureChoice {
@@ -816,7 +863,7 @@ export const BACKGROUNDS: Background[] = [
   },
   {
     id: 'charlatan',
-    name: '江湖骗子',
+    name: '骗子',
     nameEn: 'Charlatan',
     description: '靠欺骗和伪装谋生的骗术高手',
     narrative: '你一直擅长欺骗他人，无论是伪造身份、伪造文件还是编造故事。你可能曾假扮过贵族、算命师或其他受尊敬的人物，从轻信的人那里骗取金钱或好处。',
@@ -855,7 +902,7 @@ export const BACKGROUNDS: Background[] = [
   },
   {
     id: 'farmer',
-    name: '农夫',
+    name: '农民',
     nameEn: 'Farmer',
     description: '辛勤劳作的乡村劳动者',
     narrative: '你在田野和农场中长大，学会了耕作、照料动物和修理工具。你了解大自然的循环和农村生活的艰辛。你可能离开农场去寻找更好的生活，或是去保护你的家园。',
@@ -868,7 +915,7 @@ export const BACKGROUNDS: Background[] = [
   },
   {
     id: 'guard',
-    name: '守卫',
+    name: '警卫',
     nameEn: 'Guard',
     description: '维护秩序的守护者',
     narrative: '你曾在城镇、城堡或商队中担任守卫，保护人员和财产的安全。你接受过基本的战斗训练，也学会了如何保持警惕和识别可疑行为。',
@@ -933,7 +980,7 @@ export const BACKGROUNDS: Background[] = [
   },
   {
     id: 'sage',
-    name: '学者',
+    name: '智者',
     nameEn: 'Sage',
     description: '热爱学习和研究的知识分子',
     narrative: '你在年轻时往返于庄园和修道院之间，通过做各种零工和服务来换取进入图书馆的机会。你在许多漫长的夜晚学习书籍和卷轴，学习多元宇宙的知识——甚至是魔法的基础——你的思维渴望更多知识。',

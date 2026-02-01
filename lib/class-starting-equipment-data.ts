@@ -240,7 +240,7 @@ export const CLASS_STARTING_EQUIPMENT: ClassStartingEquipment[] = [
       },
     ],
   },
-  // 邪术师
+  // 魔契师
   {
     classId: 'warlock',
     options: [

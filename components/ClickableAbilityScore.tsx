@@ -231,7 +231,7 @@ export default function ClickableAbilityScore({ onComplete, initialScores }: Cli
                             e.stopPropagation();
                             handleSelectScore(ability.key, availScore);
                           }}
-                          className="py-2 px-3 bg-purple-100 hover:bg-purple-200 text-purple-900 font-bold rounded border-2 border-purple-300 hover:border-purple-500 transition-colors"
+                          className="py-2 px-3 bg-purple-100 hover:bg-purple-200 text-purple-900 font-bold rounded border-2 border-purple-300 hover:border-purple-500 transition-colors flex items-center justify-center"
                         >
                           {availScore}
                         </button>
@@ -243,7 +243,7 @@ export default function ClickableAbilityScore({ onComplete, initialScores }: Cli
                             handleRemoveScore(ability.key);
                             setSelectingAbility(null);
                           }}
-                          className="col-span-3 py-2 px-3 bg-red-100 hover:bg-red-200 text-red-900 text-sm rounded border border-red-300"
+                          className="col-span-3 py-2 px-3 bg-red-100 hover:bg-red-200 text-red-900 text-sm rounded border border-red-300 flex items-center justify-center"
                         >
                           清除
                         </button>

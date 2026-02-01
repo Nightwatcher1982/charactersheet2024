@@ -1,26 +1,38 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useCharacterStore } from '@/lib/character-store';
 import { BACKGROUNDS, CLASSES } from '@/lib/dnd-data';
-import { Check } from 'lucide-react';
+import { Check, Info } from 'lucide-react';
 import BackgroundSkillSelector from '@/components/BackgroundSkillSelector';
+
+// 背景简介（一句话）
+const getBackgroundSummary = (backgroundName: string): string => {
+  const summaryMap: Record<string, string> = {
+    '侍僧': '在神殿中服侍的虔诚信徒，精通宗教仪式和神圣知识',
+    '贤者': '致力于学术研究的学者，拥有渊博的知识',
+    '骗子': '善于欺骗和伪装的骗术大师',
+    '艺人': '娱乐大众的表演者，擅长魅力社交',
+    '商人': '精明的贸易商人，熟谙商业之道',
+    '贵族': '出身显赫的上流社会成员',
+    '平民': '普通的劳动者，拥有生存技能',
+    '士兵': '训练有素的战斗人员',
+    '罪犯': '游走在法律边缘的不法之徒',
+  };
+  return summaryMap[backgroundName] || '一个独特的成长经历';
+};
 
 export default function StepBackground() {
   const { currentCharacter, updateCurrentCharacter } = useCharacterStore();
   const [showSkillSelector, setShowSkillSelector] = useState(false);
 
-  useEffect(() => {
-    if (currentCharacter?.background) {
-      setShowSkillSelector(true);
-    }
-  }, [currentCharacter?.background]);
-
+  // 移除自动跳转逻辑，改为手动点击"下一步"按钮进入详情
+  
   if (!currentCharacter) return null;
 
   const handleSelectBackground = (backgroundName: string) => {
+    // 只更新选中的背景，不自动进入下一步
     updateCurrentCharacter({ background: backgroundName });
-    setShowSkillSelector(true);
   };
 
   const handleSkillsComplete = (skills: string[]) => {
@@ -45,78 +57,56 @@ export default function StepBackground() {
     <div className="space-y-6">
       {!showSkillSelector ? (
         <>
-          <div>
-            <h2 className="section-title">选择背景</h2>
-            <p className="text-gray-600 mb-6">
-              背景代表你的角色在成为冒险者之前的经历，在2024版规则中，背景提供技能、工具熟练、属性加值和起源专长。
-            </p>
-          </div>
-
-          <div className="info-box">
-            <p className="text-sm text-blue-800">
-              💡 <strong>提示：</strong>2024版背景系统重新设计，每个背景都提供：2个技能熟练、1个工具熟练、+3属性加值和1个起源专长。
-            </p>
-          </div>
-
-          <div className="space-y-4">
+          {/* 背景网格 - 3列布局 */}
+          <div className="grid grid-cols-3 gap-4">
             {BACKGROUNDS.map((background) => (
               <button
                 key={background.id}
                 onClick={() => handleSelectBackground(background.name)}
-                className={`w-full p-5 rounded-lg border-2 transition-all text-left ${
+                className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-2 relative ${
                   currentCharacter.background === background.name
-                    ? 'border-red-500 bg-red-50'
-                    : 'border-gray-200 hover:border-red-300 hover:shadow-md'
+                    ? 'border-gold-dark bg-gold-light/30 shadow-dnd ring-2 ring-gold-dark'
+                    : 'border-leather-light bg-white hover:border-gold-base hover:shadow-md'
                 }`}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-xl font-bold text-gray-900">
-                        {background.name}
-                      </h3>
-                    </div>
-                    <p className="text-gray-600 mb-3">{background.description}</p>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                      <div>
-                        <span className="text-gray-500">技能熟练：</span>
-                        <span className="font-medium ml-2">
-                          {background.skills.join('、')}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">工具熟练：</span>
-                        <span className="font-medium ml-2">
-                          {background.toolProficiency}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">起源专长：</span>
-                        <span className="font-medium ml-2">
-                          {background.featId}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">属性加值：</span>
-                        <span className="font-medium ml-2">
-                          +{background.abilityBonus}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {currentCharacter.background === background.name && (
-                    <div className="ml-4">
-                      <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
-                        <Check className="w-5 h-5 text-white" />
-                      </div>
-                    </div>
-                  )}
+                {/* 背景图标占位（暂时只显示首字） */}
+                <div className="w-20 h-20 rounded-lg bg-leather-light/50 flex items-center justify-center">
+                  <span className="text-3xl font-bold text-leather-dark font-cinzel">
+                    {background.name.charAt(0)}
+                  </span>
                 </div>
+                
+                {/* 背景名称 */}
+                <div className="text-center">
+                  <h3 className="font-bold text-leather-dark font-cinzel">
+                    {background.name}
+                  </h3>
+                </div>
+
+                {/* 选中标记 */}
+                {currentCharacter.background === background.name && (
+                  <div className="absolute top-2 right-2 w-6 h-6 bg-gold-dark rounded-full flex items-center justify-center">
+                    <Check className="w-4 h-4 text-white" />
+                  </div>
+                )}
               </button>
             ))}
           </div>
+
+          {/* 底部提示 - 显示背景介绍 */}
+          {currentCharacter.background && (
+            <div className="bg-parchment-base border-2 border-gold-light rounded-lg p-4 shadow-dnd mt-6">
+              <div className="flex items-start gap-3">
+                <Info className="w-5 h-5 text-gold-dark flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-leather-dark">
+                  <strong className="block mb-1">已选择：{currentCharacter.background}</strong>
+                  <p className="text-leather-base">
+                    {getBackgroundSummary(currentCharacter.background)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       ) : (
         <>

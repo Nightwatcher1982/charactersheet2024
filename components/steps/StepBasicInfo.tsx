@@ -24,23 +24,28 @@ export default function StepBasicInfo() {
       </div>
 
       <div>
-        <label className="label">
+        <label htmlFor="basic-character-name" className="label">
           角色名称 <span className="text-red-500">*</span>
         </label>
         <input
+          id="basic-character-name"
+          name="characterName"
           type="text"
           className="input"
           placeholder="例如：艾莉亚、索林、加里昂..."
           value={currentCharacter.name || ''}
           onChange={(e) => updateCurrentCharacter({ name: e.target.value })}
+          autoComplete="name"
         />
       </div>
 
       <div>
-        <label className="label">
+        <label htmlFor="character-level" className="label">
           角色等级
         </label>
         <input
+          id="character-level"
+          name="level"
           type="number"
           className="input"
           min="1"

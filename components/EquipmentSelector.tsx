@@ -9,24 +9,29 @@ interface EquipmentSelectorProps {
   backgroundName: string;
   initialChoice?: 'A' | 'B';
   onComplete: (choice: 'A' | 'B') => void;
+  autoConfirm?: boolean; // 是否自动确认
+  showConfirmButton?: boolean; // 是否显示内部确认按钮
 }
 
 export default function EquipmentSelector({
   backgroundId,
   backgroundName,
   initialChoice,
-  onComplete
+  onComplete,
+  autoConfirm = false,
+  showConfirmButton = true
 }: EquipmentSelectorProps) {
   const [selectedOption, setSelectedOption] = useState<'A' | 'B' | null>(initialChoice || null);
   
   const equipment = getBackgroundEquipment(backgroundId);
 
   useEffect(() => {
-    if (selectedOption) {
+    // 只有在 autoConfirm 为 true 时才自动触发完成
+    if (autoConfirm && selectedOption) {
       onComplete(selectedOption);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedOption]); // 只依赖 selectedOption，避免无限循环
+  }, [selectedOption, autoConfirm]);
 
   if (!equipment) {
     return (
@@ -38,35 +43,38 @@ export default function EquipmentSelector({
 
   const handleSelect = (option: 'A' | 'B') => {
     setSelectedOption(option);
+    // 立即调用 onComplete 更新父组件状态
+    onComplete(option);
+  };
+
+  const handleConfirm = () => {
+    if (selectedOption) {
+      onComplete(selectedOption);
+    }
   };
 
   return (
     <div className="space-y-4">
       {/* 说明 */}
-      <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
-        <h3 className="font-bold text-blue-900 mb-2">选择起始装备</h3>
+      <div className="px-6 py-3 bg-blue-50 border-b-2 border-blue-100">
         <p className="text-sm text-blue-800">
-          你的背景提供两种装备选项。选择最适合你角色的一种：
+          你的背景提供两种装备选项。选择最适合你角色的一种。
         </p>
       </div>
 
       {/* 选项A：装备包 */}
       <button
         onClick={() => handleSelect('A')}
-        className={`w-full p-5 rounded-lg border-2 transition-all text-left ${
+        className={`w-full p-5 rounded-lg border-2 transition-all text-left bg-white ${
           selectedOption === 'A'
-            ? 'border-green-500 bg-green-50 shadow-lg'
-            : 'border-gray-300 hover:border-green-400 hover:bg-green-50'
+            ? 'border-purple-600 bg-purple-50'
+            : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50'
         }`}
       >
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-3">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                selectedOption === 'A' ? 'bg-green-500' : 'bg-gray-300'
-              }`}>
-                <Package className="w-6 h-6 text-white" />
-              </div>
+              <Package className={`w-6 h-6 ${selectedOption === 'A' ? 'text-purple-600' : 'text-gray-400'}`} />
               <div>
                 <div className="font-bold text-lg text-gray-900">选项 A：装备包</div>
                 <div className="text-xs text-gray-600">适合立即开始冒险</div>
@@ -78,7 +86,7 @@ export default function EquipmentSelector({
               <ul className="space-y-1">
                 {equipment.optionA.items.map((item, index) => (
                   <li key={index} className="text-sm text-gray-600 flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                    <span className="w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
                     {item.name} {item.quantity > 1 && `×${item.quantity}`}
                     {item.nameEn && (
                       <span className="text-xs text-gray-400">({item.nameEn})</span>
@@ -97,9 +105,7 @@ export default function EquipmentSelector({
 
           {selectedOption === 'A' && (
             <div className="ml-4">
-              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                <Check className="w-5 h-5 text-white" />
-              </div>
+              <Check className="w-6 h-6 text-purple-600" />
             </div>
           )}
         </div>
@@ -108,20 +114,16 @@ export default function EquipmentSelector({
       {/* 选项B：金币 */}
       <button
         onClick={() => handleSelect('B')}
-        className={`w-full p-5 rounded-lg border-2 transition-all text-left ${
+        className={`w-full p-5 rounded-lg border-2 transition-all text-left bg-white ${
           selectedOption === 'B'
-            ? 'border-yellow-500 bg-yellow-50 shadow-lg'
-            : 'border-gray-300 hover:border-yellow-400 hover:bg-yellow-50'
+            ? 'border-purple-600 bg-purple-50'
+            : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50'
         }`}
       >
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-3">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                selectedOption === 'B' ? 'bg-yellow-500' : 'bg-gray-300'
-              }`}>
-                <Coins className="w-6 h-6 text-white" />
-              </div>
+              <Coins className={`w-6 h-6 ${selectedOption === 'B' ? 'text-purple-600' : 'text-gray-400'}`} />
               <div>
                 <div className="font-bold text-lg text-gray-900">选项 B：金币</div>
                 <div className="text-xs text-gray-600">自由购买你需要的装备</div>
@@ -146,9 +148,7 @@ export default function EquipmentSelector({
 
           {selectedOption === 'B' && (
             <div className="ml-4">
-              <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
-                <Check className="w-5 h-5 text-white" />
-              </div>
+              <Check className="w-6 h-6 text-purple-600" />
             </div>
           )}
         </div>
@@ -156,16 +156,28 @@ export default function EquipmentSelector({
 
       {/* 完成提示 */}
       {selectedOption && (
-        <div className="bg-green-50 border-2 border-green-500 rounded-lg p-4 text-center">
-          <div className="text-green-700 font-bold">
+        <div className="bg-purple-50 border-2 border-purple-500 rounded-lg p-4 text-center">
+          <div className="text-purple-700 font-bold">
             ✓ 已选择：选项 {selectedOption}
           </div>
-          <div className="text-green-600 text-sm mt-1">
+          <div className="text-purple-600 text-sm mt-1">
             {selectedOption === 'A' 
               ? '你将获得完整的装备包' 
               : `你将获得 ${equipment.optionB.gold} 金币`}
           </div>
         </div>
+      )}
+
+      {/* 确认按钮 - 只在非自动确认模式且设置显示时才显示 */}
+      {/* 确认按钮 - 只在非自动确认且设置显示时才显示 */}
+      {!autoConfirm && showConfirmButton && selectedOption && (
+        <button
+          onClick={handleConfirm}
+          className="w-full py-2.5 px-6 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 shadow-md"
+        >
+          <Check className="w-5 h-5" />
+          <span>确认装备选择</span>
+        </button>
       )}
 
       {/* 建议 */}

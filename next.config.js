@@ -10,7 +10,6 @@ const normalizedBasePath = (() => {
 
 const nextConfig = {
   reactStrictMode: true,
-  trailingSlash: true,
   ...(normalizedBasePath ? { basePath: normalizedBasePath } : {}),
 };
 

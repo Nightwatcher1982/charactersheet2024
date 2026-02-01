@@ -12,14 +12,14 @@ export default function StepReview() {
       <div>
         <h2 className="section-title">确认完成</h2>
         <p className="text-gray-600 mb-6">
-          这是创建流程的最后一步。确认无误后，点击页面底部的“完成角色”将直接进入网页版角色卡。
+          确认无误后点击「下一步」进入传记步骤，可填写立绘与背景故事（可选）；也可在传记步骤直接点击「完成角色创建」进入网页版角色卡。
         </p>
       </div>
 
       <div className="bg-green-50 border-2 border-green-500 rounded-lg p-4">
         <div className="text-green-800 font-bold mb-1">✓ 角色创建就绪</div>
         <div className="text-green-700 text-sm">
-          点击页面底部的“完成角色”后，会跳转到网页版角色卡页面。
+          下一步为传记（立绘与个人传记，可选），完成后在最后一步点击「完成角色创建」进入角色卡。
         </div>
       </div>
       

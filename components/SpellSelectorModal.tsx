@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Check, Sparkles, BookOpen } from 'lucide-react';
 import { 
   getCantripsForClass, 
@@ -47,11 +48,22 @@ export default function SpellSelectorModal({
       setSelectedPreparedSpells(initialPreparedSpells);
       setCurrentPage('cantrips');
       hasInitializedRef.current = true;
+      // 禁用body滚动
+      document.body.style.overflow = 'hidden';
     } else if (!isOpen) {
       // 模态框关闭时重置标志
       hasInitializedRef.current = false;
+      // 恢复body滚动
+      document.body.style.overflow = 'unset';
     }
   }, [isOpen]); // 只依赖 isOpen，避免状态被意外重置
+
+  // 清理函数 - 只在组件卸载时执行
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
 
   if (!isOpen || !hasSpellcasting(selectedClass)) return null;
 
@@ -153,11 +165,11 @@ export default function SpellSelectorModal({
     (currentPage === 'prepare' && needsPrepareStep && selectedPreparedSpells.length === preparedTargetRaw)
   );
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+  const modalContent = (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-6">
+      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[85vh] flex flex-col">
         {/* 头部 */}
-        <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center justify-between p-4 border-b flex-shrink-0">
           <div className="flex items-center gap-2">
             <Sparkles className="w-6 h-6 text-purple-600" />
             <h2 className="text-xl font-bold text-gray-900">
@@ -175,7 +187,7 @@ export default function SpellSelectorModal({
         </div>
 
         {/* 说明信息 */}
-        <div className="px-4 py-2 bg-purple-50 border-b">
+        <div className="px-4 py-2 bg-purple-50 border-b flex-shrink-0">
           {currentPage === 'cantrips' ? (
             <div className="text-sm text-gray-700">
               <p className="font-semibold">职业：{selectedClass}</p>
@@ -219,7 +231,7 @@ export default function SpellSelectorModal({
         </div>
 
         {/* 法术列表 */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto min-h-0 p-4">
           {currentPage === 'cantrips' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {availableCantrips.map((spell) => {
@@ -339,7 +351,7 @@ export default function SpellSelectorModal({
         </div>
 
         {/* 底部按钮 */}
-        <div className="flex items-center justify-between p-4 border-t bg-gray-50">
+        <div className="flex items-center justify-between p-4 border-t bg-white flex-shrink-0">
           <div className="flex gap-2">
             {currentPage === 'first-level' && (
               <button
@@ -407,4 +419,8 @@ export default function SpellSelectorModal({
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined'
+    ? createPortal(modalContent, document.body)
+    : null;
 }

@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { useCharacterStore } from '@/lib/character-store';
-import { ABILITY_GENERATION_METHODS, getAbilityModifier, Ability } from '@/lib/dnd-data';
+import { getAbilityModifier, Ability } from '@/lib/dnd-data';
 import ClickableAbilityScore from '@/components/ClickableAbilityScore';
 import PointBuyAbilityScore from '@/components/PointBuyAbilityScore';
+import { Dices, Calculator, Edit3 } from 'lucide-react';
 
 export default function StepAbilities() {
   const { currentCharacter, updateCurrentCharacter } = useCharacterStore();
@@ -86,70 +87,65 @@ export default function StepAbilities() {
     return sorted.length === expected.length && sorted.every((v, i) => v === expected[i]);
   };
 
+  // 定义页签配置
+  const tabs = [
+    {
+      id: 'standard-array',
+      name: '标准数组',
+      icon: Dices,
+      description: '推荐新手使用'
+    },
+    {
+      id: 'point-buy',
+      name: '购点法',
+      icon: Calculator,
+      description: '自定义分配'
+    },
+    {
+      id: 'manual',
+      name: '手动输入',
+      icon: Edit3,
+      description: '完全自由'
+    }
+  ];
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="section-title">分配属性值</h2>
-        <p className="text-gray-600 mb-6">
-          六大属性值决定了你的角色在各方面的能力。属性值越高，相关检定越容易成功。
-        </p>
-      </div>
+      {/* 左上角标题 */}
+      <h3 className="text-xl font-bold text-leather-dark font-cinzel">主属性分配</h3>
 
-      {/* 背景属性加值提示 */}
-      {currentCharacter.backgroundAbilityBonuses && Object.keys(currentCharacter.backgroundAbilityBonuses).length > 0 && (
-        <div className="bg-orange-50 border-l-4 border-orange-500 p-4 rounded-r-lg">
-          <div className="font-bold text-orange-900 mb-1">背景属性加值</div>
-          <div className="text-sm text-orange-800">
-            来自背景：
-            {Object.entries(currentCharacter.backgroundAbilityBonuses).map(([ability, bonus]) => (
-              <span key={ability} className="ml-2 font-bold">
-                {ability}+{bonus}
-              </span>
-            ))}
-          </div>
-          <p className="text-xs text-orange-700 mt-1">
-            这些加值会在最终角色卡中自动添加到基础属性上
-          </p>
-        </div>
-      )}
+      {/* 页签式方法选择 - 无内层框体，直接放在页面内 */}
+      {/* 页签头部 */}
+      <div className="flex border-b-2 border-gold-light/30 bg-amber-50/50 rounded-t-xl overflow-hidden">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = method === tab.id;
 
-      {/* 分配方法选择 */}
-      <div>
-        <label className="label">选择分配方法</label>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {ABILITY_GENERATION_METHODS.map((m) => (
+          return (
             <button
-              key={m.id}
-              onClick={() => handleMethodChange(m.id)}
-              className={`p-3 rounded-lg border-2 transition-all text-left ${
-                method === m.id
-                  ? 'border-red-500 bg-red-50'
-                  : 'border-gray-200 hover:border-red-300'
+              key={tab.id}
+              onClick={() => handleMethodChange(tab.id)}
+              className={`flex-1 px-4 py-3 flex items-center justify-center gap-2 transition-all relative ${
+                isActive
+                  ? 'bg-white text-purple-600 font-bold'
+                  : 'text-gray-600 hover:bg-white/60 hover:text-gray-900'
               }`}
             >
-              <div className="font-bold text-sm text-gray-900">{m.name}</div>
-              <div className="text-xs text-gray-600 mt-1">{m.description}</div>
+              <Icon className={`w-5 h-5 ${isActive ? 'text-purple-600' : 'text-gray-500'}`} />
+              <span className="text-sm font-medieval">{tab.name}</span>
+
+              {isActive && (
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-600 to-purple-700"></div>
+              )}
             </button>
-          ))}
-        </div>
+          );
+        })}
       </div>
 
-      <div className="info-box">
-        <div className="text-sm text-blue-800">
-          <strong>属性说明：</strong>
-          <ul className="list-disc list-inside mt-2 space-y-1">
-            <li><strong>属性值</strong>范围通常是 8-15（初始）或更高</li>
-            <li><strong>调整值</strong> = (属性值 - 10) ÷ 2（向下取整）</li>
-            <li>调整值用于大部分检定、攻击和伤害计算</li>
-            <li>建议优先提升职业主要属性</li>
-          </ul>
-        </div>
-      </div>
-
-      {/* 属性值分配 */}
+      {/* 页签内容区 - 无额外框体 */}
       <div>
         {method === 'standard-array' ? (
-          <ClickableAbilityScore 
+          <ClickableAbilityScore
             onComplete={handleScoresComplete}
             initialScores={isStandardArrayAbilities(currentCharacter.abilities) ? currentCharacter.abilities : undefined}
           />
@@ -168,19 +164,18 @@ export default function StepAbilities() {
               return (
                 <div
                   key={ability.key}
-                  className="p-3 rounded-lg border-2 border-gray-300 bg-white"
+                  className="p-4 rounded-lg border-2 border-gold-dark/30 bg-white hover:border-purple-400 transition-colors"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex-1">
-                      <div className="font-bold text-sm text-gray-900">
+                      <label htmlFor={`ability-${ability.key}`} className="font-bold text-base text-leather-dark font-cinzel">
                         {ability.name} ({ability.abbr})
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        {ability.description}
-                      </div>
+                      </label>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-4">
                       <input
+                        id={`ability-${ability.key}`}
+                        name={`ability-${ability.key}`}
                         type="number"
                         min="3"
                         max="20"
@@ -191,13 +186,13 @@ export default function StepAbilities() {
                             parseInt(e.target.value) || 10
                           )
                         }
-                        className="w-16 px-2 py-1 border border-gray-300 rounded text-center font-bold"
+                        className="w-20 px-3 py-2 border-2 border-gray-300 rounded-lg text-center font-bold text-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all"
                       />
-                      <div className="text-right w-12">
-                        <div className="text-xl font-bold text-red-600">
+                      <div className="text-right w-16">
+                        <div className="text-2xl font-bold text-purple-600">
                           {modifierStr}
                         </div>
-                        <div className="text-xs text-gray-500">调整</div>
+                        <div className="text-xs text-gray-500 font-medium">调整值</div>
                       </div>
                     </div>
                   </div>
@@ -206,13 +201,6 @@ export default function StepAbilities() {
             })}
           </div>
         )}
-      </div>
-
-      <div className="info-box">
-        <p className="text-sm text-blue-800">
-          💡 <strong>职业推荐：</strong>不同职业需要不同的主要属性。
-          例如：战士需要高力量或敏捷，法师需要高智力，牧师需要高感知。
-        </p>
       </div>
     </div>
   );

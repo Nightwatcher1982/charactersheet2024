@@ -25,15 +25,18 @@ export default function StepWelcome() {
 
       {/* 可选：角色名称 */}
       <div className="bg-white rounded-lg border-2 border-gray-300 p-5">
-        <label className="block font-bold text-gray-900 mb-2">
+        <label htmlFor="character-name-input" className="block font-bold text-gray-900 mb-2">
           角色名称（可选，稍后也可填写）
         </label>
         <input
+          id="character-name-input"
+          name="characterName"
           type="text"
           value={currentCharacter.name || ''}
           onChange={(e) => updateCurrentCharacter({ name: e.target.value })}
           placeholder="例如：艾瑞克·风行者"
           className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none text-lg"
+          autoComplete="name"
         />
         <p className="text-sm text-gray-500 mt-2">
           为你的角色起一个独特的名字，或暂时留空稍后填写

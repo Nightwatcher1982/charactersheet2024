@@ -169,7 +169,7 @@ export const CANTRIPS: Spell[] = [
     duration: '1分钟',
     description:
       '一只漂浮的幽灵手出现在施法距离内你指定的一点。幽灵手持续存在至法术终止。如果幽灵手与你之间的距离超过30尺，则幽灵手将消失不见。若你再次施展了此法术，现存的幽灵手也将提前消失。\n你可以在施展该法术时使用幽灵手实施一个行为：你可以操控一个物件、打开一扇未上锁的门或容器、将一件物品放入或取出一个打开的容器、或是将小瓶中的内容物倾倒出来。\n在后续的回合中，你可以用魔法 动作控制幽灵手再次实施上述行为之一。而作为那次动作的一部分，你还可以令幽灵手移动至多30尺。\n该幽灵手不能攻击，也不能激活魔法物品或承载超过10磅重的物质。',
-    classes: ['吟游诗人', '术士', '邪术师', '魔契师', '法师', '奇械师']
+    classes: ['吟游诗人', '术士', '魔契师', '法师', '奇械师']
   },
   {
     id: 'message',
@@ -199,7 +199,7 @@ export const CANTRIPS: Spell[] = [
     duration: '1分钟',
     description:
       '你在施法距离内创造一段声响或一个物件的影像，并使之维持至法术持续时间结束，详见以下对应效应的描述。你可以再次施展该法术来终止幻象。\n生物用研究动作调查该声响或影像时，其必须进行一次对抗该法术豁免 DC 的智力（调查）检定，检定成功则判断出是幻象。对于识破幻象的生物而言，幻象会变得模糊不清。\n\n声响Sound。如果你创造一段声响，其音量可以是低声耳语也可以是高声尖叫。它可以是你或其他任何人的嗓音，或者是一头狮子的咆哮、一段鼓声以及任何你指定的其他声响。声响在持续时间内不会减弱，或者你也可以于法术终止前在不同的时间段创造几段分散的声响。\n影像Image。如果你创造一个物件的影像，比如一把椅子、泥泞的脚印、一个小箱子等，则该物件各方向上大小不得大于5尺立方区域。该影像不具有声音、光亮、味道或任何其他的感官效应。由于影像可以被任何物体穿透，因此与之进行物理互动时都会揭露其幻象的本质。',
-    classes: ['吟游诗人', '术士', '邪术师', '魔契师', '法师']
+    classes: ['吟游诗人', '术士', '魔契师', '法师']
   },
   {
     id: 'poison-spray',
@@ -213,7 +213,7 @@ export const CANTRIPS: Spell[] = [
     duration: '立即',
     description:
       '你向施法距离内一个你可见的生物喷出一股毒气。对目标进行一次远程法术攻击。命中时，目标将受1d12点毒素伤害。\n戏法强化。 到达特定等级后，此戏法的伤害将增加1d12：5级（2d12）、11级（3d12）、17级（4d12）。',
-    classes: ['德鲁伊', '术士', '邪术师', '魔契师', '法师', '奇械师'],
+    classes: ['德鲁伊', '术士', '魔契师', '法师', '奇械师'],
     source: 'D&D Beyond（基础规则 2024）',
     sourceUrl: 'https://www.dndbeyond.com/spells/2618875-poison-spray'
   },
@@ -229,7 +229,7 @@ export const CANTRIPS: Spell[] = [
     duration: '至多1小时',
     description:
       '你在施法距离内创造一个魔法效应。从下述效应中选择一项。如果你多次施展该法术，则可以同时维持至多三个不同的非即时效应。\n\n感官效应Sensory Effect。 你创造一个立即生效的，无害的感官效应，比如一束火花，一阵风，微弱音乐或古怪的臭味。\n玩火Fire Play。 你立即点燃或熄灭一根蜡烛、一根火把或一处小篝火。\n清洁或弄脏Clean or Soil。 你立即清洁或弄脏一个体积不大于1立方尺的物件。\n次级感觉Minor Sensation。 你使一个不大于1立方尺的非活体物质变冷、变暖或对其调味，持续1小时。\n魔法印记Magic Mark。 你在一个物件或一个表面上创造一块色斑，一个小印记，或者一个徽记，持续1小时。\n次级造物Minor Creation。 你创造出一个非魔法小饰品或一张虚幻图像，其大小不能超过你的手掌大小，它会持续存在至下个你的回合结束为止。一个小饰品不能造成伤害，也不值任何钱。',
-    classes: ['吟游诗人', '术士', '邪术师', '魔契师', '法师', '奇械师']
+    classes: ['吟游诗人', '术士', '魔契师', '法师', '奇械师']
   },
   {
     id: 'ray-of-frost',
@@ -275,7 +275,7 @@ export const CANTRIPS: Spell[] = [
     components: 'V、S',
     duration: '专注，至多1分钟',
     description: '在此法术结束前，每当有生物对你发动攻击检定，该生物的该次攻击检定都将承受1d4减值。',
-    classes: ['吟游诗人', '术士', '邪术师', '魔契师', '法师']
+    classes: ['吟游诗人', '术士', '魔契师', '法师']
   },
   {
     id: 'chill-touch',
@@ -289,7 +289,7 @@ export const CANTRIPS: Spell[] = [
     duration: '立即',
     description:
       '你引导出来自坟墓的刺骨阴冷，对目标进行一次近战法术攻击。命中时，目标将受到1d10点暗蚀伤害，并且直至你下一回合的结束前都无法恢复生命值。\n戏法强化。 法术的伤害会在你到达下列等级时增加1d10：5级（2d10）、11级（3d10）以及17级（4d10）。',
-    classes: ['术士', '邪术师', '魔契师', '法师'],
+    classes: ['术士', '魔契师', '法师'],
     source: 'D&D Beyond（基础规则 2024）',
     sourceUrl: 'https://www.dndbeyond.com/spells/2618965-chill-touch'
   },
@@ -319,7 +319,7 @@ export const CANTRIPS: Spell[] = [
     duration: '专注，至多1分钟',
     description:
       '你魔法性地向施法距离内的一名可见生物散发出友谊感。目标必须成功于一次感知豁免，否则其在法术持续时间内陷入魅惑状态。若目标并非类人生物，或者你正在与其战斗，又或者你在过去24小时内曾对其施展过这道法术，则其进行的此次豁免自动成功。\n若目标受到伤害，或你进行一次攻击检定、造成伤害、迫使任何人进行一次豁免，则法术会提早结束。法术结束时，目标会知道他曾被你魅惑。',
-    classes: ['吟游诗人', '术士', '邪术师', '魔契师', '法师']
+    classes: ['吟游诗人', '术士', '魔契师', '法师']
   },
   {
     id: 'mind-silver',
@@ -335,7 +335,7 @@ export const CANTRIPS: Spell[] = [
       '指定施法距离内一个你可见的生物，你试图暂时刺入目标的心灵。目标必须通过一次智力豁免 。豁免失败将受到1d6点心灵伤害，并且其在你的下回合结束前，进行的下一次豁免检定将获得1d4减值。\n戏法强化。 到达特定等级后，此戏法的伤害将增加1d6：5级（2d6）、11级（3d6）、17级（4d6）。',
     classes: ['术士', '邪术师', '魔契师', '法师']
   },
-  // 邪术师戏法
+  // 魔契师戏法
   {
     id: 'eldritch-blast',
     name: '魔能爆',
@@ -348,7 +348,7 @@ export const CANTRIPS: Spell[] = [
     duration: '立即',
     description:
       '你释放出一束爆裂能量射线，对施法距离内一名生物或一个物件发动一次远程法术攻击。命中时，目标将受1d10点力场伤害。\n戏法强化。到达5级后此法术将创造出两条射线，11级后三条，17级后四条。你可以使这些射线攻击同一个目标或分别攻击不同的目标。你需要为每条射线分别进行攻击检定。',
-    classes: ['邪术师', '魔契师'],
+    classes: ['魔契师'],
     source: 'D&D Beyond（基础规则 2024）',
     sourceUrl: 'https://www.dndbeyond.com/spells/2619161-eldritch-blast'
   },
@@ -486,7 +486,7 @@ export const CANTRIPS: Spell[] = [
     description:
       '位于以你为原点5尺光环区域内的每名生物必须成功于一次体质豁免，否则受到1d6点雷鸣伤害。此法术会创造出在100尺内都能听见的巨大声响。',
     higherLevel: '戏法强化。到达特定等级后，此戏法的伤害将增加1d6：5级（2d6）、11级（3d6）、17级（4d6）。',
-    classes: ['吟游诗人', '德鲁伊', '术士', '邪术师', '魔契师', '法师', '奇械师']
+    classes: ['吟游诗人', '德鲁伊', '术士', '魔契师', '法师', '奇械师']
   },
   {
     id: 'toll-the-dead',
@@ -502,7 +502,7 @@ export const CANTRIPS: Spell[] = [
       '你对着施法距离内一名你可见的生物一指，随后目标10尺内响起一阵哀恸的钟鸣。目标必须通过一次感知豁免，否则将受到1d8点暗蚀伤害。若目标豁免失败时已损失任意数量生命值，则改为令其受到1d12点暗蚀伤害。',
     higherLevel:
       '戏法强化。到达特定等级后，此戏法的伤害骰将增加一枚：5级（2d8或2d12）、11级（3d8或3d12）、17级（4d8或4d12）。',
-    classes: ['牧师', '邪术师', '魔契师', '法师']
+    classes: ['牧师', '魔契师', '法师']
   },
   {
     id: 'true-strike',
@@ -518,7 +518,7 @@ export const CANTRIPS: Spell[] = [
       '你受到一瞬魔法洞见的指引，使用施展此法术时使用的那把武器发动一次攻击。此次攻击使用你的施法属性（而非力量属性或敏捷属性）进行攻击检定与伤害掷骰。此次攻击造成伤害时，你可以选择将其伤害类型改为光耀伤害，或是维持武器原本的伤害类型。\n（译注：根据术语汇编武器攻击条目，“使用武器发动的攻击”就是“武器攻击”（与“法术攻击”并不冲突）。）',
     higherLevel:
       '戏法强化。到达特定等级后，无论你选择造成光耀伤害还是原本类型的伤害，本次攻击都会额外造成光耀伤害：5级（1d6）、11级（2d6）、17级（3d6）。',
-    classes: ['吟游诗人', '术士', '邪术师', '魔契师', '法师', '奇械师']
+    classes: ['吟游诗人', '术士', '魔契师', '法师', '奇械师']
   },
   {
     id: 'word-of-radiance',
@@ -581,7 +581,7 @@ export const FIRST_LEVEL_SPELLS: Spell[] = [
     ritual: true,
     description:
       '在法术持续时间内，你感受到距你30尺内的魔法效应。若你感知到了此类效应，则你可以用一个魔法动作以看到任何带有该魔法效应的可见生物或物件周围环绕着微弱的灵光，且若该魔法效应属于被法术创造的效应，则你可分辨出其所属的魔法学派。\n此法术会被1尺厚的岩石、泥土或木头，1寸厚的金属，或薄薄一层铅阻隔。',
-    classes: ['吟游诗人', '牧师', '德鲁伊', '圣武士', '游侠', '术士', '邪术师', '魔契师', '法师', '奇械师']
+    classes: ['吟游诗人', '牧师', '德鲁伊', '圣武士', '游侠', '术士', '魔契师', '法师', '奇械师']
   },
   {
     id: 'guiding-bolt',
@@ -798,7 +798,7 @@ export const FIRST_LEVEL_SPELLS: Spell[] = [
     description:
       '选择法术距离内你可见的一名类人生物，迫使该生物进行一次感知豁免，如果你或者你的同伴正在与它战斗，它进行的这次豁免将具有优势。如果它豁免失败，它陷入魅惑状态直到法术结束，或者直到你或你的同伴对它造成伤害。被魅惑的生物将对你友好。在法术结束时，生物会知道它曾被你魅惑。',
     higherLevel: '升环施法。使用的法术位每比一环高一环，你就可以额外选择一个生物作为目标。',
-    classes: ['吟游诗人', '德鲁伊', '术士', '邪术师', '魔契师', '法师']
+    classes: ['吟游诗人', '德鲁伊', '术士', '魔契师', '法师']
   },
   {
     id: 'expeditious-retreat',
@@ -811,9 +811,9 @@ export const FIRST_LEVEL_SPELLS: Spell[] = [
     components: 'V、S',
     duration: '专注，至多10分钟',
     description: '你执行疾走动作，且直到法术结束为止，你均能使用附赠动作执行疾走 动作。',
-    classes: ['术士', '邪术师', '魔契师', '法师', '奇械师']
+    classes: ['术士', '魔契师', '法师', '奇械师']
   },
-  // 邪术师一环法术
+  // 魔契师一环法术
   {
     id: 'armor-of-agathys',
     name: '黯冰狱铠',
@@ -933,7 +933,7 @@ export const FIRST_LEVEL_SPELLS: Spell[] = [
     description:
       '你选择施法距离内至多三个你可见的生物，迫使其分别进行一次魅力豁免。在法术终止前，豁免失败于此次魅力豁免的目标进行的每次攻击检定与豁免检定都必须承受1d4的减值。',
     higherLevel: '升环施法。使用的法术位每比一环高一环，你就可以额外选择一个生物作为目标。',
-    classes: ['吟游诗人', '牧师', '邪术师', '魔契师']
+    classes: ['吟游诗人', '牧师', '魔契师']
   },
   {
     id: 'color-spray',
@@ -991,7 +991,7 @@ export const FIRST_LEVEL_SPELLS: Spell[] = [
     ritual: true,
     description:
       '你在法术持续时间内知晓你所听到或看到手语的所有语言的字面意义。你也可以通过触碰书写的文字来读懂其字面意义。以这种方式阅读每页文字需要花费 1 分钟的时间。这个法术并不能解读符号和暗语。',
-    classes: ['吟游诗人', '术士', '邪术师', '魔契师', '法师']
+    classes: ['吟游诗人', '术士', '魔契师', '法师']
   },
   {
     id: 'create-or-destroy-water',
@@ -1297,7 +1297,7 @@ export const FIRST_LEVEL_SPELLS: Spell[] = [
     duration: '专注，至多10分钟',
     description:
       '法术结束前，你使触碰的一名自愿生物获得针对下述生物类型的防护：异怪、天族、元素、妖精、邪魔、亡灵。\n此防护提供下述几种增益。上述生物类型的生物对目标的攻击检定具有劣势。目标不能被其附身，也不会因其陷入魅惑或恐慌状态。如果目标已经被具有上述生物类型的生物附身，或其魅惑或恐慌状态影响，目标后续进行的相关效应的豁免检定也将具有优势。',
-    classes: ['牧师', '德鲁伊', '圣武士', '邪术师', '魔契师', '法师']
+    classes: ['牧师', '德鲁伊', '圣武士', '魔契师', '法师']
   },
   {
     id: 'purify-food-and-drink',
@@ -1355,7 +1355,7 @@ export const FIRST_LEVEL_SPELLS: Spell[] = [
     ritual: true,
     description:
       '你在法术持续时间内获得理解野兽生物并用语言与其沟通的能力，并且你可以对它们使用交涉动作时任何技能选项都可以适用。\n大多数野兽在谈及和生存与伙伴无关的话题时能说的很少，但至少，一只野兽能够给你提供周遭的地点和怪物的情报，包括任何它们近一日内察觉到过的东西。',
-    classes: ['吟游诗人', '德鲁伊', '游侠', '邪术师', '魔契师']
+    classes: ['吟游诗人', '德鲁伊', '游侠', '魔契师']
   },
   {
     id: 'tashas-hideous-laughter',
@@ -1370,7 +1370,7 @@ export const FIRST_LEVEL_SPELLS: Spell[] = [
     description:
       '施法距离内你可见的一名生物进行一次感知豁免。豁免失败，目标在持续时间内陷入失能和倒地状态。在此期间，目标会不受控制地狂笑（只要它能够发笑），且无法结束自身的倒地状态。\n目标在其每回合结束或受到伤害时，可以再进行一次感知豁免。如果豁免是因受到伤害所致，则该次豁免具有优势。豁免成功时，法术终止。',
     higherLevel: '升环施法。使用的法术位每比一环高一环，你就可以额外选择一个生物作为目标。',
-    classes: ['吟游诗人', '邪术师', '魔契师', '法师']
+    classes: ['吟游诗人', '魔契师', '法师']
   },
   {
     id: 'witch-bolt',
@@ -1475,7 +1475,7 @@ export const FIRST_LEVEL_SPELLS: Spell[] = [
     ritual: true,
     description:
       '该法术创造出一个隐形、无心智、无定形的中型力场。你可以在法术终止前命令它进行简单的工作。该仆役被创造出来后出现在施法距离内一处未占空间的地面上。其AC为10，具有1生命值，力量为2，且不能攻击。若仆从的生命值降至 0，则法术终止。\n在每个自己回合内以一个附赠动作 ，你可以精神性的对仆役下达一道命令，使其移动至多15尺并与一个物件进行互动。仆役可以做人类能做到的简单工作，例如拿取东西、打扫卫生、修补东西、叠衣服、点火、上菜、倒饮料等。一旦你下达了命令，仆役就会尽全力去进行任务直至完成任务，并在此后等待你的下一个命令。\n如果你命令仆役做一件需要它离开你身边60尺的工作，则法术终止。',
-    classes: ['吟游诗人', '邪术师', '魔契师', '法师']
+    classes: ['吟游诗人', '魔契师', '法师']
   }
 ];
 
@@ -1499,8 +1499,31 @@ export function getSpellById(id: string): Spell | undefined {
 
 // 检查职业是否有施法能力
 export function hasSpellcasting(className: string): boolean {
-  const spellcastingClasses = ['牧师', '法师', '术士', '邪术师', '魔契师', '吟游诗人', '圣武士', '德鲁伊', '游侠'];
+  const spellcastingClasses = ['牧师', '法师', '术士', '魔契师', '吟游诗人', '圣武士', '德鲁伊', '游侠'];
   return spellcastingClasses.includes(className);
+}
+
+// 根据职业获取所有法术（戏法+1级法术）
+export function getSpellsByClass(className: string) {
+  return {
+    cantrips: getCantripsForClass(className),
+    level1: getFirstLevelSpellsForClass(className)
+  };
+}
+
+// 获取职业的施法信息（简化版）
+export function getClassSpellInfo(className: string) {
+  const rules = getSpellcastingRules(className, 1);
+  if (!rules) return null;
+  
+  return {
+    cantripsKnown: rules.cantripsKnown,
+    spellsKnown: rules.spellbookSpellsKnown || null, // 法师使用法术书数量
+    isPrepared: className !== '术士' && className !== '吟游诗人' && className !== '魔契师', // 大部分职业需要准备法术
+    preparedCount: rules.preparedSpells,
+    spellSlots: rules.spellSlots,
+    spellcastingAbility: rules.spellcastingAbility
+  };
 }
 
 // 获取职业的施法规则
@@ -1523,7 +1546,7 @@ export interface SpellcastingRules {
     slots: number;
     slotLevel: number;
     recoversOn: '短休' | '长休';
-  }; // 邪术师：契约法术位（短休恢复）
+  }; // 魔契师：契约法术位（短休恢复）
   spellcastingAbility: string; // 施法属性
   spellcastingFocus: string; // 施法法器
 }
@@ -1531,7 +1554,7 @@ export interface SpellcastingRules {
 export function getSpellcastingRules(className: string, level: number = 1, classFeatureChoices?: Record<string, string>): SpellcastingRules | null {
   if (!hasSpellcasting(className)) return null;
 
-  const normalizedClassName = className === '魔契师' ? '邪术师' : className;
+  const normalizedClassName = className === '魔契师' ? '魔契师' : className;
   const normalizedLevel = Math.max(1, Math.min(20, Math.floor(level || 1)));
   const idx = normalizedLevel - 1;
 
@@ -1719,7 +1742,7 @@ export function getSpellcastingRules(className: string, level: number = 1, class
       spellcastingAbility: '感知',
       spellcastingFocus: '德鲁伊法器'
     }),
-    '邪术师': () => {
+    '魔契师': () => {
       const slots = WARLOCK_SLOTS[idx];
       const slotLevel = WARLOCK_SLOT_LEVEL[idx];
       return {
