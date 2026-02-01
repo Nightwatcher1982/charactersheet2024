@@ -17,7 +17,7 @@ function StepSpellCheckMagicInitiateOnly({
   entries,
   onUpdate,
 }: {
-  character: Character;
+  character: Partial<Character>;
   entries: MagicInitiateEntry[];
   onUpdate: (updates: Partial<Character>) => void;
 }) {
