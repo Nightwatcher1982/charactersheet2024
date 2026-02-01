@@ -29,44 +29,47 @@ export const ORIGIN_FEATS: Feat[] = [
   },
   {
     id: 'magic-initiate-cleric',
-    name: '魔法启蒙（牧师）',
+    name: '魔法学徒（牧师）',
     nameEn: 'Magic Initiate (Cleric)',
     type: 'origin',
     category: '法术',
-    description: '你学习了牧师的魔法基础',
+    description: '从牧师法术列表习得两道戏法和一道一环法术',
+    repeatable: true,
     benefits: [
-      '学习2个牧师戏法',
-      '学习1个1级牧师法术，每次长休可施放一次（无需消耗法术位）',
-      '你也可以使用法术位施放该法术',
-      '感知是这些法术的施法属性'
+      '两道戏法：从牧师法术列表选择两道戏法并习得',
+      '一环法术：从该列表选择一道一环法术，始终准备；每长休可无偿施放一次，也可用法术位施放',
+      '施法属性：从智力、感知、魅力中选择一项作为本专长法术的施法属性',
+      '复选：可多次选择本专长，每次须选不同的法术列表'
     ]
   },
   {
     id: 'magic-initiate-druid',
-    name: '魔法启蒙（德鲁伊）',
+    name: '魔法学徒（德鲁伊）',
     nameEn: 'Magic Initiate (Druid)',
     type: 'origin',
     category: '法术',
-    description: '你学习了德鲁伊的魔法基础',
+    description: '从德鲁伊法术列表习得两道戏法和一道一环法术',
+    repeatable: true,
     benefits: [
-      '学习2个德鲁伊戏法',
-      '学习1个1级德鲁伊法术，每次长休可施放一次（无需消耗法术位）',
-      '你也可以使用法术位施放该法术',
-      '感知是这些法术的施法属性'
+      '两道戏法：从德鲁伊法术列表选择两道戏法并习得',
+      '一环法术：从该列表选择一道一环法术，始终准备；每长休可无偿施放一次，也可用法术位施放',
+      '施法属性：从智力、感知、魅力中选择一项作为本专长法术的施法属性',
+      '复选：可多次选择本专长，每次须选不同的法术列表'
     ]
   },
   {
     id: 'magic-initiate-wizard',
-    name: '魔法启蒙（法师）',
+    name: '魔法学徒（法师）',
     nameEn: 'Magic Initiate (Wizard)',
     type: 'origin',
     category: '法术',
-    description: '你学习了法师的魔法基础',
+    description: '从法师法术列表习得两道戏法和一道一环法术',
+    repeatable: true,
     benefits: [
-      '学习2个法师戏法',
-      '学习1个1级法师法术，每次长休可施放一次（无需消耗法术位）',
-      '你也可以使用法术位施放该法术',
-      '智力是这些法术的施法属性'
+      '两道戏法：从法师法术列表选择两道戏法并习得',
+      '一环法术：从该列表选择一道一环法术，始终准备；每长休可无偿施放一次，也可用法术位施放',
+      '施法属性：从智力、感知、魅力中选择一项作为本专长法术的施法属性',
+      '复选：可多次选择本专长，每次须选不同的法术列表'
     ]
   },
   {
@@ -595,6 +598,48 @@ export const ORIGIN_FEATS: Feat[] = [
     ]
   }
 ];
+
+// 人类「多才多艺」可选专长：仅 2024 规则中的起源专长（非全部 type=origin 的专长）
+export const VERSATILE_ORIGIN_FEAT_IDS: string[] = [
+  'alert',           // 警觉
+  'healer',          // 医疗师
+  'lucky',           // 幸运
+  'magic-initiate-cleric',
+  'magic-initiate-druid',
+  'magic-initiate-wizard',
+  'savage-attacker', // 凶蛮打手
+  'skilled',         // 熟习
+  'tavern-brawler',  // 酒馆斗殴者
+  'tough',           // 健壮
+];
+
+/** 人类多才多艺可选专长列表（仅起源专长） */
+export function getVersatileOriginFeats(): Feat[] {
+  return ORIGIN_FEATS.filter((f) => VERSATILE_ORIGIN_FEAT_IDS.includes(f.id));
+}
+
+// 魔法学徒专长 ID 列表（复选时每次须选不同法术列表）
+export const MAGIC_INITIATE_FEAT_IDS = ['magic-initiate-cleric', 'magic-initiate-druid', 'magic-initiate-wizard'] as const;
+export type MagicInitiateFeatId = (typeof MAGIC_INITIATE_FEAT_IDS)[number];
+
+/** 根据魔法学徒专长 ID 返回对应的法术列表职业名（用于 getSpellsByClass） */
+export function getMagicInitiateSpellList(featId: string): '牧师' | '德鲁伊' | '法师' | null {
+  switch (featId) {
+    case 'magic-initiate-cleric':
+      return '牧师';
+    case 'magic-initiate-druid':
+      return '德鲁伊';
+    case 'magic-initiate-wizard':
+      return '法师';
+    default:
+      return null;
+  }
+}
+
+/** 判断是否为魔法学徒专长 */
+export function isMagicInitiateFeat(featId: string): boolean {
+  return (MAGIC_INITIATE_FEAT_IDS as readonly string[]).includes(featId);
+}
 
 // 根据ID获取专长
 export function getFeatById(id: string): Feat | undefined {

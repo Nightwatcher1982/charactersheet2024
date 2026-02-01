@@ -5,10 +5,12 @@ import { createPortal } from 'react-dom';
 import { useCharacterStore } from '@/lib/character-store';
 import { BACKGROUNDS } from '@/lib/dnd-data';
 import { getAssetPath } from '@/lib/asset-path';
-import { getFeatById } from '@/lib/feats-data';
+import { getFeatById, isMagicInitiateFeat } from '@/lib/feats-data';
+import { getMagicInitiateSpellInfo } from '@/lib/spells-data';
 import { Check, ChevronDown, ChevronUp, Star, ArrowRight, Info, Package } from 'lucide-react';
 import EquipmentSelector from '@/components/EquipmentSelector';
 import BackgroundAbilityBonus from '@/components/BackgroundAbilityBonus';
+import MagicInitiateSpellModal from '@/components/MagicInitiateSpellModal';
 
 // 背景简介（一句话）
 const getBackgroundSummary = (backgroundName: string): string => {
@@ -70,6 +72,10 @@ export default function StepOriginBackground({ onNextSubStep }: StepOriginBackgr
   const [showEquipmentSelector, setShowEquipmentSelector] = useState(false);
   const [showAbilityBonus, setShowAbilityBonus] = useState(false);
   const [tempEquipmentChoice, setTempEquipmentChoice] = useState<'A' | 'B' | null>(null);
+  /** 主属性加值弹窗内当前加值，供底栏「确认属性加值」显示与提交 */
+  const [abilityBonusState, setAbilityBonusState] = useState<{ bonuses: Record<string, number>; total: number }>({ bonuses: {}, total: 0 });
+  /** 背景为魔法学徒专长时，进入装备选择前先完成戏法/一环法术/施法属性选择 */
+  const [pendingMagicInitiateFeatId, setPendingMagicInitiateFeatId] = useState<string | null>(null);
 
   // 清理函数 - 只在组件卸载时执行
   useEffect(() => {
@@ -87,6 +93,9 @@ export default function StepOriginBackground({ onNextSubStep }: StepOriginBackgr
         setShowAbilityBonus(true);
         setShowEquipmentSelector(false);
         setTempEquipmentChoice(null);
+        const bonuses = currentCharacter.backgroundAbilityBonuses || {};
+        const total = Object.values(bonuses).reduce((s, v) => s + v, 0);
+        setAbilityBonusState({ bonuses, total });
       }
     };
     window.addEventListener('triggerBackgroundConfiguration', handleTriggerConfig);
@@ -112,10 +121,18 @@ export default function StepOriginBackground({ onNextSubStep }: StepOriginBackgr
     updateCurrentCharacter({
       backgroundAbilityBonuses: bonuses
     });
-    // 主属性选择完成后，显示装备选择
     setShowAbilityBonus(false);
     setTempEquipmentChoice(currentCharacter.backgroundEquipmentChoice || null);
     setShowEquipmentSelector(true);
+    // 若背景专长为魔法学徒，且尚未选择戏法/一环法术，先弹出法术选择
+    const bg = BACKGROUNDS.find(b => b.name === currentCharacter.background);
+    if (bg && isMagicInitiateFeat(bg.featId as string)) {
+      const info = getMagicInitiateSpellInfo(currentCharacter);
+      const entry = info.entries.find(e => e.featId === bg.featId);
+      if (!entry || entry.cantrips.length < 2 || !entry.level1Spell) {
+        setPendingMagicInitiateFeatId(bg.featId as string);
+      }
+    }
   };
 
   const handleEquipmentSelect = (choice: 'A' | 'B') => {
@@ -126,20 +143,36 @@ export default function StepOriginBackground({ onNextSubStep }: StepOriginBackgr
   };
 
   const handleEquipmentComplete = () => {
-    // 保存临时选择到实际的 character store
     if (tempEquipmentChoice) {
       updateCurrentCharacter({
         backgroundEquipmentChoice: tempEquipmentChoice
       });
     }
-    // 装备选择完成，返回起源步骤主界面，让用户继续选择物种
     setShowEquipmentSelector(false);
     setShowAbilityBonus(false);
     setTempEquipmentChoice(null);
-    // 调用父组件的回调，进入下一个子步骤（物种）
-    if (onNextSubStep) {
-      onNextSubStep();
+    setPendingMagicInitiateFeatId(null);
+    if (onNextSubStep) onNextSubStep();
+  };
+
+  const handleMagicInitiateComplete = (featId: string, choice: { cantrips: string[]; spell: string; ability: string }) => {
+    const raw = currentCharacter.classFeatureChoices?.magicInitiateChoices;
+    let choices: Record<string, { cantrips: string[]; spell: string; ability: string }> = {};
+    if (raw) {
+      try {
+        choices = JSON.parse(raw) as Record<string, { cantrips: string[]; spell: string; ability: string }>;
+      } catch {
+        // ignore
+      }
     }
+    choices[featId] = choice;
+    updateCurrentCharacter({
+      classFeatureChoices: {
+        ...(currentCharacter.classFeatureChoices || {}),
+        magicInitiateChoices: JSON.stringify(choices)
+      }
+    });
+    setPendingMagicInitiateFeatId(null);
   };
 
   // 显示主属性加值选择弹窗
@@ -147,15 +180,14 @@ export default function StepOriginBackground({ onNextSubStep }: StepOriginBackgr
     const background = BACKGROUNDS.find(b => b.name === currentCharacter.background);
     if (!background) return null;
 
-    // 获取背景的专长信息
     const feat = getFeatById(background.featId as string);
 
     return (
       <>
         {/* 主属性加值选择弹窗 - Portal 挂载到 body，z-[100] */}
         {typeof document !== 'undefined' && createPortal(
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-6">
-            <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col min-h-0">
             {/* 标题栏 */}
             <div className="bg-leather-dark text-white p-4 flex items-center justify-between border-b-2 border-gold-dark flex-shrink-0">
               <div className="flex items-center gap-2">
@@ -176,10 +208,10 @@ export default function StepOriginBackground({ onNextSubStep }: StepOriginBackgr
               </button>
             </div>
 
-            {/* 内容区 */}
+            {/* 内容区：可滚动，为底栏留出空间 */}
             <div className="p-6 overflow-y-auto flex-1 min-h-0">
               <BackgroundAbilityBonus
-                key={background.name} // 添加 key 确保背景切换时重新渲染
+                key={background.name}
                 availableAbilities={background.abilityChoices || ['力量', '敏捷', '体质', '智力', '感知', '魅力']}
                 onComplete={handleAbilityBonusComplete}
                 initialBonuses={currentCharacter.backgroundAbilityBonuses}
@@ -188,10 +220,12 @@ export default function StepOriginBackground({ onNextSubStep }: StepOriginBackgr
                 backgroundSkills={background.skills}
                 backgroundTools={background.toolProficiency}
                 backgroundFeat={feat?.name}
+                hideConfirmButton
+                onBonusesChange={(bonuses, total) => setAbilityBonusState({ bonuses, total })}
               />
             </div>
 
-            {/* 底部按钮 */}
+            {/* 底部按钮：固定可见，确认与取消并排 */}
             <div className="p-4 border-t-2 border-gray-200 bg-white flex gap-3 flex-shrink-0">
               <button
                 type="button"
@@ -200,6 +234,17 @@ export default function StepOriginBackground({ onNextSubStep }: StepOriginBackgr
               >
                 取消
               </button>
+              {abilityBonusState.total === 3 && (
+                <button
+                  type="button"
+                  id="ability-bonus-confirm"
+                  onClick={() => handleAbilityBonusComplete(abilityBonusState.bonuses)}
+                  className="flex-1 py-2.5 px-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 shadow-md"
+                >
+                  <Check className="w-5 h-5" />
+                  确认属性加值
+                </button>
+              )}
             </div>
           </div>
         </div>,
@@ -223,7 +268,7 @@ export default function StepOriginBackground({ onNextSubStep }: StepOriginBackgr
     const background = BACKGROUNDS.find(b => b.name === currentCharacter.background);
     if (!background) return null;
 
-    // 首次进入装备选择时，添加背景的技能和专长
+    // 首次进入装备选择时，添加背景的技能和专长（合并到现有专长，不覆盖人类多才多艺等已选专长）
     if (!currentCharacter.feats?.includes(background.featId as string)) {
       const currentSkills = currentCharacter.skills || [];
       const oldBg = BACKGROUNDS.find(b => b.name !== currentCharacter.background && currentSkills.some(s => b.skills.includes(s)));
@@ -231,15 +276,34 @@ export default function StepOriginBackground({ onNextSubStep }: StepOriginBackgr
         ? currentSkills.filter(skill => !oldBg.skills.includes(skill))
         : currentSkills;
       const newSkills = [...skillsWithoutOldBg, ...background.skills];
-      
+      const currentFeats = currentCharacter.feats || [];
       updateCurrentCharacter({ 
-        feats: [background.featId as string],
+        feats: [...currentFeats, background.featId as string],
         skills: newSkills
       });
     }
 
     return (
       <>
+        {/* 背景为魔法学徒专长时，先完成戏法/一环法术/施法属性选择 */}
+        {pendingMagicInitiateFeatId && typeof document !== 'undefined' && createPortal(
+          (() => {
+            const miInfo = getMagicInitiateSpellInfo(currentCharacter);
+            const entry = miInfo.entries.find((e) => e.featId === pendingMagicInitiateFeatId);
+            return (
+              <MagicInitiateSpellModal
+                isOpen={true}
+                onClose={() => setPendingMagicInitiateFeatId(null)}
+                featId={pendingMagicInitiateFeatId}
+                onComplete={(choice) => handleMagicInitiateComplete(pendingMagicInitiateFeatId, choice)}
+                initialCantrips={entry?.cantrips ?? []}
+                initialSpell={entry?.level1Spell ?? ''}
+                initialAbility={entry?.ability ?? ''}
+              />
+            );
+          })(),
+          document.body
+        )}
         {/* 背景装备选择弹窗 - Portal 挂载到 body，z-[100] */}
         {typeof document !== 'undefined' && createPortal(
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-6">

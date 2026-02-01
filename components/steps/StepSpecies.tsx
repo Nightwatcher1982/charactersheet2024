@@ -9,6 +9,9 @@ import { Info } from 'lucide-react';
 import SpeciesTraitSelector from '@/components/SpeciesTraitSelector';
 import FeatSelector from '@/components/FeatSelector';
 import SkillSelectorModal from '@/components/SkillSelectorModal';
+import MagicInitiateSpellModal from '@/components/MagicInitiateSpellModal';
+import { isMagicInitiateFeat } from '@/lib/feats-data';
+import { getMagicInitiateSpellInfo } from '@/lib/spells-data';
 
 // 物种图标映射
 const getSpeciesIconPath = (speciesName: string): string => {
@@ -56,6 +59,8 @@ export default function StepSpecies({ onComplete }: StepSpeciesProps = {}) {
   const [traitsCompleted, setTraitsCompleted] = useState(false);
   const [pendingSkillChoice, setPendingSkillChoice] = useState<{choiceId: string, options: string[]} | null>(null);
   const [skillModalCalled, setSkillModalCalled] = useState(false);
+  /** 人类选择魔法学徒专长后，需先完成戏法/一环法术/施法属性选择 */
+  const [pendingMagicInitiateFeatId, setPendingMagicInitiateFeatId] = useState<string | null>(null);
 
   useEffect(() => {
     // 移除自动跳转逻辑,仅当已经进入详情页时才处理物种特性
@@ -331,12 +336,35 @@ export default function StepSpecies({ onComplete }: StepSpeciesProps = {}) {
         feats: [...currentFeats, featId]
       });
     }
-    setShowFeatSelector(false);
-    
-    // 专长选择完成，调用父组件回调进入语言选择
-    if (onComplete) {
-      onComplete();
+    if (isMagicInitiateFeat(featId)) {
+      // 魔法学徒专长：先完成戏法/一环法术/施法属性选择，再关闭
+      setPendingMagicInitiateFeatId(featId);
+      return;
     }
+    setShowFeatSelector(false);
+    if (onComplete) onComplete();
+  };
+
+  const handleMagicInitiateComplete = (featId: string, choice: { cantrips: string[]; spell: string; ability: string }) => {
+    const raw = currentCharacter.classFeatureChoices?.magicInitiateChoices;
+    let choices: Record<string, { cantrips: string[]; spell: string; ability: string }> = {};
+    if (raw) {
+      try {
+        choices = JSON.parse(raw) as Record<string, { cantrips: string[]; spell: string; ability: string }>;
+      } catch {
+        // ignore
+      }
+    }
+    choices[featId] = choice;
+    updateCurrentCharacter({
+      classFeatureChoices: {
+        ...(currentCharacter.classFeatureChoices || {}),
+        magicInitiateChoices: JSON.stringify(choices)
+      }
+    });
+    setPendingMagicInitiateFeatId(null);
+    setShowFeatSelector(false);
+    if (onComplete) onComplete();
   };
 
   // 获取物种技能选择选项
@@ -440,10 +468,35 @@ export default function StepSpecies({ onComplete }: StepSpeciesProps = {}) {
                 onCancel={() => setShowFeatSelector(false)}
                 title=""
                 description=""
+                originOnlyVersatile={true}
               />
             </div>
           </div>
         </div>,
+        document.body
+      )}
+
+      {/* 人类选择魔法学徒专长后：戏法/一环法术/施法属性选择 */}
+      {pendingMagicInitiateFeatId && typeof document !== 'undefined' && createPortal(
+        (() => {
+          const miInfo = getMagicInitiateSpellInfo(currentCharacter);
+          const entry = miInfo.entries.find((e) => e.featId === pendingMagicInitiateFeatId);
+          return (
+            <MagicInitiateSpellModal
+              isOpen={true}
+              onClose={() => {
+                setPendingMagicInitiateFeatId(null);
+                setShowFeatSelector(false);
+                if (onComplete) onComplete();
+              }}
+              featId={pendingMagicInitiateFeatId}
+              onComplete={(choice) => handleMagicInitiateComplete(pendingMagicInitiateFeatId, choice)}
+              initialCantrips={entry?.cantrips ?? []}
+              initialSpell={entry?.level1Spell ?? ''}
+              initialAbility={entry?.ability ?? ''}
+            />
+          );
+        })(),
         document.body
       )}
 

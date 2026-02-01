@@ -1,5 +1,7 @@
 // D&D 2024 法术数据
 
+import { getMagicInitiateSpellList } from '@/lib/feats-data';
+
 export interface Spell {
   id: string;
   name: string;
@@ -1509,6 +1511,45 @@ export function getSpellsByClass(className: string) {
     cantrips: getCantripsForClass(className),
     level1: getFirstLevelSpellsForClass(className)
   };
+}
+
+// 魔法学徒专长：从 classFeatureChoices.magicInitiateChoices 读取每个专长的戏法/一环法术/施法属性
+export interface MagicInitiateEntry {
+  featId: string;
+  listName: '牧师' | '德鲁伊' | '法师';
+  cantrips: string[];
+  level1Spell: string;
+  ability: string; // 智力 | 感知 | 魅力
+}
+
+export function getMagicInitiateSpellInfo(character: {
+  feats?: string[];
+  classFeatureChoices?: Record<string, string>;
+}): { entries: MagicInitiateEntry[] } {
+  const feats = character.feats || [];
+  const raw = character.classFeatureChoices?.magicInitiateChoices;
+  let choices: Record<string, { cantrips: string[]; spell: string; ability: string }> = {};
+  if (raw) {
+    try {
+      choices = JSON.parse(raw) as Record<string, { cantrips: string[]; spell: string; ability: string }>;
+    } catch {
+      // ignore
+    }
+  }
+  const entries: MagicInitiateEntry[] = [];
+  for (const featId of feats) {
+    const listName = getMagicInitiateSpellList(featId);
+    if (!listName) continue;
+    const c = choices[featId] || { cantrips: [], spell: '', ability: listName === '法师' ? '智力' : '感知' };
+    entries.push({
+      featId,
+      listName,
+      cantrips: Array.isArray(c.cantrips) ? c.cantrips : [],
+      level1Spell: c.spell || '',
+      ability: c.ability || (listName === '法师' ? '智力' : '感知')
+    });
+  }
+  return { entries };
 }
 
 // 获取职业的施法信息（简化版）

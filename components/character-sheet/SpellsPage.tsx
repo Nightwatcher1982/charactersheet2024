@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { Character, getAbilityModifier, getProficiencyBonus } from '@/lib/dnd-data';
-import { getSpellById, getClassSpellInfo } from '@/lib/spells-data';
-import { Wand2, Sparkles, Zap, Trash2, AlertCircle, Plus } from 'lucide-react';
+import { getSpellById, getClassSpellInfo, getMagicInitiateSpellInfo, type MagicInitiateEntry } from '@/lib/spells-data';
+import { getFeatById } from '@/lib/feats-data';
+import { Wand2, Sparkles, Zap, Trash2, AlertCircle, Plus, Pencil } from 'lucide-react';
 import AddSpellModal from './AddSpellModal';
+import MagicInitiateSpellModal from '@/components/MagicInitiateSpellModal';
 
 interface SpellsPageProps {
   character: Partial<Character>;
@@ -12,6 +14,152 @@ interface SpellsPageProps {
 }
 
 type SpellTab = 'cantrips' | 'level1' | 'level2';
+
+/** 仅魔法学徒专长（非施法职业）的法术页：显示专长戏法 + 一环法术，可编辑 */
+function MagicInitiateOnlySpellsView({
+  character,
+  onUpdate,
+  entries,
+}: {
+  character: Partial<Character>;
+  onUpdate: (updates: Partial<Character>) => void;
+  entries: MagicInitiateEntry[];
+}) {
+  const [editingFeatId, setEditingFeatId] = useState<string | null>(null);
+
+  const abilities = character.abilities || {
+    strength: 10,
+    dexterity: 10,
+    constitution: 10,
+    intelligence: 10,
+    wisdom: 10,
+    charisma: 10,
+  };
+  const finalAbilities = { ...abilities };
+  if (character.backgroundAbilityBonuses) {
+    const abilityMap: Record<string, keyof typeof abilities> = {
+      '力量': 'strength',
+      '敏捷': 'dexterity',
+      '体质': 'constitution',
+      '智力': 'intelligence',
+      '感知': 'wisdom',
+      '魅力': 'charisma',
+    };
+    Object.entries(character.backgroundAbilityBonuses).forEach(([abilityName, bonus]) => {
+      const key = abilityMap[abilityName];
+      if (key) finalAbilities[key] += bonus;
+    });
+  }
+  const abilityNameToKey: Record<string, keyof typeof abilities> = {
+    '智力': 'intelligence',
+    '感知': 'wisdom',
+    '魅力': 'charisma',
+  };
+  const profBonus = getProficiencyBonus(character.level || 1);
+
+  const handleMagicInitiateComplete = (featId: string, choice: { cantrips: string[]; spell: string; ability: string }) => {
+    const raw = character.classFeatureChoices?.magicInitiateChoices;
+    let choices: Record<string, { cantrips: string[]; spell: string; ability: string }> = {};
+    if (raw) {
+      try {
+        choices = JSON.parse(raw) as Record<string, { cantrips: string[]; spell: string; ability: string }>;
+      } catch {
+        // ignore
+      }
+    }
+    choices[featId] = choice;
+    onUpdate({
+      classFeatureChoices: {
+        ...(character.classFeatureChoices || {}),
+        magicInitiateChoices: JSON.stringify(choices),
+      },
+    });
+    setEditingFeatId(null);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-xl shadow-lg border-2 border-gold-light p-6">
+        <h2 className="text-2xl font-cinzel font-bold text-purple-900 mb-2">魔法学徒（专长）</h2>
+        <p className="text-sm text-gray-600 mb-4">
+          以下法术来自你通过专长习得的能力，每长休可无偿施放一次一环法术；也可使用法术位施放。
+        </p>
+        {entries.map((entry) => {
+          const abilityKey = abilityNameToKey[entry.ability] || 'intelligence';
+          const abilityMod = getAbilityModifier(finalAbilities[abilityKey]);
+          const spellSaveDC = 8 + profBonus + abilityMod;
+          const spellAttackBonus = profBonus + abilityMod;
+          const feat = getFeatById(entry.featId);
+
+          return (
+            <div key={entry.featId} className="mb-6 p-4 rounded-xl border-2 border-purple-200 bg-purple-50/50">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-bold text-purple-900">{feat?.name ?? entry.listName}</h3>
+                <div className="flex items-center gap-2 text-sm text-purple-700">
+                  <span>施法属性：{entry.ability}</span>
+                  <span>豁免 DC {spellSaveDC}</span>
+                  <span>命中 +{spellAttackBonus >= 0 ? '' : ''}{spellAttackBonus}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditingFeatId(entry.featId)}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium"
+                >
+                  <Pencil className="w-4 h-4" />
+                  编辑
+                </button>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-purple-700">戏法（2）</p>
+                {entry.cantrips.length > 0 ? (
+                  <ul className="space-y-1">
+                    {entry.cantrips.map((id) => {
+                      const s = getSpellById(id);
+                      return s ? (
+                        <li key={id} className="text-sm text-gray-800">
+                          {s.name} ({s.nameEn}) · {s.school}
+                        </li>
+                      ) : null;
+                    })}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-gray-500">未选择</p>
+                )}
+                <p className="text-xs font-semibold text-purple-700 mt-2">一环法术（1，每长休可无偿施放一次）</p>
+                {entry.level1Spell ? (
+                  (() => {
+                    const s = getSpellById(entry.level1Spell);
+                    return s ? (
+                      <p className="text-sm text-gray-800">
+                        {s.name} ({s.nameEn}) · {s.school} · {s.castingTime} · {s.range}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-gray-500">未选择</p>
+                    );
+                  })()
+                ) : (
+                  <p className="text-sm text-gray-500">未选择</p>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {editingFeatId && (
+        <MagicInitiateSpellModal
+          isOpen={true}
+          onClose={() => setEditingFeatId(null)}
+          featId={editingFeatId}
+          onComplete={(choice) => handleMagicInitiateComplete(editingFeatId, choice)}
+          initialCantrips={entries.find((e) => e.featId === editingFeatId)?.cantrips ?? []}
+          initialSpell={entries.find((e) => e.featId === editingFeatId)?.level1Spell ?? ''}
+          initialAbility={entries.find((e) => e.featId === editingFeatId)?.ability ?? ''}
+        />
+      )}
+    </div>
+  );
+}
 
 export default function SpellsPage({ character, onUpdate }: SpellsPageProps) {
   const [activeTab, setActiveTab] = useState<SpellTab>('cantrips');
@@ -27,13 +175,22 @@ export default function SpellsPage({ character, onUpdate }: SpellsPageProps) {
   }
 
   const spellInfo = getClassSpellInfo(character.class);
-  
-  if (!spellInfo) {
+  const magicInitiateInfo = getMagicInitiateSpellInfo(character);
+
+  // 非施法职业且无魔法学徒专长：提示
+  if (!spellInfo && magicInitiateInfo.entries.length === 0) {
     return (
       <div className="bg-white rounded-xl shadow-lg border-2 border-gold-light p-8 text-center">
         <Wand2 className="w-16 h-16 text-gray-400 mx-auto mb-3" />
         <p className="text-gray-600">{character.class} 不是施法职业</p>
       </div>
+    );
+  }
+
+  // 仅魔法学徒专长（非施法职业）：只显示专长法术
+  if (!spellInfo && magicInitiateInfo.entries.length > 0) {
+    return (
+      <MagicInitiateOnlySpellsView character={character} onUpdate={onUpdate} entries={magicInitiateInfo.entries} />
     );
   }
 

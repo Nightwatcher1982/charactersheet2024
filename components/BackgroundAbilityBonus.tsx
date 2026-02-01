@@ -12,6 +12,10 @@ interface BackgroundAbilityBonusProps {
   backgroundSkills?: string[];
   backgroundTools?: string;
   backgroundFeat?: string;
+  /** 为 true 时不渲染内部确认按钮，由父级（如弹窗底栏）统一提供 */
+  hideConfirmButton?: boolean;
+  /** 加值变化时回调，供父级同步状态并在底栏显示确认按钮 */
+  onBonusesChange?: (bonuses: Record<string, number>, total: number) => void;
 }
 
 export default function BackgroundAbilityBonus({ 
@@ -22,23 +26,24 @@ export default function BackgroundAbilityBonus({
   backgroundSummary,
   backgroundSkills,
   backgroundTools,
-  backgroundFeat
+  backgroundFeat,
+  hideConfirmButton = false,
+  onBonusesChange
 }: BackgroundAbilityBonusProps) {
   const [bonuses, setBonuses] = useState<Record<string, number>>(initialBonuses);
   const [distributionMode, setDistributionMode] = useState<'2-1' | '1-1-1'>('2-1');
 
   useEffect(() => {
-    // 禁用body滚动
     document.body.style.overflow = 'hidden';
-    
-    // 清理函数
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
+    return () => { document.body.style.overflow = 'unset'; };
   }, []);
 
   const totalAssigned = Object.values(bonuses).reduce((sum, val) => sum + val, 0);
   const isComplete = totalAssigned === 3;
+
+  useEffect(() => {
+    onBonusesChange?.(bonuses, totalAssigned);
+  }, [bonuses, totalAssigned, onBonusesChange]);
 
   const handleIncrement = (ability: string) => {
     const current = bonuses[ability] || 0;
@@ -252,8 +257,8 @@ export default function BackgroundAbilityBonus({
         })}
       </div>
 
-      {/* 确认按钮 */}
-      {isComplete && (
+      {/* 确认按钮（hideConfirmButton 时由弹窗底栏提供，此处不渲染） */}
+      {!hideConfirmButton && isComplete && (
         <div className="pt-2">
           <button
             type="button"

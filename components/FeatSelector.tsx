@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ORIGIN_FEATS, Feat, checkFeatPrerequisite } from '@/lib/feats-data';
+import { ORIGIN_FEATS, getVersatileOriginFeats, Feat, checkFeatPrerequisite } from '@/lib/feats-data';
 import { Check, Search, Filter } from 'lucide-react';
 import FeatDisplay from './FeatDisplay';
 
@@ -12,6 +12,8 @@ interface FeatSelectorProps {
   onCancel?: () => void;
   title?: string;
   description?: string;
+  /** 人类多才多艺：仅显示 2024 起源专长（约 10 个），否则显示全部 ORIGIN_FEATS */
+  originOnlyVersatile?: boolean;
 }
 
 export default function FeatSelector({
@@ -20,7 +22,8 @@ export default function FeatSelector({
   onComplete,
   onCancel,
   title = '选择专长',
-  description = '从以下起源专长中选择一个'
+  description = '从以下起源专长中选择一个',
+  originOnlyVersatile = false,
 }: FeatSelectorProps) {
   const [selectedFeat, setSelectedFeat] = useState<string | null>(initialFeat || null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,11 +36,13 @@ export default function FeatSelector({
     }
   };
 
-  // 获取所有类别
-  const categories = Array.from(new Set(ORIGIN_FEATS.map(f => f.category).filter(Boolean))) as string[];
+  const featList = originOnlyVersatile ? getVersatileOriginFeats() : ORIGIN_FEATS;
+
+  // 获取所有类别（基于当前列表）
+  const categories = Array.from(new Set(featList.map(f => f.category).filter(Boolean))) as string[];
 
   // 过滤专长
-  const filteredFeats = ORIGIN_FEATS.filter(feat => {
+  const filteredFeats = featList.filter(feat => {
     // 搜索过滤
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
@@ -106,7 +111,7 @@ export default function FeatSelector({
 
       {/* 统计信息 - 紧凑 */}
       <div className="flex items-center justify-between text-xs text-gray-600 px-0.5">
-        <span>显示 <strong className="text-purple-600">{filteredFeats.length}</strong> / {ORIGIN_FEATS.length} 个</span>
+        <span>显示 <strong className="text-purple-600">{filteredFeats.length}</strong> / {featList.length} 个</span>
         {selectedFeat && <span className="text-green-600 font-medium">✓ 已选 1 个</span>}
       </div>
 

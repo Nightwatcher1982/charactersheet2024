@@ -2,10 +2,95 @@
 
 import { useState } from 'react';
 import { useCharacterStore } from '@/lib/character-store';
-import { Sparkles, Wand2, Check, Circle } from 'lucide-react';
-import { getSpellsByClass, getClassSpellInfo } from '@/lib/spells-data';
+import { Sparkles, Wand2, Check, Circle, Pencil } from 'lucide-react';
+import { getSpellsByClass, getClassSpellInfo, getMagicInitiateSpellInfo, getSpellById } from '@/lib/spells-data';
+import { getFeatById } from '@/lib/feats-data';
+import MagicInitiateSpellModal from '@/components/MagicInitiateSpellModal';
+import type { MagicInitiateEntry } from '@/lib/spells-data';
+import type { Character } from '@/lib/dnd-data';
 
 type TabType = 'cantrips' | 'spells';
+
+/** 仅魔法学徒专长的法术检查：列出专长戏法 + 一环法术，可编辑 */
+function StepSpellCheckMagicInitiateOnly({
+  character,
+  entries,
+  onUpdate,
+}: {
+  character: Character;
+  entries: MagicInitiateEntry[];
+  onUpdate: (updates: Partial<Character>) => void;
+}) {
+  const [editingFeatId, setEditingFeatId] = useState<string | null>(null);
+
+  const handleMagicInitiateComplete = (featId: string, choice: { cantrips: string[]; spell: string; ability: string }) => {
+    const raw = character.classFeatureChoices?.magicInitiateChoices;
+    let choices: Record<string, { cantrips: string[]; spell: string; ability: string }> = {};
+    if (raw) {
+      try {
+        choices = JSON.parse(raw) as Record<string, { cantrips: string[]; spell: string; ability: string }>;
+      } catch {
+        // ignore
+      }
+    }
+    choices[featId] = choice;
+    onUpdate({
+      classFeatureChoices: {
+        ...(character.classFeatureChoices || {}),
+        magicInitiateChoices: JSON.stringify(choices),
+      },
+    });
+    setEditingFeatId(null);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="section-title">法术检查</h2>
+        <p className="text-gray-600 mb-4">以下为通过魔法学徒专长习得的戏法与一环法术。</p>
+      </div>
+      {entries.map((entry) => {
+        const feat = getFeatById(entry.featId);
+        const incomplete = entry.cantrips.length < 2 || !entry.level1Spell;
+
+        return (
+          <div key={entry.featId} className="bg-purple-50 border-2 border-purple-200 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-bold text-purple-900">{feat?.name ?? entry.listName}</h3>
+              <button
+                type="button"
+                onClick={() => setEditingFeatId(entry.featId)}
+                className="flex items-center gap-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium"
+              >
+                <Pencil className="w-4 h-4" />
+                编辑
+              </button>
+            </div>
+            {incomplete && (
+              <p className="text-amber-700 text-sm mb-2">请完成选择：2 道戏法 + 1 道一环法术。</p>
+            )}
+            <div className="text-sm text-gray-700 space-y-1">
+              <p><strong>戏法：</strong>{entry.cantrips.map((id) => getSpellById(id)?.name).filter(Boolean).join('、') || '未选'}</p>
+              <p><strong>一环法术：</strong>{entry.level1Spell ? getSpellById(entry.level1Spell)?.name ?? entry.level1Spell : '未选'}</p>
+              <p><strong>施法属性：</strong>{entry.ability}</p>
+            </div>
+          </div>
+        );
+      })}
+      {editingFeatId && (
+        <MagicInitiateSpellModal
+          isOpen={true}
+          onClose={() => setEditingFeatId(null)}
+          featId={editingFeatId}
+          onComplete={(choice) => handleMagicInitiateComplete(editingFeatId, choice)}
+          initialCantrips={entries.find((e) => e.featId === editingFeatId)?.cantrips ?? []}
+          initialSpell={entries.find((e) => e.featId === editingFeatId)?.level1Spell ?? ''}
+          initialAbility={entries.find((e) => e.featId === editingFeatId)?.ability ?? ''}
+        />
+      )}
+    </div>
+  );
+}
 
 export default function StepSpellCheck() {
   const { currentCharacter, updateCurrentCharacter } = useCharacterStore();
@@ -28,19 +113,30 @@ export default function StepSpellCheck() {
   }
 
   const spellInfo = getClassSpellInfo(currentCharacter.class);
-  
+  const magicInitiateInfo = getMagicInitiateSpellInfo(currentCharacter);
+
+  // 非施法职业：若有魔法学徒专长则显示专长法术检查，否则提示
   if (!spellInfo) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="section-title">法术检查</h2>
-          <p className="text-gray-600 mb-4">你的职业（{currentCharacter.class}）不是施法职业。</p>
-          <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-6 text-center">
-            <Wand2 className="w-16 h-16 text-gray-400 mx-auto mb-3" />
-            <p className="text-gray-600">非施法职业不需要管理法术。</p>
+    if (magicInitiateInfo.entries.length === 0) {
+      return (
+        <div className="space-y-6">
+          <div>
+            <h2 className="section-title">法术检查</h2>
+            <p className="text-gray-600 mb-4">你的职业（{currentCharacter.class}）不是施法职业。</p>
+            <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-6 text-center">
+              <Wand2 className="w-16 h-16 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-600">非施法职业不需要管理法术。</p>
+            </div>
           </div>
         </div>
-      </div>
+      );
+    }
+    return (
+      <StepSpellCheckMagicInitiateOnly
+        character={currentCharacter}
+        entries={magicInitiateInfo.entries}
+        onUpdate={(updates) => updateCurrentCharacter(updates)}
+      />
     );
   }
 
