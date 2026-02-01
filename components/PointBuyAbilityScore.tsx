@@ -78,10 +78,7 @@ export default function PointBuyAbilityScore({ onComplete, initialScores }: Poin
     try {
       return Object.values(scores).reduce((total, score) => {
         const cost = POINT_COST[score];
-        if (cost === undefined) {
-          console.warn('Invalid score:', score);
-          return total;
-        }
+        if (cost === undefined) return total;
         return total + cost;
       }, 0);
     } catch (error) {

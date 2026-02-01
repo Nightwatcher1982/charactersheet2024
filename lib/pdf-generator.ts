@@ -484,7 +484,5 @@ export async function generateCharacterPDF(character: Character): Promise<void> 
 
 // 从 HTML 元素生成 PDF（备用方法）
 export async function generatePDFFromElement(element: HTMLElement, filename: string): Promise<void> {
-  // 这个方法暂时保留，但主要使用上面的方法
-  console.log('使用标准PDF生成器');
-  // 可以在这里实现基于html2canvas的备用方案
+  // 这个方法暂时保留，但主要使用上面的方法；可在此实现基于 html2canvas 的备用方案
 }

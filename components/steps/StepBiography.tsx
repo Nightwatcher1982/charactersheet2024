@@ -104,10 +104,12 @@ export default function StepBiography() {
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
             <Upload className="w-16 h-16 text-gray-400 mx-auto mb-3" />
             <p className="text-gray-600 mb-4">上传角色立绘图片（可选）</p>
-            <label className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg cursor-pointer transition-colors font-bold">
+            <label htmlFor="biography-avatar" className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg cursor-pointer transition-colors font-bold">
               <Upload className="w-4 h-4" />
               选择图片
               <input
+                id="biography-avatar"
+                name="biography-avatar"
                 type="file"
                 accept="image/*"
                 onChange={handleAvatarUpload}
@@ -127,6 +129,8 @@ export default function StepBiography() {
         </h3>
 
         <textarea
+          id="biography-backstory"
+          name="biography-backstory"
           value={bioText}
           onChange={(e) => setBioText(e.target.value)}
           onBlur={handleBlurBackstory}

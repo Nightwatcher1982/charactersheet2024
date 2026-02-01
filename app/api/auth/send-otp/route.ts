@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         );
       }
-    } else {
+    } else if (process.env.NODE_ENV === 'development') {
       // 开发模式：在控制台输出验证码
       console.log(`[DEV] 验证码（${phone}）:`, code);
     }

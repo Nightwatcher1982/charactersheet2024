@@ -53,23 +53,14 @@ export default function StepSpellCheck() {
     ? JSON.parse(currentCharacter.classFeatureChoices.selectedFirstLevelSpells as string)
     : [];
 
-  // 调试信息
-  console.log('StepSpellCheck - Class:', currentCharacter.class);
-  console.log('StepSpellCheck - classFeatureChoices:', currentCharacter.classFeatureChoices);
-  console.log('StepSpellCheck - selectedCantrips:', selectedCantrips);
-  console.log('StepSpellCheck - selectedFirstLevelSpells:', selectedFirstLevelSpells);
-
   // 获取戏法和1级法术的详细信息
   const allSpells = getSpellsByClass(currentCharacter.class);
-  const cantripDetails = allSpells.cantrips.filter(spell => 
-    selectedCantrips.includes(spell.id) // ✅ 使用 spell.id 而不是 spell.name
+  const cantripDetails = allSpells.cantrips.filter(spell =>
+    selectedCantrips.includes(spell.id)
   );
-  const spellDetails = allSpells.level1.filter(spell => 
-    selectedFirstLevelSpells.includes(spell.id) // ✅ 使用 spell.id 而不是 spell.name
+  const spellDetails = allSpells.level1.filter(spell =>
+    selectedFirstLevelSpells.includes(spell.id)
   );
-
-  console.log('StepSpellCheck - cantripDetails:', cantripDetails);
-  console.log('StepSpellCheck - spellDetails:', spellDetails);
 
   // 计算最大准备法术数量
   const maxPreparedSpells = spellInfo.isPrepared
