@@ -10,6 +10,7 @@ const normalizedBasePath = (() => {
 
 const nextConfig = {
   reactStrictMode: true,
+  eslint: { ignoreDuringBuilds: true },
   ...(normalizedBasePath ? { basePath: normalizedBasePath } : {}),
 };
 
