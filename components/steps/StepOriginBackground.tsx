@@ -9,7 +9,6 @@ import { getFeatById } from '@/lib/feats-data';
 import { Check, ChevronDown, ChevronUp, Star, ArrowRight, Info, Package } from 'lucide-react';
 import EquipmentSelector from '@/components/EquipmentSelector';
 import BackgroundAbilityBonus from '@/components/BackgroundAbilityBonus';
-import Image from 'next/image';
 
 // 背景简介（一句话）
 const getBackgroundSummary = (backgroundName: string): string => {
@@ -34,7 +33,7 @@ const getBackgroundSummary = (backgroundName: string): string => {
   return summaryMap[backgroundName] || '一个独特的成长经历';
 };
 
-// 背景图标路径映射
+// 背景图标路径映射（原图）
 const getBackgroundImagePath = (backgroundName: string): string => {
   const imageMap: Record<string, string> = {
     '侍僧': '/pic/background/侍僧.jpg',
@@ -56,6 +55,10 @@ const getBackgroundImagePath = (backgroundName: string): string => {
   };
   return getAssetPath(imageMap[backgroundName] || '/pic/background/侍僧.jpg');
 };
+
+// 缩略图路径（运行 scripts/generate-background-thumbnails.mjs 后生成，未生成则回退到原图）
+const getBackgroundThumbPath = (backgroundName: string): string =>
+  getAssetPath(`/pic/background/${backgroundName}-thumb.jpg`);
 
 interface StepOriginBackgroundProps {
   onNextSubStep?: () => void;
@@ -327,7 +330,8 @@ export default function StepOriginBackground({ onNextSubStep }: StepOriginBackgr
       {/* 背景网格 - 4列布局，间距足够避免框体重叠 */}
       <div className="grid grid-cols-4 gap-6 justify-items-center">
         {BACKGROUNDS.map((background) => {
-          const bgImagePath = getBackgroundImagePath(background.name);
+          const bgThumbPath = getBackgroundThumbPath(background.name);
+          const bgFullPath = getBackgroundImagePath(background.name);
           const isSelected = currentCharacter.background === background.name;
           
           return (
@@ -341,14 +345,20 @@ export default function StepOriginBackground({ onNextSubStep }: StepOriginBackgr
                   : 'border-2 border-leather-light bg-white hover:border-blue-400 hover:shadow-md'
               }`}
             >
-              {/* 图标 - 与职业页一致 w-20 h-20 (80px) */}
+              {/* 图标 - 先加载缩略图（若有），失败则用原图；懒加载减少首屏请求 */}
               <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100">
-                <Image
-                  src={bgImagePath}
+                <img
+                  src={bgThumbPath}
                   alt={background.name}
                   width={80}
                   height={80}
                   className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                  onError={(e) => {
+                    const el = e.currentTarget;
+                    if (el.src !== bgFullPath) el.src = bgFullPath;
+                  }}
                 />
               </div>
 
