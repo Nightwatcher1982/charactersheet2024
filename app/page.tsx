@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { useCharacterStore } from '@/lib/character-store';
 import { ALIGNMENTS } from '@/lib/dnd-data';
 import { getAssetPath } from '@/lib/asset-path';
@@ -22,13 +21,22 @@ export default function HomePage() {
 
   useEffect(() => {
     setMounted(true);
-    // 预加载首屏背景和 Logo，减少白屏时间
+    // 预加载首屏背景，尽早开始下载
     const preloadHomeBg = document.createElement('link');
     preloadHomeBg.rel = 'preload';
     preloadHomeBg.as = 'image';
     preloadHomeBg.href = getAssetPath('/pic/home-bg.png');
     document.head.appendChild(preloadHomeBg);
-    return () => { document.head.removeChild(preloadHomeBg); };
+    // 预取创建页背景，点击「创建新角色」时可能已缓存
+    const prefetchCreateWelcome = document.createElement('link');
+    prefetchCreateWelcome.rel = 'prefetch';
+    prefetchCreateWelcome.as = 'image';
+    prefetchCreateWelcome.href = getAssetPath('/pic/create-welcome-bg.png');
+    document.head.appendChild(prefetchCreateWelcome);
+    return () => {
+      document.head.removeChild(preloadHomeBg);
+      document.head.removeChild(prefetchCreateWelcome);
+    };
   }, []);
 
   const handleCreateNew = () => {
@@ -53,30 +61,26 @@ export default function HomePage() {
 
   return (
     <div className="relative overflow-hidden">
-      {/* 全屏固定背景层 - 使用 next/image 自动优化与优先加载 */}
-      <div className="fixed inset-0 z-0" aria-hidden>
-        <Image
-          src="/pic/home-bg.png"
-          alt=""
-          fill
-          className="object-cover object-center"
-          priority
-          sizes="100vw"
-        />
-      </div>
+      {/* 全屏固定背景层 - 直接使用静态路径 + 预加载，避免 basePath 下 Image 优化异常 */}
+      <div
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${getAssetPath('/pic/home-bg.png')})` }}
+        aria-hidden
+      />
       <div className="fixed inset-0 z-0 bg-black/25 pointer-events-none" aria-hidden />
 
       {/* 第一屏：Logo + 标题 + 底部创建按钮，留出背景主题 */}
       <section className="min-h-screen flex flex-col relative z-10">
         <header className="text-center pt-12 md:pt-20 px-4">
           <h1 className="flex items-center justify-center gap-3 text-4xl md:text-6xl font-bold text-white drop-shadow-md font-cinzel tracking-wider">
-            <Image
-              src="/pic/dnd-logo.png"
+            <img
+              src={getAssetPath('/pic/dnd-logo.png')}
               alt="D&D"
               width={80}
               height={56}
               className="h-10 md:h-14 w-auto object-contain drop-shadow-md"
-              priority
+              fetchPriority="high"
+              decoding="async"
             />
             <span>5R 角色卡</span>
           </h1>

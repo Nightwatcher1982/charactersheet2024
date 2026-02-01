@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { useCharacterStore } from '@/lib/character-store';
+import { getAssetPath } from '@/lib/asset-path';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 // 步骤组件 - 按照 DND 2024 官方流程
@@ -39,6 +39,24 @@ export default function CreateCharacterPage() {
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // 进入创建页时预加载两张背景图，减少切换步骤时的等待
+  useEffect(() => {
+    const link1 = document.createElement('link');
+    link1.rel = 'preload';
+    link1.as = 'image';
+    link1.href = getAssetPath('/pic/create-welcome-bg.png');
+    document.head.appendChild(link1);
+    const link2 = document.createElement('link');
+    link2.rel = 'preload';
+    link2.as = 'image';
+    link2.href = getAssetPath('/pic/create-page-bg.png');
+    document.head.appendChild(link2);
+    return () => {
+      document.head.removeChild(link1);
+      document.head.removeChild(link2);
+    };
   }, []);
 
   useEffect(() => {
@@ -202,26 +220,16 @@ export default function CreateCharacterPage() {
 
   return (
     <div className="min-h-screen relative">
-      {/* 全屏固定背景层 - 使用 next/image 自动优化，按需加载 */}
-      <div className="fixed inset-0 z-0" aria-hidden>
-        {isWelcomeStep ? (
-          <Image
-            src="/pic/create-welcome-bg.png"
-            alt=""
-            fill
-            className="object-cover object-center"
-            sizes="100vw"
-          />
-        ) : (
-          <Image
-            src="/pic/create-page-bg.png"
-            alt=""
-            fill
-            className="object-cover object-center"
-            sizes="100vw"
-          />
-        )}
-      </div>
+      {/* 全屏固定背景层 - 直接使用静态路径，避免 basePath 下 Image 优化异常 */}
+      <div
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: isWelcomeStep
+            ? `url(${getAssetPath('/pic/create-welcome-bg.png')})`
+            : `url(${getAssetPath('/pic/create-page-bg.png')})`,
+        }}
+        aria-hidden
+      />
       <div className={`fixed inset-0 z-0 pointer-events-none ${isWelcomeStep ? 'bg-black/15' : 'bg-black/20'}`} aria-hidden />
 
       {/* 顶部导航 - 步骤0 不显示，整页露背景；其余步骤显示 */}
