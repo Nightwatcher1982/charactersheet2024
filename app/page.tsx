@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCharacterStore } from '@/lib/character-store';
 import { ALIGNMENTS } from '@/lib/dnd-data';
+import { getAssetPath } from '@/lib/asset-path';
 import { Plus, Edit, Trash2, FileText } from 'lucide-react';
 import Link from 'next/link';
 
@@ -47,7 +48,7 @@ export default function HomePage() {
       {/* 全屏固定背景层 - 漏出主题 */}
       <div
         className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: 'url(/pic/home-bg.png)' }}
+        style={{ backgroundImage: `url(${getAssetPath('/pic/home-bg.png')})` }}
         aria-hidden
       />
       <div className="fixed inset-0 z-0 bg-black/25 pointer-events-none" aria-hidden />
@@ -57,7 +58,7 @@ export default function HomePage() {
         <header className="text-center pt-12 md:pt-20 px-4">
           <h1 className="flex items-center justify-center gap-3 text-4xl md:text-6xl font-bold text-white drop-shadow-md font-cinzel tracking-wider">
             <img
-              src="/pic/dnd-logo.png"
+              src={getAssetPath('/pic/dnd-logo.png')}
               alt="D&D"
               className="h-10 md:h-14 w-auto object-contain drop-shadow-md inline-block"
             />

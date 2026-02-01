@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useCharacterStore } from '@/lib/character-store';
 import { SPECIES, SKILLS, CLASSES, BACKGROUNDS } from '@/lib/dnd-data';
+import { getAssetPath } from '@/lib/asset-path';
 import { Info } from 'lucide-react';
 import SpeciesTraitSelector from '@/components/SpeciesTraitSelector';
 import FeatSelector from '@/components/FeatSelector';
@@ -23,7 +24,7 @@ const getSpeciesIconPath = (speciesName: string): string => {
     '阿斯莫': '/pic/races/阿斯莫.jpeg',
     '歌利亚': '/pic/races/歌利亚.jpeg',
   };
-  return iconMap[speciesName] || '';
+  return getAssetPath(iconMap[speciesName] || '');
 };
 
 // 物种简介

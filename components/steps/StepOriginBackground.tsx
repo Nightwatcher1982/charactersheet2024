@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useCharacterStore } from '@/lib/character-store';
 import { BACKGROUNDS } from '@/lib/dnd-data';
+import { getAssetPath } from '@/lib/asset-path';
 import { getFeatById } from '@/lib/feats-data';
 import { Check, ChevronDown, ChevronUp, Star, ArrowRight, Info, Package } from 'lucide-react';
 import EquipmentSelector from '@/components/EquipmentSelector';
@@ -53,7 +54,7 @@ const getBackgroundImagePath = (backgroundName: string): string => {
     '士兵': '/pic/background/士兵.jpg',
     '流浪者': '/pic/background/流浪者.jpg',
   };
-  return imageMap[backgroundName] || '/pic/background/侍僧.jpg';
+  return getAssetPath(imageMap[backgroundName] || '/pic/background/侍僧.jpg');
 };
 
 interface StepOriginBackgroundProps {

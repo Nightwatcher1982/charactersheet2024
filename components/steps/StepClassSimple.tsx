@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useCharacterStore } from '@/lib/character-store';
 import { CLASSES } from '@/lib/dnd-data';
+import { getAssetPath } from '@/lib/asset-path';
 import { Info, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import ClassFeatureSelector from '@/components/ClassFeatureSelector';
 import { getClassStartingEquipment } from '@/lib/class-starting-equipment-data';
@@ -30,7 +31,7 @@ const getClassIconPath = (classNameEn: string): string => {
     'Warlock': '/pic/walock.jpeg', // 注意文件名是 walock
     'Wizard': '/pic/wizard.jpeg',
   };
-  return iconMap[classNameEn] || '/pic/barbarian.jpeg';
+  return getAssetPath(iconMap[classNameEn] || '/pic/barbarian.jpeg');
 };
 
 // 职业简介

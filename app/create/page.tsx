@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCharacterStore } from '@/lib/character-store';
+import { getAssetPath } from '@/lib/asset-path';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 // 步骤组件 - 按照 DND 2024 官方流程
@@ -204,7 +205,7 @@ export default function CreateCharacterPage() {
       {/* 全屏固定背景层 - 步骤0 用桌案图，其余用原背景 */}
       <div
         className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: isWelcomeStep ? 'url(/pic/create-welcome-bg.png)' : 'url(/pic/create-page-bg.png)' }}
+        style={{ backgroundImage: isWelcomeStep ? `url(${getAssetPath('/pic/create-welcome-bg.png')})` : `url(${getAssetPath('/pic/create-page-bg.png')})` }}
         aria-hidden
       />
       <div className={`fixed inset-0 z-0 pointer-events-none ${isWelcomeStep ? 'bg-black/15' : 'bg-black/20'}`} aria-hidden />
