@@ -1,6 +1,6 @@
 'use client';
 
-import { Character, getAbilityModifier, getProficiencyBonus, CLASSES, BACKGROUNDS, SPECIES, SKILLS } from '@/lib/dnd-data';
+import { Character, getAbilityModifier, getProficiencyBonus, CLASSES, BACKGROUNDS, SPECIES, SKILLS, ALIGNMENTS } from '@/lib/dnd-data';
 import { getFeatById } from '@/lib/feats-data';
 import { getLanguageById } from '@/lib/languages-data';
 import { BACKGROUND_EQUIPMENT } from '@/lib/equipment-packages-data';
@@ -174,7 +174,7 @@ export default function CharacterSheetSummary({ character }: CharacterSheetSumma
               </span>
               {character.alignment && (
                 <span className="bg-white/20 px-3 py-1 rounded-full">
-                  {character.alignment}
+                  {ALIGNMENTS.find((a) => a.id === character.alignment)?.name ?? character.alignment}
                 </span>
               )}
             </div>

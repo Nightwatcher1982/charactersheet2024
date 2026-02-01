@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import { Character, getAbilityModifier, getProficiencyBonus, SKILLS, CLASSES } from './dnd-data';
+import { Character, getAbilityModifier, getProficiencyBonus, SKILLS, CLASSES, ALIGNMENTS } from './dnd-data';
 import { getFeatById } from './feats-data';
 import { getLanguageById } from './languages-data';
 
@@ -33,12 +33,13 @@ export async function generateCharacterPDF(character: Character): Promise<void> 
   pdf.setTextColor(0, 0, 0);
   pdf.setFont('helvetica', 'normal');
   
+  const alignmentName = ALIGNMENTS.find((a) => a.id === character.alignment)?.name ?? character.alignment ?? '';
   const basicInfo = [
     `职业: ${character.class}`,
     `等级: ${character.level}`,
     `物种: ${character.species}`,
     `背景: ${character.background}`,
-    `阵营: ${character.alignment}`,
+    `阵营: ${alignmentName}`,
   ];
   
   const infoWidth = (pageWidth - 2 * margin) / 5;

@@ -24,6 +24,26 @@ function normalizeCharacterSpecies<T extends unknown>(character: T): T {
   return character;
 }
 
+// 职业中文名 2024 版统一：邪术师 → 魔契师
+const CLASS_NAME_ALIASES: Record<string, string> = {
+  邪术师: '魔契师',
+  邪术士: '魔契师',
+};
+
+function normalizeClassName(class_: unknown): unknown {
+  if (typeof class_ !== 'string') return class_;
+  return CLASS_NAME_ALIASES[class_] ?? class_;
+}
+
+function normalizeCharacterClass<T extends unknown>(character: T): T {
+  if (!character || typeof character !== 'object') return character;
+  const c = character as Record<string, unknown>;
+  if ('class' in c) {
+    c.class = normalizeClassName(c.class);
+  }
+  return character;
+}
+
 function generateId(): string {
   // 优先：现代浏览器（含大多数桌面端/新移动端）
   if (globalThis.crypto && 'randomUUID' in globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function') {
@@ -194,17 +214,19 @@ export const useCharacterStore = create<CharacterStore>()(
     }),
     {
       name: 'dnd-character-storage',
-      version: 1,
+      version: 2,
       migrate: (persistedState) => {
-        // 兼容历史数据：把旧物种中文名映射到新版（不改动其它字段）
+        // 兼容历史数据：物种与职业中文名映射到新版
         if (!persistedState || typeof persistedState !== 'object') return persistedState;
         const s = persistedState as Record<string, unknown>;
 
+        const normalize = (c: unknown) => normalizeCharacterClass(normalizeCharacterSpecies(c));
+
         if (Array.isArray(s.characters)) {
-          s.characters = s.characters.map((c) => normalizeCharacterSpecies(c)) as unknown;
+          s.characters = s.characters.map((c) => normalize(c)) as unknown;
         }
         if ('currentCharacter' in s) {
-          s.currentCharacter = normalizeCharacterSpecies(s.currentCharacter);
+          s.currentCharacter = normalize(s.currentCharacter);
         }
         return s;
       },

@@ -390,9 +390,9 @@ export const CLASSES = [
   },
   {
     id: 'warlock',
-    name: '邪术师',
+    name: '魔契师',
     nameEn: 'Warlock',
-    description: '与异界存在订立契约的魔法使用者',
+    description: '与至高存在缔结契约，通过秘传学识施展法术的施法者',
     hitDie: 8,
     primaryAbility: ['魅力'],
     savingThrows: ['感知', '魅力'],

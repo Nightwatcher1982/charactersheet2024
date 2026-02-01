@@ -44,7 +44,7 @@ export default function RootLayout({
         <meta charSet="utf-8" />
       </head>
       <body className="font-crimson" suppressHydrationWarning>
-        <div className="min-h-screen bg-parchment-light flex flex-col">
+        <div className="min-h-screen flex flex-col">
           <main className="flex-1">{children}</main>
           <footer className="py-6 text-center text-xs text-leather-light print:hidden">
             Dimvision 出品

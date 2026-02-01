@@ -3,8 +3,15 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCharacterStore } from '@/lib/character-store';
-import { Sword, Plus, Edit, Trash2, FileText } from 'lucide-react';
+import { ALIGNMENTS } from '@/lib/dnd-data';
+import { Plus, Edit, Trash2, FileText } from 'lucide-react';
 import Link from 'next/link';
+
+function getAlignmentName(alignmentId: string | undefined): string {
+  if (!alignmentId) return '';
+  const a = ALIGNMENTS.find((x) => x.id === alignmentId);
+  return a ? a.name : alignmentId;
+}
 
 export default function HomePage() {
   const router = useRouter();
@@ -36,55 +43,45 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50 to-amber-100 relative overflow-hidden">
-      {/* 背景装饰效果 - 淡淡的羊皮纸纹理 */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute top-20 left-10 w-64 h-64 bg-amber-300 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-orange-300 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/3 w-48 h-48 bg-yellow-300 rounded-full blur-3xl"></div>
-      </div>
+    <div className="relative overflow-hidden">
+      {/* 全屏固定背景层 - 漏出主题 */}
+      <div
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: 'url(/pic/home-bg.png)' }}
+        aria-hidden
+      />
+      <div className="fixed inset-0 z-0 bg-black/25 pointer-events-none" aria-hidden />
 
-      <div className="container mx-auto px-4 py-12 max-w-6xl relative z-10">
-        {/* 头部 - 羊皮纸风格 */}
-        <header className="text-center mb-16">
-          <div className="relative inline-block mb-6">
-            {/* 淡淡的装饰效果 */}
-            <div className="absolute inset-0 bg-gradient-to-r from-amber-200 via-orange-200 to-amber-200 blur-xl opacity-20"></div>
-            <div className="relative flex items-center justify-center gap-4">
-              <Sword className="w-16 h-16 text-amber-700 drop-shadow-lg" />
-              <h1 className="text-5xl md:text-7xl font-bold text-leather-dark font-cinzel tracking-wider drop-shadow-md">
-                龙与地下城
-              </h1>
-              <Sword className="w-16 h-16 text-purple-700 drop-shadow-lg" />
-            </div>
-          </div>
-          <div className="inline-block px-6 py-2 bg-white/80 border-2 border-gold-dark/40 rounded-full backdrop-blur-sm shadow-md">
-            <p className="text-leather-dark text-xl font-medieval tracking-wide">
-              2024 版角色档案管理系统
-            </p>
-          </div>
-          <p className="text-leather-base text-sm mt-4 font-medieval">
-            ✨ 创建你的英雄传奇 · 书写你的冒险史诗 ✨
-          </p>
+      {/* 第一屏：Logo + 标题 + 底部创建按钮，留出背景主题 */}
+      <section className="min-h-screen flex flex-col relative z-10">
+        <header className="text-center pt-12 md:pt-20 px-4">
+          <h1 className="flex items-center justify-center gap-3 text-4xl md:text-6xl font-bold text-white drop-shadow-md font-cinzel tracking-wider">
+            <img
+              src="/pic/dnd-logo.png"
+              alt="D&D"
+              className="h-10 md:h-14 w-auto object-contain drop-shadow-md inline-block"
+            />
+            <span>5R 角色卡</span>
+          </h1>
         </header>
-
-        {/* 创建新角色按钮 - 羊皮纸风格 */}
-        <div className="flex justify-center mb-12">
+        <div className="flex-1 min-h-[40vh]" />
+        <div className="container mx-auto px-4 pb-16 flex justify-center">
           <button
             onClick={handleCreateNew}
-            className="group relative px-10 py-5 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-xl font-bold text-xl text-white shadow-xl transform hover:scale-105 transition-all duration-300 border-2 border-purple-800"
+            className="group px-10 py-5 bg-purple-600 hover:bg-purple-700 rounded-xl font-bold text-xl text-white shadow-xl hover:scale-105 transition-all duration-300 flex items-center gap-3"
           >
-            <span className="relative flex items-center gap-3">
-              <Plus className="w-7 h-7 drop-shadow-lg group-hover:rotate-90 transition-transform duration-300" />
-              <span className="font-cinzel tracking-wider">创建新角色</span>
-            </span>
+            <Plus className="w-7 h-7 group-hover:rotate-90 transition-transform duration-300" />
+            <span className="font-cinzel tracking-wider">创建新角色</span>
           </button>
         </div>
+      </section>
 
-        {/* 角色列表 */}
+      {/* 第二屏：已创建角色卡 / 空状态 */}
+      <section className="min-h-screen relative z-10 pt-8 pb-16">
+        <div className="container mx-auto px-4 max-w-6xl">
         {characters.length > 0 ? (
           <div>
-            <h2 className="text-3xl font-bold text-center mb-8 text-leather-dark font-cinzel">
+            <h2 className="text-3xl font-bold text-center mb-8 text-white font-cinzel">
               ⚔️ 我的冒险者 ⚔️
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -137,7 +134,7 @@ export default function HomePage() {
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-leather-base">⚖️ 阵营</span>
-                        <span className="font-medium text-leather-dark">{character.alignment}</span>
+                        <span className="font-medium text-leather-dark">{getAlignmentName(character.alignment)}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-leather-base">❤️ 生命值</span>
@@ -148,7 +145,7 @@ export default function HomePage() {
                     {/* 查看按钮 */}
                     <div className="pt-4 border-t border-gold-light/40">
                       <Link
-                        href={`/characters/${character.id}`}
+                        href={`/characters/${character.id}/character-sheet`}
                         className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-lg font-bold text-white shadow-lg transition-all duration-300 hover:scale-105"
                       >
                         <FileText className="w-5 h-5" />
@@ -166,24 +163,22 @@ export default function HomePage() {
             </div>
           </div>
         ) : (
-          <div className="relative bg-white/80 backdrop-blur-sm border-2 border-gold-dark/30 rounded-2xl p-16 text-center shadow-lg">
-            {/* 空状态背景装饰 */}
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl"></div>
+          <div className="relative bg-white/90 backdrop-blur-sm border border-gray-200 rounded-2xl p-16 text-center shadow-lg">
             <div className="relative z-10">
-              <Sword className="w-24 h-24 text-leather-light/50 mx-auto mb-6" />
-              <h3 className="text-2xl font-bold text-leather-dark mb-3 font-cinzel">
+              <h3 className="text-2xl font-bold text-gray-800 mb-3 font-cinzel">
                 还没有冒险者
               </h3>
-              <p className="text-leather-base mb-8 font-medieval">
+              <p className="text-gray-600 mb-8">
                 开始你的传奇之旅，创建第一个角色吧！
               </p>
-              <div className="text-leather-light text-sm font-medieval">
-                ✨ 点击上方&quot;创建新角色&quot;按钮开始 ✨
-              </div>
+              <p className="text-gray-500 text-sm">
+                ✨ 点击上方「创建新角色」按钮开始 ✨
+              </p>
             </div>
           </div>
         )}
-      </div>
+        </div>
+      </section>
     </div>
   );
 }

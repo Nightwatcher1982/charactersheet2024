@@ -442,20 +442,20 @@ export const CLASS_FEATURES: ClassFeaturesData[] = [
   },
   {
     classId: 'warlock',
-    className: '邪术师',
+    className: '魔契师',
     level1Features: [
       {
         id: 'spellcasting',
         name: '施法',
         nameEn: 'Spellcasting',
         level: 1,
-        description: '作为与异界存在订立契约的施法者，你可以施展邪术师法术。',
+        description: '作为与至高存在缔结契约的施法者，你可以施展魔契师法术。',
         details: [
-          '戏法：你知晓两个邪术师戏法',
-          '法术位：邪术师特性表显示了你可用的法术位数量（短休恢复）',
-          '准备法术：最初选择两道一环邪术师法术；之后按特性表“准备法术”列增加（升级时可替换）',
-          '施法属性：你邪术师法术的施法属性是魅力',
-          '施法法器：你可以使用奥术法器作为你邪术师法术的施法法器'
+          '戏法：你知晓两个魔契师戏法',
+          '法术位：魔契师特性表显示了你可用的法术位数量（短休恢复）',
+          '准备法术：最初选择两道一环魔契师法术；之后按特性表“准备法术”列增加（升级时可替换）',
+          '施法属性：你魔契师法术的施法属性是魅力',
+          '施法法器：你可以使用奥术法器作为你魔契师法术的施法法器'
         ]
       },
       {
@@ -463,7 +463,7 @@ export const CLASS_FEATURES: ClassFeaturesData[] = [
         name: '契约魔法',
         nameEn: 'Pact Magic',
         level: 1,
-        description: '你的魔法来自与异界存在的契约。',
+        description: '你的魔法来自与至高存在缔结的契约。',
         details: [
           '你的法术位在短休后恢复，而非长休',
           '所有法术位都是同一环阶（从1环开始，随等级提升）',

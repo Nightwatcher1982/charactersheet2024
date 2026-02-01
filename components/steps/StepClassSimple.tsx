@@ -46,7 +46,7 @@ const getClassDescription = (classNameEn: string): string => {
     'Ranger': '荒野的猎手，精通追踪和远程攻击',
     'Rogue': '灵巧的盗贼，擅长潜行和致命的偷袭',
     'Sorcerer': '天生的施法者，体内流淌着魔法血脉',
-    'Warlock': '与异界存在立约，获得神秘力量的施法者',
+    'Warlock': '与至高存在缔结契约，通过秘传学识施展法术的魔契师',
     'Wizard': '博学的法师，通过研究掌握奥术魔法',
   };
   return descriptionMap[classNameEn] || '';
