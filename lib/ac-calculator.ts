@@ -47,7 +47,7 @@ export function getEquippedArmorAndShield(character: Partial<Character>): {
     });
   }
 
-  const armor = equippedArmorName ? getArmorByName(equippedArmorName) : null;
+  const armor = equippedArmorName ? getArmorByName(equippedArmorName) : undefined;
   return { armor, shield: !!equippedShield };
 }
 
