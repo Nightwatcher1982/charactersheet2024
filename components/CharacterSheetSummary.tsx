@@ -6,6 +6,7 @@ import { getLanguageById } from '@/lib/languages-data';
 import { BACKGROUND_EQUIPMENT } from '@/lib/equipment-packages-data';
 import { WEAPONS, getWeaponByName, calculateWeaponAttackBonus } from '@/lib/weapons-data';
 import { computeArmorClass } from '@/lib/ac-calculator';
+import { getClassFeatures } from '@/lib/class-features-data';
 import { calculateSpeciesHPBonus, getSpeciesBaseSpeed, calculateClassFeatureHPBonus } from '@/lib/species-traits-calculator';
 import { User, Shield, Heart, Zap, Award, Globe, Package, Star, Swords, BookOpen, Sword } from 'lucide-react';
 
@@ -46,6 +47,7 @@ export default function CharacterSheetSummary({ character }: CharacterSheetSumma
 
   const profBonus = getProficiencyBonus(character.level || 1);
   const classData = CLASSES.find(c => c.name === character.class);
+  const classFeatures = classData?.id ? getClassFeatures(classData.id) : undefined;
   const backgroundData = BACKGROUNDS.find(b => b.name === character.background);
   const speciesData = SPECIES.find(s => s.name === character.species);
 
