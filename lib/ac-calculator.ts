@@ -178,7 +178,7 @@ export function computeArmorClass(
   const params = getACParams(character, finalAbilities);
   return calculateAC(
     10,
-    params.armor,
+    params.armor ?? null,
     params.shield,
     params.dexterityMod,
     params.isProficientWithArmor,
