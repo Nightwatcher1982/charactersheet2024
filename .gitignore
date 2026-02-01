@@ -42,6 +42,7 @@ README_v2.0_重构版.md
 # misc
 .DS_Store
 *.pem
+ossutil_output/
 
 # debug
 npm-debug.log*
