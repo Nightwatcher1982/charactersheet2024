@@ -5,6 +5,7 @@ import { useCharacterData } from '@/lib/character-data-context';
 import { useEffect, useState } from 'react';
 import { ArrowLeft, Plus, Trash2, X, ZoomIn, Image as ImageIcon } from 'lucide-react';
 import Link from 'next/link';
+import { getApiUrl } from '@/lib/asset-path';
 
 export default function CharacterPortraitsPage() {
   const params = useParams();
@@ -45,7 +46,7 @@ export default function CharacterPortraitsPage() {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('characterId', id);
-      const res = await fetch('/api/upload/portrait', { method: 'POST', body: formData });
+      const res = await fetch(getApiUrl('/api/upload/portrait'), { method: 'POST', body: formData });
       const data = await res.json();
 
       if (res.ok && data.url) {

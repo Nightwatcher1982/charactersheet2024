@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { getApiUrl } from '@/lib/asset-path';
 
 export function useRequireAdmin(): { loading: boolean; isAdmin: boolean } {
   const pathname = usePathname();
@@ -19,7 +20,7 @@ export function useRequireAdmin(): { loading: boolean; isAdmin: boolean } {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/admin/me');
+        const res = await fetch(getApiUrl('/api/admin/me'));
         const data = await res.json();
         if (cancelled) return;
         if (res.status === 401 || !data?.isAdmin) {

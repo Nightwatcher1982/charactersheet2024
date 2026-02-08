@@ -3,7 +3,7 @@
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, Lock, Shield } from 'lucide-react';
-import { getAssetPath } from '@/lib/asset-path';
+import { getAssetPath, getApiUrl } from '@/lib/asset-path';
 
 const AGREEMENT_VERSION = '1.0';
 
@@ -42,7 +42,7 @@ function LoginForm() {
     }
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/send-code', {
+      const res = await fetch(getApiUrl('/api/auth/send-code'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim().toLowerCase(), type: sendCodeType }),
@@ -87,7 +87,7 @@ function LoginForm() {
     }
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/reset-password', {
+      const res = await fetch(getApiUrl('/api/auth/reset-password'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -129,7 +129,7 @@ function LoginForm() {
     }
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/register', {
+      const res = await fetch(getApiUrl('/api/auth/register'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -164,7 +164,7 @@ function LoginForm() {
     }
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch(getApiUrl('/api/auth/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

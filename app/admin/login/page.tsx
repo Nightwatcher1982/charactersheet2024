@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Lock, Mail, Shield } from 'lucide-react';
+import { getApiUrl } from '@/lib/asset-path';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -21,7 +22,7 @@ export default function AdminLoginPage() {
     }
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/login', {
+      const res = await fetch(getApiUrl('/api/admin/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim().toLowerCase(), password }),

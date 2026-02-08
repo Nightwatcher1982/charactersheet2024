@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Users, FileText, ChevronRight } from 'lucide-react';
+import { getApiUrl } from '@/lib/asset-path';
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<{ totalUsers: number; totalCharacters: number } | null>(null);
@@ -11,7 +12,7 @@ export default function AdminDashboardPage() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/admin/stats');
+        const res = await fetch(getApiUrl('/api/admin/stats'));
         if (!res.ok) return;
         const data = await res.json();
         if (!cancelled) {

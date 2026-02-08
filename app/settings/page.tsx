@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Mail, User, Phone } from 'lucide-react';
+import { getApiUrl } from '@/lib/asset-path';
 
 export default function SettingsProfilePage() {
   const router = useRouter();
@@ -24,7 +25,7 @@ export default function SettingsProfilePage() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/auth/me');
+        const res = await fetch(getApiUrl('/api/auth/me'));
         if (res.status === 401) {
           if (!cancelled) router.replace('/login');
           return;
@@ -56,7 +57,7 @@ export default function SettingsProfilePage() {
     setMessage('');
     setSaving(true);
     try {
-      const res = await fetch('/api/user/profile', {
+      const res = await fetch(getApiUrl('/api/user/profile'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ displayName, contactInfo }),

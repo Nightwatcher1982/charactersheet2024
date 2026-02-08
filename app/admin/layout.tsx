@@ -4,6 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useRequireAdmin } from '@/lib/use-require-admin';
 import { LayoutDashboard, Users, FileText, LogOut } from 'lucide-react';
+import { getApiUrl } from '@/lib/asset-path';
 
 export default function AdminLayout({
   children,
@@ -59,7 +60,7 @@ export default function AdminLayout({
           <button
             type="button"
             onClick={async () => {
-              await fetch('/api/admin/logout', { method: 'POST' });
+              await fetch(getApiUrl('/api/admin/logout'), { method: 'POST' });
               router.push('/admin/login');
               router.refresh();
             }}

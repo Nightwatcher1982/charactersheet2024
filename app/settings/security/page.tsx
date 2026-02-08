@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Lock } from 'lucide-react';
+import { getApiUrl } from '@/lib/asset-path';
 
 export default function SettingsSecurityPage() {
   const router = useRouter();
@@ -28,7 +29,7 @@ export default function SettingsSecurityPage() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/auth/me');
+        const res = await fetch(getApiUrl('/api/auth/me'));
         if (res.status === 401) {
           if (!cancelled) router.replace('/login');
           return;
@@ -55,7 +56,7 @@ export default function SettingsSecurityPage() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/user/login-history?limit=20');
+        const res = await fetch(getApiUrl('/api/user/login-history?limit=20'));
         if (!res.ok) return;
         const data = await res.json();
         if (!cancelled && data.logs) setLoginLogs(data.logs);
@@ -77,7 +78,7 @@ export default function SettingsSecurityPage() {
     setError('');
     setLoadingAction(true);
     try {
-      const res = await fetch('/api/auth/send-code', {
+      const res = await fetch(getApiUrl('/api/auth/send-code'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -117,7 +118,7 @@ export default function SettingsSecurityPage() {
     setMessage('');
     setLoadingAction(true);
     try {
-      const res = await fetch('/api/user/password', {
+      const res = await fetch(getApiUrl('/api/user/password'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: currentCode, newPassword }),
@@ -144,7 +145,7 @@ export default function SettingsSecurityPage() {
     setMessage('');
     setLoadingAction(true);
     try {
-      const res = await fetch('/api/user/email', {
+      const res = await fetch(getApiUrl('/api/user/email'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -182,7 +183,7 @@ export default function SettingsSecurityPage() {
     setLoadingAction(true);
     setError('');
     try {
-      const res = await fetch('/api/auth/logout-all', { method: 'POST' });
+      const res = await fetch(getApiUrl('/api/auth/logout-all'), { method: 'POST' });
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || '操作失败');
@@ -203,7 +204,7 @@ export default function SettingsSecurityPage() {
     setError('');
     setLoadingAction(true);
     try {
-      const res = await fetch('/api/user/deactivate', {
+      const res = await fetch(getApiUrl('/api/user/deactivate'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: currentCode }),

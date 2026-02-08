@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Character } from '@/lib/dnd-data';
 import { BookOpen, Save, Edit3, Upload, X } from 'lucide-react';
+import { getApiUrl } from '@/lib/asset-path';
 
 interface BiographyPageProps {
   character: Partial<Character>;
@@ -38,7 +39,7 @@ export default function BiographyPage({ character, onUpdate }: BiographyPageProp
       const formData = new FormData();
       formData.append('file', file);
       formData.append('characterId', character.id ?? 'draft');
-      const res = await fetch('/api/upload/portrait', { method: 'POST', body: formData });
+      const res = await fetch(getApiUrl('/api/upload/portrait'), { method: 'POST', body: formData });
       const data = await res.json();
 
       if (res.ok && data.url) {

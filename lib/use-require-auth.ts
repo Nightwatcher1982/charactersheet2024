@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { getApiUrl } from '@/lib/asset-path';
 
 export interface AuthUser {
   id: string;
@@ -29,7 +30,7 @@ export function useRequireAuth(): {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/auth/me');
+        const res = await fetch(getApiUrl('/api/auth/me'));
         const data = await res.json();
         if (cancelled) return;
         if (res.status === 401 || !data?.isLoggedIn) {

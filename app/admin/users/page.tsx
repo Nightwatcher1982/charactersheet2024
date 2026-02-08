@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Search, ChevronRight, User } from 'lucide-react';
+import { getApiUrl } from '@/lib/asset-path';
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<{
@@ -29,7 +30,7 @@ export default function AdminUsersPage() {
       });
       if (emailFilter) params.set('email', emailFilter);
       if (roleFilter) params.set('role', roleFilter);
-      const res = await fetch(`/api/admin/users?${params}`);
+      const res = await fetch(getApiUrl(`/api/admin/users?${params}`));
       if (!res.ok) return;
       const data = await res.json();
       setUsers(data.users ?? []);

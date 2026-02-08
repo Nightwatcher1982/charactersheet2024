@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { FileText } from 'lucide-react';
+import { getApiUrl } from '@/lib/asset-path';
 
 type AuditLogItem = {
   id: string;
@@ -44,7 +45,7 @@ export default function AdminAuditPage() {
       });
       if (actionFilter) params.set('action', actionFilter);
       if (targetUserIdFilter) params.set('targetUserId', targetUserIdFilter);
-      const res = await fetch(`/api/admin/audit-logs?${params}`);
+      const res = await fetch(getApiUrl(`/api/admin/audit-logs?${params}`));
       if (!res.ok) return;
       const data = await res.json();
       setLogs(data.logs ?? []);

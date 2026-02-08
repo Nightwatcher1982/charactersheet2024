@@ -12,14 +12,40 @@ export function getAssetPath(path: string): string {
     return `${base}${path}`;
   }
 
-  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+  const basePath = getEffectiveBasePath();
   if (!basePath) return path;
+  return `${basePath}${path}`;
+}
 
-  const normalizedBasePath = (() => {
-    const withLeadingSlash = basePath.startsWith('/') ? basePath : `/${basePath}`;
-    const trimmed = withLeadingSlash.replace(/\/+$/, '');
-    return trimmed === '/' ? '' : trimmed;
+/**
+ * 获取当前生效的 basePath（构建时注入或浏览器端从 pathname 推断）
+ * 用于子路径部署时 API/资源路径正确带上前缀。
+ */
+function getEffectiveBasePath(): string {
+  const fromEnv = process.env.NEXT_PUBLIC_BASE_PATH || '';
+  const normalizedEnv = (() => {
+    if (!fromEnv) return '';
+    const withLead = fromEnv.startsWith('/') ? fromEnv : `/${fromEnv}`;
+    const t = withLead.replace(/\/+$/, '');
+    return t === '' || t === '/' ? '' : t;
   })();
+  if (normalizedEnv) return normalizedEnv;
 
-  return `${normalizedBasePath}${path}`;
+  if (typeof window === 'undefined') return '';
+  const pathname = window.location.pathname || '';
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments.length === 0) return '';
+  const first = segments[0];
+  if (first === 'login' || first === 'api' || first === 'admin' || first === 'settings' || first === 'characters' || first === 'create') return '';
+  return `/${first}`;
+}
+
+/**
+ * 获取 API 请求的完整路径（含 basePath，用于子路径部署时 fetch 正确命中接口）
+ * @param path 以 / 开头的 API 路径，如 /api/auth/me
+ */
+export function getApiUrl(path: string): string {
+  const basePath = getEffectiveBasePath();
+  if (!basePath) return path;
+  return `${basePath}${path}`;
 }

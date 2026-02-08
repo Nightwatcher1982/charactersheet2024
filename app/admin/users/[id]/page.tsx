@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, User, Key, Crown, FileText, Trash2 } from 'lucide-react';
+import { getApiUrl } from '@/lib/asset-path';
 
 type UserDetail = {
   id: string;
@@ -50,7 +51,7 @@ export default function AdminUserDetailPage() {
     (async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/admin/users/${id}`);
+        const res = await fetch(getApiUrl(`/api/admin/users/${id}`));
         if (!res.ok) {
           if (res.status === 404 && !cancelled) setUser(null);
           return;
@@ -75,7 +76,7 @@ export default function AdminUserDetailPage() {
     if (!id) return;
     setCharactersLoading(true);
     try {
-      const res = await fetch(`/api/admin/users/${id}/characters`);
+      const res = await fetch(getApiUrl(`/api/admin/users/${id}/characters`));
       if (!res.ok) return;
       const data = await res.json();
       setCharacters(data.characters ?? []);
@@ -95,7 +96,7 @@ export default function AdminUserDetailPage() {
     }
     setResetPasswordSubmitting(true);
     try {
-      const res = await fetch(`/api/admin/users/${id}/password`, {
+      const res = await fetch(getApiUrl(`/api/admin/users/${id}/password`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ newPassword: resetPasswordValue }),
@@ -116,7 +117,7 @@ export default function AdminUserDetailPage() {
     setRoleError('');
     setRoleSubmitting(true);
     try {
-      const res = await fetch(`/api/admin/users/${id}/role`, {
+      const res = await fetch(getApiUrl(`/api/admin/users/${id}/role`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: roleValue }),
@@ -137,7 +138,7 @@ export default function AdminUserDetailPage() {
     setDeleteError('');
     setDeleteSubmitting(true);
     try {
-      const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+      const res = await fetch(getApiUrl(`/api/admin/users/${id}`), { method: 'DELETE' });
       const data = await res.json();
       if (!res.ok) {
         setDeleteError(data.error ?? '删除失败');

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useCharacterStore } from '@/lib/character-store';
 import { useRequireAuth } from '@/lib/use-require-auth';
 import { ALIGNMENTS } from '@/lib/dnd-data';
-import { getAssetPath } from '@/lib/asset-path';
+import { getAssetPath, getApiUrl } from '@/lib/asset-path';
 import { Plus, Edit, Trash2, FileText, Settings, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import type { Character } from '@/lib/dnd-data';
@@ -29,7 +29,7 @@ export default function HomePage() {
   const fetchCharacters = async () => {
     setCharactersLoading(true);
     try {
-      const res = await fetch('/api/characters');
+      const res = await fetch(getApiUrl('/api/characters'));
       if (!res.ok) return;
       const data = await res.json();
       setCharacters(data.characters ?? []);
@@ -71,7 +71,7 @@ export default function HomePage() {
 
   const handleEdit = async (serverId: string) => {
     try {
-      const res = await fetch(`/api/characters/${serverId}`);
+      const res = await fetch(getApiUrl(`/api/characters/${serverId}`));
       if (!res.ok) return;
       const data = await res.json();
       const char = data.character as Character;
@@ -85,7 +85,7 @@ export default function HomePage() {
   const handleDelete = async (serverId: string) => {
     if (!confirm('确定要删除这个角色吗？')) return;
     try {
-      const res = await fetch(`/api/characters/${serverId}`, { method: 'DELETE' });
+      const res = await fetch(getApiUrl(`/api/characters/${serverId}`), { method: 'DELETE' });
       if (!res.ok) return;
       setCharacters((prev) => prev.filter((c) => c.serverId !== serverId));
     } catch {
@@ -126,7 +126,7 @@ export default function HomePage() {
               <button
                 type="button"
                 onClick={async () => {
-                  await fetch('/api/auth/logout', { method: 'POST' });
+                  await fetch(getApiUrl('/api/auth/logout'), { method: 'POST' });
                   router.refresh();
                   router.push('/login');
                 }}

@@ -2,6 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import type { Character } from '@/lib/dnd-data';
+import { getApiUrl } from '@/lib/asset-path';
 
 type CharacterWithServerId = Character & { serverId?: string };
 
@@ -34,7 +35,7 @@ export function CharacterDataProvider({
     setLoading(true);
     setError(false);
     try {
-      const res = await fetch(`/api/characters/${serverId}`);
+      const res = await fetch(getApiUrl(`/api/characters/${serverId}`));
       if (!res.ok) {
         setError(true);
         setCharacter(null);
@@ -61,7 +62,7 @@ export function CharacterDataProvider({
       const next = { ...character, ...updates, updatedAt: new Date().toISOString() };
       setCharacter(next);
       try {
-        const res = await fetch(`/api/characters/${serverId}`, {
+        const res = await fetch(getApiUrl(`/api/characters/${serverId}`), {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(next),

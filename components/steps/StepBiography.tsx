@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useCharacterStore } from '@/lib/character-store';
 import { BookOpen, Upload, X } from 'lucide-react';
+import { getApiUrl } from '@/lib/asset-path';
 
 export default function StepBiography() {
   const { currentCharacter, updateCurrentCharacter } = useCharacterStore();
@@ -61,7 +62,7 @@ export default function StepBiography() {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('characterId', 'draft');
-      const res = await fetch('/api/upload/portrait', { method: 'POST', body: formData });
+      const res = await fetch(getApiUrl('/api/upload/portrait'), { method: 'POST', body: formData });
       const data = await res.json();
 
       if (res.ok && data.url) {
