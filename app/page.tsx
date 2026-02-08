@@ -55,8 +55,8 @@ export default function HomePage() {
     prefetchCreateWelcome.href = getAssetPath('/pic/create-welcome-bg.png');
     document.head.appendChild(prefetchCreateWelcome);
     return () => {
-      document.head.removeChild(preloadHomeBg);
-      document.head.removeChild(prefetchCreateWelcome);
+      if (preloadHomeBg.parentNode) document.head.removeChild(preloadHomeBg);
+      if (prefetchCreateWelcome.parentNode) document.head.removeChild(prefetchCreateWelcome);
     };
   }, []);
 

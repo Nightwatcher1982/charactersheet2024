@@ -28,7 +28,8 @@ export function useRequireAuth(): {
 
   useEffect(() => {
     let cancelled = false;
-    const loginPath = getApiUrl('/login') || '/login';
+    // 跳转用应用内路径即可，Next 会根据 basePath 自动加前缀；getApiUrl 只用于 fetch
+    const loginPath = '/login';
     (async () => {
       try {
         const ctrl = new AbortController();
