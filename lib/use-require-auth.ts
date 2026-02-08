@@ -28,21 +28,25 @@ export function useRequireAuth(): {
 
   useEffect(() => {
     let cancelled = false;
+    const loginPath = getApiUrl('/login') || '/login';
     (async () => {
       try {
-        const res = await fetch(getApiUrl('/api/auth/me'));
+        const ctrl = new AbortController();
+        const timeout = setTimeout(() => ctrl.abort(), 15000);
+        const res = await fetch(getApiUrl('/api/auth/me'), { signal: ctrl.signal });
+        clearTimeout(timeout);
         const data = await res.json();
         if (cancelled) return;
         if (res.status === 401 || !data?.isLoggedIn) {
           const from = pathname ? encodeURIComponent(pathname) : '';
-          router.replace(from ? `/login?from=${from}` : '/login');
+          router.replace(from ? `${loginPath}?from=${from}` : loginPath);
           return;
         }
         setIsLoggedIn(true);
         setUser(data.user ?? null);
       } catch {
         if (!cancelled) {
-          router.replace('/login');
+          router.replace(loginPath);
         }
       } finally {
         if (!cancelled) setLoading(false);
