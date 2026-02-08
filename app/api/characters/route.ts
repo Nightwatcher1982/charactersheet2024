@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/session';
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/characters - 获取当前用户的所有角色
 export async function GET() {
   try {
@@ -14,7 +16,10 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      characters: characters.map(c => c.data),
+      characters: characters.map((c) => ({
+        ...(c.data as object),
+        serverId: c.id,
+      })),
     });
   } catch (error) {
     if (error instanceof Error && error.message === 'Unauthorized') {
@@ -47,6 +52,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       character: character.data,
+      serverId: character.id,
     });
   } catch (error) {
     if (error instanceof Error && error.message === 'Unauthorized') {

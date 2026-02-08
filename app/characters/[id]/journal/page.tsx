@@ -1,9 +1,9 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useCharacterStore } from '@/lib/character-store';
-import { useEffect, useState } from 'react';
-import { Character, JournalEntry } from '@/lib/dnd-data';
+import { useCharacterData } from '@/lib/character-data-context';
+import { useState } from 'react';
+import { JournalEntry } from '@/lib/dnd-data';
 import { ArrowLeft, Plus, Edit, Trash2, Calendar, MapPin, Users, Tag } from 'lucide-react';
 import Link from 'next/link';
 
@@ -15,21 +15,10 @@ export default function CharacterJournalPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
-  
-  const { characters, setCurrentCharacter, saveCharacter } = useCharacterStore();
-  const [character, setCharacter] = useState<Character | null>(null);
+  const { character, loading, error, updateCharacter } = useCharacterData();
   const [isEditing, setIsEditing] = useState(false);
   const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
   const [showForm, setShowForm] = useState(false);
-
-  useEffect(() => {
-    const found = characters.find((c) => c.id === id);
-    if (found) {
-      setCharacter(found as Character);
-    } else {
-      router.push('/');
-    }
-  }, [id, characters, router]);
 
   const handleCreateEntry = () => {
     const newEntry: JournalEntry = {
@@ -54,7 +43,7 @@ export default function CharacterJournalPage() {
     setShowForm(true);
   };
 
-  const handleSaveEntry = () => {
+  const handleSaveEntry = async () => {
     if (!character || !editingEntry || !editingEntry.title.trim()) {
       alert('请填写标题');
       return;
@@ -74,34 +63,16 @@ export default function CharacterJournalPage() {
       updatedJournal.unshift(editingEntry);
     }
 
-    const updatedCharacter = {
-      ...character,
-      journal: updatedJournal,
-      updatedAt: new Date().toISOString()
-    };
-
-    setCurrentCharacter(updatedCharacter);
-    saveCharacter();
-    setCharacter(updatedCharacter);
+    await updateCharacter({ journal: updatedJournal });
     setShowForm(false);
     setEditingEntry(null);
   };
 
-  const handleDeleteEntry = (entryId: string) => {
+  const handleDeleteEntry = async (entryId: string) => {
     if (!character) return;
-    
-    if (confirm('确定要删除这条日志吗？')) {
-      const updatedJournal = (character.journal || []).filter(e => e.id !== entryId);
-      const updatedCharacter = {
-        ...character,
-        journal: updatedJournal,
-        updatedAt: new Date().toISOString()
-      };
-
-      setCurrentCharacter(updatedCharacter);
-      saveCharacter();
-      setCharacter(updatedCharacter);
-    }
+    if (!confirm('确定要删除这条日志吗？')) return;
+    const updatedJournal = (character.journal || []).filter(e => e.id !== entryId);
+    await updateCharacter({ journal: updatedJournal });
   };
 
   const handleCancel = () => {
@@ -109,7 +80,12 @@ export default function CharacterJournalPage() {
     setEditingEntry(null);
   };
 
-  if (!character) {
+  if (error) {
+    router.push('/');
+    return null;
+  }
+
+  if (loading || !character) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-red-50 to-white flex items-center justify-center">
         <div className="text-center">

@@ -1,9 +1,7 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useCharacterStore } from '@/lib/character-store';
-import { useEffect, useState } from 'react';
-import { Character } from '@/lib/dnd-data';
+import { useCharacterData } from '@/lib/character-data-context';
 import { ArrowLeft, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 
@@ -11,20 +9,14 @@ export default function LevelUpPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
-  
-  const { characters } = useCharacterStore();
-  const [character, setCharacter] = useState<Character | null>(null);
+  const { character, loading, error } = useCharacterData();
 
-  useEffect(() => {
-    const found = characters.find((c) => c.id === id);
-    if (found) {
-      setCharacter(found as Character);
-    } else {
-      router.push('/');
-    }
-  }, [id, characters, router]);
+  if (error) {
+    router.push('/');
+    return null;
+  }
 
-  if (!character) {
+  if (loading || !character) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-red-50 to-white flex items-center justify-center">
         <div className="text-center">

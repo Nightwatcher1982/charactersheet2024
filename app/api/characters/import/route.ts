@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/session';
 
+export const dynamic = 'force-dynamic';
+
 // POST /api/characters/import - 批量导入本地角色
 export async function POST(request: NextRequest) {
   try {

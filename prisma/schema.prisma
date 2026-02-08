@@ -10,27 +10,41 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 用户表
+// 用户表（邮箱为主键标识）
 model User {
-  id        String   @id @default(cuid())
-  phone     String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
+  id                   String    @id @default(cuid())
+  email                String?   @unique // 新系统主键；迁移期可为空
+  phone                String?   @unique // 旧系统，逐步废弃
+  passwordHash         String?
+  displayName          String?
+  contactInfo          String?
+  role                 String    @default("normal") // normal | member
+  emailVerifiedAt      DateTime?
+  agreementAcceptedAt  DateTime?
+  agreementVersion     String?
+  tokenVersion         Int       @default(0) // 多端登出：递增使旧 session 失效
+  deletedAt           DateTime? // 软删除
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
   characters Character[]
   sessions   Session[]
+  loginLogs  LoginLog[]
+
+  @@index([email])
+  @@index([role])
 }
 
-// 会话表
+// 会话表（用于多端登出等）
 model Session {
   id        String   @id @default(cuid())
   userId    String
   token     String   @unique
   expiresAt DateTime
-  createdAt DateTime @default(now())
-  
+  createdAt DateTime  @default(now())
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@index([userId])
   @@index([token])
 }
@@ -39,23 +53,67 @@ model Session {
 model Character {
   id        String   @id @default(cuid())
   userId    String
-  data      Json     // 存储完整的Character对象（包括传记、日志、高光等）
+  data      Json // 存储完整的 Character 对象（包括传记、日志、高光等）
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
+  updatedAt DateTime  @updatedAt
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@index([userId])
 }
 
-// 验证码表（用于短信验证码）
+// 验证码表（支持邮箱与短信，按 type 区分场景）
 model VerificationCode {
   id        String   @id @default(cuid())
-  phone     String
+  email     String?
+  phone     String?
   code      String
+  type      String   @default("phone") // register | change_password | change_email | reset_password | phone(旧)
+  newEmail  String?   // 更换邮箱时存新邮箱
   expiresAt DateTime
-  createdAt DateTime @default(now())
   attempts  Int      @default(0)
-  
+  createdAt DateTime @default(now())
+
+  @@index([email, type])
   @@index([phone])
+}
+
+// 登录历史（P3）
+model LoginLog {
+  id        String   @id @default(cuid())
+  userId    String
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, createdAt])
+}
+
+// 管理员表（P4）
+model Admin {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  auditLogs AdminAuditLog[]
+}
+
+// 后台操作审计（P4）
+model AdminAuditLog {
+  id           String   @id @default(cuid())
+  adminId      String
+  action       String
+  targetUserId String?
+  payload      Json?
+  createdAt    DateTime @default(now())
+
+  admin Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([createdAt])
 }

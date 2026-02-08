@@ -8,6 +8,7 @@ export default function StepBiography() {
   const { currentCharacter, updateCurrentCharacter } = useCharacterStore();
   const [bioText, setBioText] = useState(currentCharacter?.backstory || '');
   const [avatarPreview, setAvatarPreview] = useState<string | null>(currentCharacter?.avatar || null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const bioSyncRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const bioTextRef = useRef(bioText);
   bioTextRef.current = bioText;
@@ -51,16 +52,39 @@ export default function StepBiography() {
     }
   };
 
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) return;
+
+    setAvatarUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('characterId', 'draft');
+      const res = await fetch('/api/upload/portrait', { method: 'POST', body: formData });
+      const data = await res.json();
+
+      if (res.ok && data.url) {
+        setAvatarPreview(data.url);
+        updateCurrentCharacter({ avatar: data.url });
+      } else {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64String = reader.result as string;
+          setAvatarPreview(base64String);
+          updateCurrentCharacter({ avatar: base64String });
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch {
       const reader = new FileReader();
       reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setAvatarPreview(base64String);
-        updateCurrentCharacter({ avatar: base64String });
+        setAvatarPreview(reader.result as string);
+        updateCurrentCharacter({ avatar: reader.result as string });
       };
       reader.readAsDataURL(file);
+    } finally {
+      setAvatarUploading(false);
     }
   };
 
@@ -104,9 +128,9 @@ export default function StepBiography() {
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
             <Upload className="w-16 h-16 text-gray-400 mx-auto mb-3" />
             <p className="text-gray-600 mb-4">上传角色立绘图片（可选）</p>
-            <label htmlFor="biography-avatar" className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg cursor-pointer transition-colors font-bold">
+            <label htmlFor="biography-avatar" className={`inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg cursor-pointer transition-colors font-bold ${avatarUploading ? 'opacity-70 pointer-events-none' : ''}`}>
               <Upload className="w-4 h-4" />
-              选择图片
+              {avatarUploading ? '上传中...' : '选择图片'}
               <input
                 id="biography-avatar"
                 name="biography-avatar"

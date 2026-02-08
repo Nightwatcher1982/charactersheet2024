@@ -1,8 +1,8 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
+import { useCharacterData } from '@/lib/character-data-context';
 import { useCharacterStore } from '@/lib/character-store';
-import { useEffect, useState } from 'react';
 import { Character } from '@/lib/dnd-data';
 import { CLASSES, SPECIES, BACKGROUNDS } from '@/lib/dnd-data';
 import { ArrowLeft, Edit, FileText, Scroll, Star, Image, TrendingUp, Share2, Printer } from 'lucide-react';
@@ -12,21 +12,15 @@ export default function CharacterProfilePage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
-  
-  const { characters } = useCharacterStore();
-  const [character, setCharacter] = useState<Character | null>(null);
+  const { character, loading, error } = useCharacterData();
+  const setCurrentCharacter = useCharacterStore((s) => s.setCurrentCharacter);
 
-  useEffect(() => {
-    const found = characters.find((c) => c.id === id);
-    if (found) {
-      setCharacter(found as Character);
-    } else {
-      // 角色不存在，返回首页
-      router.push('/');
-    }
-  }, [id, characters, router]);
+  if (error) {
+    router.push('/');
+    return null;
+  }
 
-  if (!character) {
+  if (loading || !character) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-red-50 to-white flex items-center justify-center">
         <div className="text-center">
@@ -60,8 +54,13 @@ export default function CharacterProfilePage() {
               打印/分享
             </Link>
             <Link
-              href={`/create?edit=${id}`}
+              href="/create"
               className="btn btn-primary flex items-center gap-2"
+              onClick={(e) => {
+                e.preventDefault();
+                setCurrentCharacter(character);
+                router.push('/create');
+              }}
             >
               <Edit className="w-4 h-4" />
               编辑角色

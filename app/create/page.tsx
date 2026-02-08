@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCharacterStore } from '@/lib/character-store';
+import { useRequireAuth } from '@/lib/use-require-auth';
 import { getAssetPath } from '@/lib/asset-path';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
@@ -34,8 +35,10 @@ const STEPS = [
 
 export default function CreateCharacterPage() {
   const router = useRouter();
+  const { loading: authLoading } = useRequireAuth();
   const { currentCharacter, currentStep, setStep, nextStep, prevStep, saveCharacter, resetWizard, updateCurrentCharacter } = useCharacterStore();
   const [mounted, setMounted] = useState(false);
+  const [finishSubmitting, setFinishSubmitting] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -65,6 +68,17 @@ export default function CreateCharacterPage() {
       router.push('/');
     }
   }, [currentCharacter, mounted, router]);
+
+  if (!mounted || authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-parchment-light">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gold-dark mx-auto mb-4" />
+          <p className="text-leather-base">加载中...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleNext = () => {
     // 步骤1：职业选择 - 只要选了职业就派发，由 StepClassSimple 决定弹窗或进入下一步
@@ -100,20 +114,45 @@ export default function CreateCharacterPage() {
     alert('角色已保存！');
   };
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     // 若当前在传记步骤（最后一步），先派发事件让 StepBiography 把未失焦的传记内容写入 store
     if (currentStep === 8) {
       window.dispatchEvent(new CustomEvent('flushBiography'));
     }
     saveCharacter();
-    // 保存一份临时数据给网页版角色卡读取（使用 store 最新状态，含刚刷新的传记）
     const char = useCharacterStore.getState().currentCharacter ?? currentCharacter;
-    try {
-      localStorage.setItem('temp-character-for-sheet', JSON.stringify(char));
-    } catch {
-      // 忽略：极端环境下 localStorage 不可用
+    if (!char) {
+      alert('角色数据异常，请重试。');
+      return;
     }
-    router.push('/character-sheet');
+    const serverId = (char as { serverId?: string }).serverId;
+    setFinishSubmitting(true);
+    try {
+      const url = serverId ? `/api/characters/${serverId}` : '/api/characters';
+      const method = serverId ? 'PUT' : 'POST';
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(char),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || '保存失败，请检查网络后重试。');
+        return;
+      }
+      const data = await res.json().catch(() => ({}));
+      const savedServerId = data.serverId ?? serverId;
+      // 跳转到服务器上的角色卡页（用 serverId，数据从接口拉取）
+      if (savedServerId) {
+        router.push(`/characters/${savedServerId}/character-sheet`);
+      } else {
+        router.push('/character-sheet');
+      }
+    } catch {
+      alert('网络错误，保存失败，请重试。');
+    } finally {
+      setFinishSubmitting(false);
+    }
   };
 
   const handleGoHome = () => {
@@ -369,9 +408,10 @@ export default function CreateCharacterPage() {
                   <button
                     type="button"
                     onClick={handleFinish}
-                    className="group flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 border-2 border-green-700 rounded-xl font-bold text-white text-sm shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                    disabled={finishSubmitting}
+                    className="group flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 border-2 border-green-700 rounded-xl font-bold text-white text-sm shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed"
                   >
-                    <span>完成角色创建</span>
+                    <span>{finishSubmitting ? '保存中...' : '完成角色创建'}</span>
                   </button>
                 )}
               </div>

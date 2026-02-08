@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { Character, Ability } from './dnd-data';
+import { Character } from './dnd-data';
 
 const SPECIES_NAME_ALIASES: Record<string, string> = {
   // 统一到 2024 物种中文命名
@@ -137,9 +136,8 @@ const createEmptyCharacter = (): Partial<Character> => ({
   notes: ''
 });
 
-export const useCharacterStore = create<CharacterStore>()(
-  persist(
-    (set, get) => ({
+// 仅内存状态，不做本地持久化；角色列表与详情均从服务器拉取
+export const useCharacterStore = create<CharacterStore>()((set, get) => ({
       characters: [],
       currentCharacter: null,
       currentStep: 0,
@@ -211,25 +209,4 @@ export const useCharacterStore = create<CharacterStore>()(
           currentStep: 0,
         });
       },
-    }),
-    {
-      name: 'dnd-character-storage',
-      version: 2,
-      migrate: (persistedState) => {
-        // 兼容历史数据：物种与职业中文名映射到新版
-        if (!persistedState || typeof persistedState !== 'object') return persistedState;
-        const s = persistedState as Record<string, unknown>;
-
-        const normalize = (c: unknown) => normalizeCharacterClass(normalizeCharacterSpecies(c));
-
-        if (Array.isArray(s.characters)) {
-          s.characters = s.characters.map((c) => normalize(c)) as unknown;
-        }
-        if ('currentCharacter' in s) {
-          s.currentCharacter = normalize(s.currentCharacter);
-        }
-        return s;
-      },
-    }
-  )
-);
+}));

@@ -1,36 +1,19 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
-import { useCharacterStore } from '@/lib/character-store';
-import { useEffect } from 'react';
-import { Character } from '@/lib/dnd-data';
+import { useRouter } from 'next/navigation';
+import { useCharacterData } from '@/lib/character-data-context';
 import CharacterSheetTabs from '@/components/character-sheet/CharacterSheetTabs';
 
 export default function CharacterSheetByCharacterPage() {
-  const params = useParams();
   const router = useRouter();
-  const id = params.id as string;
+  const { character, loading, error, updateCharacter } = useCharacterData();
 
-  const { characters, currentCharacter, loadCharacter, updateCurrentCharacter, saveCharacter } = useCharacterStore();
+  if (error) {
+    router.push('/');
+    return null;
+  }
 
-  useEffect(() => {
-    const found = characters.find((c) => c.id === id);
-    if (found) {
-      loadCharacter(id);
-    } else {
-      router.push('/');
-    }
-  }, [id, characters, loadCharacter, router]);
-
-  const character = currentCharacter?.id === id ? currentCharacter : characters.find((c) => c.id === id);
-
-  const handleUpdate = (updates: Partial<Character>) => {
-    if (!character) return;
-    updateCurrentCharacter(updates);
-    saveCharacter();
-  };
-
-  if (!character || character.id !== id) {
+  if (loading || !character) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-parchment-light">
         <div className="text-center">
@@ -41,5 +24,5 @@ export default function CharacterSheetByCharacterPage() {
     );
   }
 
-  return <CharacterSheetTabs character={character} onUpdate={handleUpdate} />;
+  return <CharacterSheetTabs character={character} onUpdate={updateCharacter} />;
 }

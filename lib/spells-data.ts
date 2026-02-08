@@ -1499,6 +1499,63 @@ export function getSpellById(id: string): Spell | undefined {
   return ALL_SPELLS.find(spell => spell.id === id);
 }
 
+/** 物种特质授予的戏法 ID（提夫林：异界存在奇术 + 邪魔遗赠 1 级戏法；侏儒：血系戏法） */
+export function getSpeciesGrantedCantrips(character: {
+  species?: string;
+  classFeatureChoices?: Record<string, string>;
+}): string[] {
+  if (!character.species) return [];
+  const out: string[] = [];
+
+  // 提夫林：异界存在 -> 奇术 Thaumaturgy
+  if (character.species === '提夫林') {
+    out.push('thaumaturgy');
+    // 邪魔遗赠 1 级：深渊=毒气喷涌，幽冥=颤栗之触，炼狱=火焰箭
+    if (character.classFeatureChoices?.speciesChoices) {
+      try {
+        const choices = JSON.parse(character.classFeatureChoices.speciesChoices as string);
+        if (choices.legacy) {
+          const legacy = choices.legacy as string;
+          if (legacy.includes('深渊')) out.push('poison-spray');
+          if (legacy.includes('冥界')) out.push('chill-touch');
+          if (legacy.includes('炼狱')) out.push('fire-bolt');
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  // 侏儒：森林侏儒=次级幻象；岩石侏儒=修复术+魔法伎俩
+  if (character.species === '侏儒' && character.classFeatureChoices?.speciesChoices) {
+    try {
+      const choices = JSON.parse(character.classFeatureChoices.speciesChoices as string);
+      if (choices.lineage) {
+        const lineage = choices.lineage as string;
+        if (lineage.includes('森林侏儒')) out.push('minor-illusion');
+        if (lineage.includes('岩石侏儒')) {
+          out.push('mending', 'prestidigitation');
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  return [...new Set(out)];
+}
+
+/** 有效戏法列表 = 物种授予 + 职业选择（去重，物种在前） */
+export function getEffectiveCantrips(character: {
+  species?: string;
+  classFeatureChoices?: Record<string, string>;
+}): string[] {
+  const speciesIds = getSpeciesGrantedCantrips(character);
+  const raw = character.classFeatureChoices?.selectedCantrips;
+  const selected: string[] = raw ? (JSON.parse(raw as string) as string[]) : [];
+  return [...new Set([...speciesIds, ...selected])];
+}
+
 // 检查职业是否有施法能力
 export function hasSpellcasting(className: string): boolean {
   const spellcastingClasses = ['牧师', '法师', '术士', '魔契师', '吟游诗人', '圣武士', '德鲁伊', '游侠'];

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/session';
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/characters/[id] - 获取单个角色
 export async function GET(
   request: NextRequest,

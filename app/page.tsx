@@ -3,10 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCharacterStore } from '@/lib/character-store';
+import { useRequireAuth } from '@/lib/use-require-auth';
 import { ALIGNMENTS } from '@/lib/dnd-data';
 import { getAssetPath } from '@/lib/asset-path';
-import { Plus, Edit, Trash2, FileText } from 'lucide-react';
+import { Plus, Edit, Trash2, FileText, Settings, LogOut } from 'lucide-react';
 import Link from 'next/link';
+import type { Character } from '@/lib/dnd-data';
+
+type CharacterWithServerId = Character & { serverId: string };
 
 function getAlignmentName(alignmentId: string | undefined): string {
   if (!alignmentId) return '';
@@ -16,8 +20,25 @@ function getAlignmentName(alignmentId: string | undefined): string {
 
 export default function HomePage() {
   const router = useRouter();
-  const { characters, createNewCharacter, loadCharacter, deleteCharacter } = useCharacterStore();
+  const { loading: authLoading, user } = useRequireAuth();
+  const { createNewCharacter, setCurrentCharacter } = useCharacterStore();
   const [mounted, setMounted] = useState(false);
+  const [characters, setCharacters] = useState<CharacterWithServerId[]>([]);
+  const [charactersLoading, setCharactersLoading] = useState(true);
+
+  const fetchCharacters = async () => {
+    setCharactersLoading(true);
+    try {
+      const res = await fetch('/api/characters');
+      if (!res.ok) return;
+      const data = await res.json();
+      setCharacters(data.characters ?? []);
+    } catch {
+      setCharacters([]);
+    } finally {
+      setCharactersLoading(false);
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -39,24 +60,48 @@ export default function HomePage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!authLoading) fetchCharacters();
+  }, [authLoading]);
+
   const handleCreateNew = () => {
     createNewCharacter();
     router.push('/create');
   };
 
-  const handleEdit = (id: string) => {
-    loadCharacter(id);
-    router.push('/create');
-  };
-
-  const handleDelete = (id: string) => {
-    if (confirm('确定要删除这个角色吗？')) {
-      deleteCharacter(id);
+  const handleEdit = async (serverId: string) => {
+    try {
+      const res = await fetch(`/api/characters/${serverId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const char = data.character as Character;
+      setCurrentCharacter({ ...char, serverId } as Partial<Character>);
+      router.push('/create');
+    } catch {
+      alert('加载角色失败，请重试。');
     }
   };
 
-  if (!mounted) {
-    return null;
+  const handleDelete = async (serverId: string) => {
+    if (!confirm('确定要删除这个角色吗？')) return;
+    try {
+      const res = await fetch(`/api/characters/${serverId}`, { method: 'DELETE' });
+      if (!res.ok) return;
+      setCharacters((prev) => prev.filter((c) => c.serverId !== serverId));
+    } catch {
+      alert('删除失败，请重试。');
+    }
+  };
+
+  if (!mounted || authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-parchment-light">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gold-dark mx-auto mb-4" />
+          <p className="text-leather-base">加载中...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -71,7 +116,27 @@ export default function HomePage() {
 
       {/* 第一屏：Logo + 标题 + 底部创建按钮，留出背景主题 */}
       <section className="min-h-screen flex flex-col relative z-10">
-        <header className="text-center pt-12 md:pt-20 px-4">
+        <header className="text-center pt-12 md:pt-20 px-4 relative">
+          {user && (
+            <nav className="absolute top-4 right-4 flex items-center gap-3 text-white/90 text-sm">
+              <span className="hidden sm:inline truncate max-w-[120px]" title={user.email}>{user.email}</span>
+              <Link href="/settings" className="flex items-center gap-1 hover:text-white transition-colors" title="账号设置">
+                <Settings className="w-4 h-4" /> 设置
+              </Link>
+              <button
+                type="button"
+                onClick={async () => {
+                  await fetch('/api/auth/logout', { method: 'POST' });
+                  router.refresh();
+                  router.push('/login');
+                }}
+                className="flex items-center gap-1 hover:text-white transition-colors"
+                title="退出登录"
+              >
+                <LogOut className="w-4 h-4" /> 退出
+              </button>
+            </nav>
+          )}
           <h1 className="flex items-center justify-center gap-3 text-4xl md:text-6xl font-bold text-white drop-shadow-md font-cinzel tracking-wider">
             <img
               src={getAssetPath('/pic/dnd-logo.png')}
@@ -97,10 +162,12 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 第二屏：已创建角色卡 / 空状态 */}
+      {/* 第二屏：已创建角色卡 / 空状态（从服务器拉取） */}
       <section className="min-h-screen relative z-10 pt-8 pb-16">
         <div className="container mx-auto px-4 max-w-6xl">
-        {characters.length > 0 ? (
+        {charactersLoading ? (
+          <div className="text-center py-16 text-white/90">加载角色列表中...</div>
+        ) : characters.length > 0 ? (
           <div>
             <h2 className="text-3xl font-bold text-center mb-8 text-white font-cinzel">
               ⚔️ 我的冒险者 ⚔️
@@ -108,7 +175,7 @@ export default function HomePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {characters.map((character) => (
                 <div 
-                  key={character.id} 
+                  key={character.serverId} 
                   className="group relative bg-white/90 backdrop-blur-sm border-2 border-gold-dark/30 rounded-2xl p-6 hover:border-purple-600/60 hover:shadow-xl transition-all duration-300 overflow-hidden"
                 >
                   {/* 卡片背景装饰 */}
@@ -131,14 +198,14 @@ export default function HomePage() {
                       </div>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => handleEdit(character.id)}
+                          onClick={() => handleEdit(character.serverId)}
                           className="p-2 text-amber-700 hover:bg-amber-100 rounded-lg transition-all hover:scale-110"
                           title="编辑"
                         >
                           <Edit className="w-5 h-5" />
                         </button>
                         <button
-                          onClick={() => handleDelete(character.id)}
+                          onClick={() => handleDelete(character.serverId)}
                           className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-all hover:scale-110"
                           title="删除"
                         >
@@ -166,7 +233,7 @@ export default function HomePage() {
                     {/* 查看按钮 */}
                     <div className="pt-4 border-t border-gold-light/40">
                       <Link
-                        href={`/characters/${character.id}/character-sheet`}
+                        href={`/characters/${character.serverId}/character-sheet`}
                         className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-lg font-bold text-white shadow-lg transition-all duration-300 hover:scale-105"
                       >
                         <FileText className="w-5 h-5" />

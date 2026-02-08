@@ -189,23 +189,60 @@ export default function FeaturesPage({ character, onUpdate }: FeaturesPageProps)
                   </div>
                 )}
 
-                {/* 专长 */}
+                {/* 起源专长：完整规则详情 */}
                 {(backgroundData?.featId || backgroundData?.feats) && (
-                  <div className="bg-amber-50 rounded-lg p-4 border-2 border-amber-200 md:col-span-2">
-                    <h3 className="font-bold text-amber-900 mb-2 flex items-center gap-2">
+                  <div className="bg-amber-50 rounded-lg p-5 border-2 border-amber-200 md:col-span-2">
+                    <h3 className="font-bold text-amber-900 mb-3 flex items-center gap-2">
                       <Check className="w-4 h-4" />
                       起源专长
                     </h3>
                     {(() => {
                       const featId = backgroundData?.featId || (backgroundData?.feats && backgroundData.feats[0]);
                       const feat = featId ? getFeatById(featId) : null;
-                      return feat ? (
-                        <div>
-                          <p className="font-semibold text-amber-900">{feat.name}</p>
-                          <p className="text-gray-700 text-sm mt-1">{feat.description}</p>
+                      if (!feat) {
+                        return <p className="text-gray-600 text-sm">{featId}</p>;
+                      }
+                      return (
+                        <div className="space-y-3">
+                          <div>
+                            <p className="font-bold text-amber-900 text-lg">{feat.name}</p>
+                            {feat.nameEn && (
+                              <p className="text-amber-800/80 text-sm">{feat.nameEn}</p>
+                            )}
+                            {feat.category && (
+                              <span className="inline-block mt-1 px-2 py-0.5 bg-amber-200/80 text-amber-900 rounded text-xs font-medium">
+                                {feat.category}
+                              </span>
+                            )}
+                            {feat.repeatable && (
+                              <span className="ml-2 inline-block px-2 py-0.5 bg-amber-200/60 text-amber-800 rounded text-xs">
+                                可复选
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line">
+                            {feat.description}
+                          </p>
+                          {feat.prerequisite && (
+                            <div className="text-sm">
+                              <span className="font-semibold text-amber-900">先决条件：</span>
+                              <span className="text-gray-700">{feat.prerequisite}</span>
+                            </div>
+                          )}
+                          {feat.benefits && feat.benefits.length > 0 && (
+                            <div>
+                              <p className="font-semibold text-amber-900 mb-2 text-sm">规则详情：</p>
+                              <ul className="space-y-1.5 text-sm text-gray-700">
+                                {feat.benefits.map((benefit, idx) => (
+                                  <li key={idx} className="flex items-start gap-2">
+                                    <span className="text-amber-600 mt-0.5 flex-shrink-0">•</span>
+                                    <span className="leading-relaxed">{benefit}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
                         </div>
-                      ) : (
-                        <p className="text-gray-600 text-sm">{featId}</p>
                       );
                     })()}
                   </div>

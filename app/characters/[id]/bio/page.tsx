@@ -1,9 +1,9 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useCharacterStore } from '@/lib/character-store';
+import { useCharacterData } from '@/lib/character-data-context';
 import { useEffect, useState } from 'react';
-import { Character, Biography } from '@/lib/dnd-data';
+import { Biography } from '@/lib/dnd-data';
 import { ArrowLeft, Save, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -11,9 +11,7 @@ export default function CharacterBioPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
-  
-  const { characters, updateCurrentCharacter, saveCharacter, setCurrentCharacter } = useCharacterStore();
-  const [character, setCharacter] = useState<Character | null>(null);
+  const { character, loading, error, updateCharacter } = useCharacterData();
   const [biography, setBiography] = useState<Biography>({
     appearance: '',
     personality: '',
@@ -24,37 +22,14 @@ export default function CharacterBioPage() {
   const [showTimeline, setShowTimeline] = useState(false);
 
   useEffect(() => {
-    const found = characters.find((c) => c.id === id);
-    if (found) {
-      setCharacter(found as Character);
-      if (found.biography) {
-        setBiography(found.biography);
-      }
-    } else {
-      router.push('/');
-    }
-  }, [id, characters, router]);
+    if (character?.biography) setBiography(character.biography);
+  }, [character?.biography]);
 
   const handleSave = async () => {
     if (!character) return;
-    
     setIsSaving(true);
-    
-    // 更新角色的传记信息
-    const updatedCharacter = {
-      ...character,
-      biography,
-      updatedAt: new Date().toISOString()
-    };
-    
-    // 更新store中的角色
-    setCurrentCharacter(updatedCharacter);
-    saveCharacter();
-    setCharacter(updatedCharacter);
-    
-    setTimeout(() => {
-      setIsSaving(false);
-    }, 500);
+    await updateCharacter({ biography });
+    setIsSaving(false);
   };
 
   const addTimelineEvent = () => {
@@ -84,7 +59,12 @@ export default function CharacterBioPage() {
     }));
   };
 
-  if (!character) {
+  if (error) {
+    router.push('/');
+    return null;
+  }
+
+  if (loading || !character) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-red-50 to-white flex items-center justify-center">
         <div className="text-center">

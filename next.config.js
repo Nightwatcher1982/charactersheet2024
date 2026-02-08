@@ -17,6 +17,11 @@ const nextConfig = {
     // 启用 WebP/AVIF 等格式，减小体积、加快加载
     formats: ['image/avif', 'image/webp'],
   },
+  // 开发环境禁用 webpack 文件系统缓存，避免 .next/cache 损坏导致 404（ENOENT pack.gz）
+  webpack: (config, { dev }) => {
+    if (dev) config.cache = false;
+    return config;
+  },
 };
 
 module.exports = nextConfig;

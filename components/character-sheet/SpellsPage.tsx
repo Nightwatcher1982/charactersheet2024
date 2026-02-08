@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Character, getAbilityModifier, getProficiencyBonus } from '@/lib/dnd-data';
-import { getSpellById, getClassSpellInfo, getMagicInitiateSpellInfo, type MagicInitiateEntry } from '@/lib/spells-data';
+import { getSpellById, getClassSpellInfo, getMagicInitiateSpellInfo, getEffectiveCantrips, getSpeciesGrantedCantrips, type MagicInitiateEntry } from '@/lib/spells-data';
 import { getFeatById } from '@/lib/feats-data';
 import { Wand2, Sparkles, Zap, Trash2, AlertCircle, Plus, Pencil } from 'lucide-react';
 import AddSpellModal from './AddSpellModal';
@@ -242,7 +242,9 @@ export default function SpellsPage({ character, onUpdate }: SpellsPageProps) {
   const spellSaveDC = 8 + profBonus + abilityMod;
   const spellAttackBonus = profBonus + abilityMod;
 
-  // 获取已选择的法术
+  // 有效戏法 = 物种授予 + 职业选择
+  const effectiveCantrips = getEffectiveCantrips(character);
+  const speciesGrantedCantrips = getSpeciesGrantedCantrips(character);
   const selectedCantrips = character.classFeatureChoices?.selectedCantrips
     ? JSON.parse(character.classFeatureChoices.selectedCantrips as string)
     : [];
@@ -255,8 +257,11 @@ export default function SpellsPage({ character, onUpdate }: SpellsPageProps) {
     ? JSON.parse(character.classFeatureChoices.selectedPreparedSpells as string)
     : [];
 
-  // 移除戏法
+  // 移除戏法（物种授予的戏法不可移除）
   const handleRemoveCantrip = (spellId: string) => {
+    if (speciesGrantedCantrips.includes(spellId)) {
+      return; // 物种特质戏法不显示移除按钮，或这里直接禁止
+    }
     if (!confirm('确定要移除这个戏法吗？')) return;
     
     const updated = selectedCantrips.filter((id: string) => id !== spellId);
@@ -302,7 +307,7 @@ export default function SpellsPage({ character, onUpdate }: SpellsPageProps) {
     onUpdate({ classFeatureChoices: updatedChoices });
   };
 
-  // 添加戏法
+  // 添加戏法（与有效列表去重，避免重复添加物种戏法）
   const handleAddCantrips = (cantrips: string[]) => {
     const updatedCantrips = [...new Set([...selectedCantrips, ...cantrips])];
     const updatedChoices = {
@@ -368,7 +373,7 @@ export default function SpellsPage({ character, onUpdate }: SpellsPageProps) {
           <div className="text-center">
             <div className="text-xs text-gray-600 mb-1">已知戏法</div>
             <div className="text-2xl font-bold text-purple-600">
-              {selectedCantrips.length} / {spellInfo.cantripsKnown}
+              {effectiveCantrips.length} / {spellInfo.cantripsKnown + speciesGrantedCantrips.length}
             </div>
           </div>
           <div className="text-center">
@@ -409,7 +414,7 @@ export default function SpellsPage({ character, onUpdate }: SpellsPageProps) {
             <div className="flex items-center justify-center gap-2">
               <Wand2 className="w-5 h-5" />
               <span>戏法</span>
-              <span className="text-sm">({selectedCantrips.length})</span>
+              <span className="text-sm">({effectiveCantrips.length})</span>
             </div>
           </button>
           <button
@@ -461,10 +466,11 @@ export default function SpellsPage({ character, onUpdate }: SpellsPageProps) {
                 </button>
               </div>
 
-              {selectedCantrips.length > 0 ? (
-                selectedCantrips.map((spellId: string) => {
+              {effectiveCantrips.length > 0 ? (
+                effectiveCantrips.map((spellId: string) => {
                   const spell = getSpellById(spellId);
                   if (!spell) return null;
+                  const isSpeciesGranted = speciesGrantedCantrips.includes(spellId);
 
                   return (
                     <div
@@ -475,6 +481,9 @@ export default function SpellsPage({ character, onUpdate }: SpellsPageProps) {
                         <div className="flex-1">
                           <h3 className="font-bold text-purple-900 text-lg">
                             {spell.name} ({spell.nameEn})
+                            {isSpeciesGranted && (
+                              <span className="ml-2 text-xs font-normal text-purple-600">（物种）</span>
+                            )}
                           </h3>
                           <div className="text-sm text-purple-700 mt-1">
                             {spell.school} · {spell.castingTime} · {spell.range}
@@ -482,12 +491,14 @@ export default function SpellsPage({ character, onUpdate }: SpellsPageProps) {
                         </div>
                         <div className="flex items-center gap-2 ml-3">
                           <Wand2 className="w-5 h-5 text-purple-600" />
-                          <button
-                            onClick={() => handleRemoveCantrip(spellId)}
-                            className="p-1 hover:bg-red-100 rounded transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4 text-red-600" />
-                          </button>
+                          {!isSpeciesGranted && (
+                            <button
+                              onClick={() => handleRemoveCantrip(spellId)}
+                              className="p-1 hover:bg-red-100 rounded transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4 text-red-600" />
+                            </button>
+                          )}
                         </div>
                       </div>
                       <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
@@ -620,7 +631,7 @@ export default function SpellsPage({ character, onUpdate }: SpellsPageProps) {
         onComplete={handleAddCantrips}
         selectedClass={character.class}
         spellLevel={0}
-        alreadySelected={selectedCantrips}
+        alreadySelected={effectiveCantrips}
         title="添加戏法"
         description="选择要添加到角色卡的戏法"
       />

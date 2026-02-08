@@ -1,9 +1,8 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useCharacterStore } from '@/lib/character-store';
+import { useCharacterData } from '@/lib/character-data-context';
 import { useEffect, useState } from 'react';
-import { Character } from '@/lib/dnd-data';
 import { ArrowLeft, Plus, Trash2, X, ZoomIn, Image as ImageIcon } from 'lucide-react';
 import Link from 'next/link';
 
@@ -11,20 +10,9 @@ export default function CharacterPortraitsPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
-  
-  const { characters, setCurrentCharacter, saveCharacter } = useCharacterStore();
-  const [character, setCharacter] = useState<Character | null>(null);
+  const { character, loading, error, updateCharacter } = useCharacterData();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-
-  useEffect(() => {
-    const found = characters.find((c) => c.id === id);
-    if (found) {
-      setCharacter(found as Character);
-    } else {
-      router.push('/');
-    }
-  }, [id, characters, router]);
 
   // 管理大图预览时的滚动锁定
   useEffect(() => {
@@ -42,76 +30,64 @@ export default function CharacterPortraitsPage() {
     };
   }, []);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !character) return;
 
-    // 检查文件大小（限制5MB）
-    if (file.size > 5 * 1024 * 1024) {
-      alert('图片大小不能超过5MB');
+    if (file.size > 2 * 1024 * 1024) {
+      alert('图片大小不能超过 2MB');
       return;
     }
 
     setIsUploading(true);
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64String = reader.result as string;
-      
-      const updatedPortraits = [...(character.portraits || []), base64String];
-      const updatedCharacter = {
-        ...character,
-        portraits: updatedPortraits,
-        updatedAt: new Date().toISOString()
-      };
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('characterId', id);
+      const res = await fetch('/api/upload/portrait', { method: 'POST', body: formData });
+      const data = await res.json();
 
-      setCurrentCharacter(updatedCharacter);
-      saveCharacter();
-      setCharacter(updatedCharacter);
+      if (res.ok && data.url) {
+        const updatedPortraits = [...(character.portraits || []), data.url];
+        await updateCharacter({ portraits: updatedPortraits });
+      } else {
+        // OSS 未配置或失败时退回 base64（如本地开发）
+        const base64String = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = () => reject(new Error('图片读取失败'));
+          reader.readAsDataURL(file);
+        });
+        const updatedPortraits = [...(character.portraits || []), base64String];
+        await updateCharacter({ portraits: updatedPortraits });
+      }
+    } catch {
+      alert('上传失败，请重试');
+    } finally {
       setIsUploading(false);
-    };
-
-    reader.onerror = () => {
-      alert('图片读取失败');
-      setIsUploading(false);
-    };
-
-    reader.readAsDataURL(file);
-  };
-
-  const handleDeleteImage = (index: number) => {
-    if (!character) return;
-    
-    if (confirm('确定要删除这张图片吗？')) {
-      const updatedPortraits = (character.portraits || []).filter((_, i) => i !== index);
-      const updatedCharacter = {
-        ...character,
-        portraits: updatedPortraits,
-        updatedAt: new Date().toISOString()
-      };
-
-      setCurrentCharacter(updatedCharacter);
-      saveCharacter();
-      setCharacter(updatedCharacter);
     }
   };
 
-  const handleSetAsAvatar = (imageUrl: string) => {
+  const handleDeleteImage = async (index: number) => {
     if (!character) return;
-    
-    const updatedCharacter = {
-      ...character,
-      avatar: imageUrl,
-      updatedAt: new Date().toISOString()
-    };
+    if (!confirm('确定要删除这张图片吗？')) return;
+    const updatedPortraits = (character.portraits || []).filter((_, i) => i !== index);
+    await updateCharacter({ portraits: updatedPortraits });
+  };
 
-    setCurrentCharacter(updatedCharacter);
-    saveCharacter();
-    setCharacter(updatedCharacter);
+  const handleSetAsAvatar = async (imageUrl: string) => {
+    if (!character) return;
+    await updateCharacter({ avatar: imageUrl });
     alert('已设置为头像');
   };
 
-  if (!character) {
+  if (error) {
+    router.push('/');
+    return null;
+  }
+
+  if (loading || !character) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-red-50 to-white flex items-center justify-center">
         <div className="text-center">
@@ -247,8 +223,8 @@ export default function CharacterPortraitsPage() {
           <ul className="text-sm text-blue-800 space-y-1">
             <li>• 点击图片可以查看大图</li>
             <li>• 鼠标悬停在图片上可以看到操作按钮</li>
-            <li>• 单张图片大小限制为5MB</li>
-            <li>• 图片以base64格式存储在本地浏览器中</li>
+            <li>• 单张图片大小限制为 2MB</li>
+            <li>• 图片将上传至 OSS（未配置时以 base64 存于本地）</li>
           </ul>
         </div>
       </div>

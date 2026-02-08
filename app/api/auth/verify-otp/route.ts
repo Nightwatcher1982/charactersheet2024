@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 import { validatePhoneNumber } from '@/lib/sms';
 
+export const dynamic = 'force-dynamic';
+
 // 最大尝试次数
 const MAX_ATTEMPTS = 5;
 
@@ -85,7 +87,7 @@ export async function POST(request: NextRequest) {
     // 创建会话
     const session = await getSession();
     session.userId = user.id;
-    session.phone = user.phone;
+    session.phone = user.phone ?? undefined;
     session.isLoggedIn = true;
     await session.save();
 

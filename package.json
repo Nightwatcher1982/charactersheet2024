@@ -4,16 +4,22 @@
   "description": "DND 2024 角色卡创建工具",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "rm -rf .next && node scripts/ensure-middleware-manifest.js && next dev",
+    "dev:fast": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "create-admin": "npx tsx scripts/create-admin.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
+    "@alicloud/dm20151123": "^1.8.3",
     "@alicloud/dysmsapi20170525": "^4.4.0",
     "@alicloud/openapi-client": "^0.4.15",
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^5.22.0",
+    "ali-oss": "^6.23.0",
     "bcrypt": "^6.0.0",
     "iron-session": "^8.0.4",
     "jspdf": "^4.0.0",
@@ -26,15 +32,18 @@
     "zustand": "^4.5.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.0",
     "@types/bcrypt": "^6.0.0",
     "@types/node": "^20.11.0",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.0",
+    "dotenv": "^17.2.3",
     "eslint": "^8.56.0",
     "eslint-config-next": "^14.2.0",
     "postcss": "^8.4.0",
     "tailwindcss": "^3.4.0",
+    "tsx": "^4.7.0",
     "typescript": "^5.3.0"
   }
 }

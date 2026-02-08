@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useCharacterStore } from '@/lib/character-store';
 import { Sparkles, Wand2, Check, Circle, Pencil } from 'lucide-react';
-import { getSpellsByClass, getClassSpellInfo, getMagicInitiateSpellInfo, getSpellById } from '@/lib/spells-data';
+import { getSpellsByClass, getClassSpellInfo, getMagicInitiateSpellInfo, getSpellById, getEffectiveCantrips, getSpeciesGrantedCantrips } from '@/lib/spells-data';
 import { getFeatById } from '@/lib/feats-data';
 import MagicInitiateSpellModal from '@/components/MagicInitiateSpellModal';
 import type { MagicInitiateEntry } from '@/lib/spells-data';
@@ -140,20 +140,18 @@ export default function StepSpellCheck() {
     );
   }
 
-  // 获取已选择的戏法和法术
-  const selectedCantrips = currentCharacter.classFeatureChoices?.selectedCantrips
-    ? JSON.parse(currentCharacter.classFeatureChoices.selectedCantrips as string)
-    : [];
-  
+  // 有效戏法 = 物种授予（提夫林奇术+遗赠戏法、侏儒血系戏法）+ 职业选择
+  const effectiveCantrips = getEffectiveCantrips(currentCharacter);
+  const speciesGrantedCantrips = getSpeciesGrantedCantrips(currentCharacter);
   const selectedFirstLevelSpells = currentCharacter.classFeatureChoices?.selectedFirstLevelSpells
     ? JSON.parse(currentCharacter.classFeatureChoices.selectedFirstLevelSpells as string)
     : [];
 
-  // 获取戏法和1级法术的详细信息
+  // 获取戏法和1级法术的详细信息（戏法用有效列表，含物种授予）
   const allSpells = getSpellsByClass(currentCharacter.class);
-  const cantripDetails = allSpells.cantrips.filter(spell =>
-    selectedCantrips.includes(spell.id)
-  );
+  const cantripDetails = effectiveCantrips
+    .map(id => getSpellById(id))
+    .filter((s): s is NonNullable<typeof s> => !!s);
   const spellDetails = allSpells.level1.filter(spell =>
     selectedFirstLevelSpells.includes(spell.id)
   );
@@ -215,7 +213,7 @@ export default function StepSpellCheck() {
             <Wand2 className="w-4 h-4" />
             <span>戏法</span>
             <span className="text-sm">
-              {selectedCantrips.length}/{spellInfo.cantripsKnown}
+              {effectiveCantrips.length}/{spellInfo.cantripsKnown + speciesGrantedCantrips.length}
             </span>
           </div>
         </button>
@@ -256,7 +254,12 @@ export default function StepSpellCheck() {
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h4 className="font-bold text-leather-dark text-lg">{cantrip.name}</h4>
+                      <h4 className="font-bold text-leather-dark text-lg">
+                        {cantrip.name}
+                        {speciesGrantedCantrips.includes(cantrip.id) && (
+                          <span className="ml-2 text-sm font-normal text-purple-600">（物种）</span>
+                        )}
+                      </h4>
                       <div className="text-sm text-gray-600 mt-1">
                         {cantrip.school} | 施法时间: {cantrip.castingTime}
                       </div>

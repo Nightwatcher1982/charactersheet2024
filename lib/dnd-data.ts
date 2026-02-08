@@ -796,7 +796,7 @@ export const SPECIES = [
       },
       {
         name: '异界存在',
-        description: '知晓妙术戏法'
+        description: '你习得戏法奇术 Thaumaturgy，施法属性与邪魔遗赠相同'
       }
     ],
     choices: [

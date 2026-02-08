@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
+import { prisma } from '@/lib/prisma';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
@@ -12,11 +15,24 @@ export async function GET() {
       );
     }
 
+    const user = await prisma.user.findFirst({
+      where: { id: session.userId, deletedAt: null },
+      select: { id: true, email: true, displayName: true, role: true },
+    });
+    if (!user) {
+      return NextResponse.json(
+        { isLoggedIn: false },
+        { status: 401 }
+      );
+    }
+
     return NextResponse.json({
       isLoggedIn: true,
       user: {
-        id: session.userId,
-        phone: session.phone,
+        id: user.id,
+        email: user.email,
+        displayName: user.displayName,
+        role: user.role,
       },
     });
   } catch (error) {
