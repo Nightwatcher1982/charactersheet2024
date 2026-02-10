@@ -102,8 +102,7 @@ export default function DiceBox3D({ trigger, onRollComplete, onClose }: DiceBox3
       const DiceBox = mod.default;
       try {
         const box = new DiceBox(`#${CONTAINER_ID}`, {
-          sounds: true,
-          volume: 80,
+          sounds: false,
           shadows: true,
           theme_surface: 'green-felt',
           theme_colorset: 'swa_blue',

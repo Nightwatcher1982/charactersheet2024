@@ -47,7 +47,11 @@ export async function GET(
         { status: 401 }
       );
     }
-    throw error;
+    console.error('[GET /api/campaigns/[id]/logs]', error);
+    return NextResponse.json(
+      { error: '获取战役日志失败，请确认数据库已执行迁移' },
+      { status: 500 }
+    );
   }
 }
 
@@ -101,6 +105,10 @@ export async function POST(
         { status: 401 }
       );
     }
-    throw error;
+    console.error('[POST /api/campaigns/[id]/logs]', error);
+    return NextResponse.json(
+      { error: '添加战役日志失败，请确认数据库已执行迁移' },
+      { status: 500 }
+    );
   }
 }
