@@ -3,6 +3,11 @@ const nextConfig = {
   trailingSlash: false,
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
+  async rewrites() {
+    return [
+      { source: '/dice-assets/sounds/:path*', destination: '/api/dice-sound' },
+    ];
+  },
   webpack: (config, { dev }) => {
     if (dev) config.cache = false;
     return config;

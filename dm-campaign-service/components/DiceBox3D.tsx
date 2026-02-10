@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const CONTAINER_ID = 'dice-box-3d-container';
 
@@ -87,6 +87,7 @@ export default function DiceBox3D({ trigger, onRollComplete, onClose }: DiceBox3
   const boxRef = useRef<DiceBoxInstance | null>(null);
   const lastNotationRef = useRef<string | string[] | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [ready, setReady] = useState(false);
 
   const triggerRef = useRef<DiceTrigger | null>(null);
   triggerRef.current = trigger;
@@ -107,7 +108,6 @@ export default function DiceBox3D({ trigger, onRollComplete, onClose }: DiceBox3
           theme_surface: 'green-felt',
           theme_colorset: 'swa_blue',
           theme_material: 'plastic',
-          sound_dieMaterial: 'plastic',
           assetPath: '/dice-assets/',
           onRollComplete: () => {
             onRollComplete?.();
@@ -122,6 +122,7 @@ export default function DiceBox3D({ trigger, onRollComplete, onClose }: DiceBox3
           if (b.desk.material) b.desk.material.opacity = 0;
         }
         boxRef.current = box as DiceBoxInstance;
+        setReady(true);
         const pending = triggerRef.current;
         if (pending) {
           const notation = buildPredeterminedNotation(
@@ -143,6 +144,7 @@ export default function DiceBox3D({ trigger, onRollComplete, onClose }: DiceBox3
     return () => {
       mounted = false;
       boxRef.current = null;
+      setReady(false);
     };
   }, [onRollComplete]);
 
@@ -171,6 +173,11 @@ export default function DiceBox3D({ trigger, onRollComplete, onClose }: DiceBox3
         id={CONTAINER_ID}
         className="w-full h-full overflow-hidden"
       />
+      {!ready && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-30">
+          <span className="px-4 py-2 rounded bg-white/95 text-gray-800 text-sm shadow">准备骰子…</span>
+        </div>
+      )}
       {onClose && (
         <button
           type="button"
