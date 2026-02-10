@@ -24,10 +24,10 @@ export async function GET(request: NextRequest) {
     const result = await fetchMyCharacters(authHeader);
     const list = result.ok ? result.characters : result.characters;
     const mapped = list.map((c) => ({
+      ...c,
       serverId: c.serverId,
       id: c.serverId,
       name: c.name ?? '未命名',
-      ...c,
     }));
     if (!result.ok && result.status === 401) {
       return NextResponse.json({
