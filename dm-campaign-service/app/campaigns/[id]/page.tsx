@@ -627,9 +627,19 @@ export default function CampaignHallPage() {
       <div className="min-h-screen p-4 max-w-2xl mx-auto bg-slate-50">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold text-gray-900">{campaign.name}</h1>
-          <Link href="/campaigns" className="px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-100 bg-white text-gray-800 text-sm">
-            返回列表
-          </Link>
+          <div className="flex gap-2">
+            {CHARACTER_SHEET_URL ? (
+              <a
+                href={CHARACTER_SHEET_URL}
+                className="px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-100 bg-white text-gray-800 text-sm"
+              >
+                我的角色卡
+              </a>
+            ) : null}
+            <Link href="/campaigns" className="px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-100 bg-white text-gray-800 text-sm">
+              返回列表
+            </Link>
+          </div>
         </div>
         {(campaign.backgroundImageUrl || campaign.backgroundIntro) && (
           <section className="border border-gray-200 rounded p-4 mb-4 bg-white">
@@ -722,6 +732,14 @@ export default function CampaignHallPage() {
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold text-gray-900">{campaign.name}</h1>
         <div className="flex gap-2">
+          {CHARACTER_SHEET_URL ? (
+            <a
+              href={CHARACTER_SHEET_URL}
+              className="px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-100 bg-white text-gray-800 text-sm"
+            >
+              我的角色卡
+            </a>
+          ) : null}
           {campaign.isDm && (
             <Link
               href={`/campaigns/${id}/settings`}

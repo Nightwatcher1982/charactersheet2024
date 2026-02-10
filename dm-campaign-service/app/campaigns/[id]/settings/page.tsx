@@ -169,6 +169,14 @@ export default function CampaignSettingsPage() {
           <Link href={`/campaigns/${id}`} className="px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-100 bg-white text-gray-800 text-sm">
             ← 返回主厅
           </Link>
+          {process.env.NEXT_PUBLIC_CHARACTER_SHEET_URL ? (
+            <a
+              href={process.env.NEXT_PUBLIC_CHARACTER_SHEET_URL}
+              className="px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-100 bg-white text-gray-800 text-sm"
+            >
+              我的角色卡
+            </a>
+          ) : null}
           <button
             type="button"
             onClick={() => {

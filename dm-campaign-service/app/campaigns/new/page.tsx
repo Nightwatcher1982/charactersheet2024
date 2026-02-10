@@ -46,9 +46,23 @@ export default function NewCampaignPage() {
     }
   };
 
+  const csUrl = process.env.NEXT_PUBLIC_CHARACTER_SHEET_URL || '';
+
   return (
     <div className="min-h-screen p-4 max-w-md mx-auto bg-slate-50">
-      <h1 className="text-2xl font-bold mb-4 text-gray-900">创建战役</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold text-gray-900">创建战役</h1>
+        <div className="flex gap-2">
+          <Link href="/campaigns" className="px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-100 bg-white text-gray-800 text-sm">
+            战役列表
+          </Link>
+          {csUrl ? (
+            <a href={csUrl} className="px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-100 bg-white text-gray-800 text-sm">
+              我的角色卡
+            </a>
+          ) : null}
+        </div>
+      </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">战役名称</label>

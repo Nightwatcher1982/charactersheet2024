@@ -209,10 +209,15 @@ function JoinForm() {
             <p className="text-sm text-gray-500">请配置 NEXT_PUBLIC_CHARACTER_SHEET_URL</p>
           ) : null}
         </div>
-        <p className="mt-4">
+        <p className="mt-4 flex gap-4">
           <Link href="/campaigns" className="text-gray-600 hover:underline text-sm">
             ← 返回战役列表
           </Link>
+          {CS_URL ? (
+            <a href={CS_URL} className="text-gray-600 hover:underline text-sm">
+              我的角色卡
+            </a>
+          ) : null}
         </p>
       </div>
     );
@@ -220,7 +225,19 @@ function JoinForm() {
 
   return (
     <div className="min-h-screen p-4 max-w-md mx-auto bg-slate-50">
-      <h1 className="text-2xl font-bold mb-4 text-gray-900">加入战役</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold text-gray-900">加入战役</h1>
+        <div className="flex gap-2">
+          <Link href="/campaigns" className="px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-100 bg-white text-gray-800 text-sm">
+            战役列表
+          </Link>
+          {CS_URL ? (
+            <a href={CS_URL} className="px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-100 bg-white text-gray-800 text-sm">
+              我的角色卡
+            </a>
+          ) : null}
+        </div>
+      </div>
       {campaignName && (
         <p className="text-gray-700 mb-4">将加入：{campaignName}</p>
       )}

@@ -85,16 +85,26 @@ export default function CampaignsPage() {
     <div className="min-h-screen p-4 max-w-4xl mx-auto bg-slate-50">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold text-gray-900">战役大厅</h1>
-        <button
-          type="button"
-          onClick={() => {
-            clearToken();
-            window.location.href = '/campaigns';
-          }}
-          className="px-3 py-1.5 border border-amber-300 bg-amber-50/80 rounded hover:bg-amber-100 text-amber-900 text-sm"
-        >
-          退出登录
-        </button>
+        <div className="flex items-center gap-2">
+          {CS_URL ? (
+            <a
+              href={CS_URL}
+              className="px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-100 bg-white text-gray-800 text-sm"
+            >
+              我的角色卡
+            </a>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => {
+              clearToken();
+              window.location.href = '/campaigns';
+            }}
+            className="px-3 py-1.5 border border-amber-300 bg-amber-50/80 rounded hover:bg-amber-100 text-amber-900 text-sm"
+          >
+            退出登录
+          </button>
+        </div>
       </div>
       <div className="flex flex-wrap gap-3 mb-6 items-center">
         {canCreate ? (
