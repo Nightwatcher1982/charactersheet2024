@@ -1,4 +1,4 @@
 declare module '@3d-dice/dice-box-threejs' {
-  const DiceBox: new (selector: string, options?: Record<string, unknown>) => { clear: () => void; [k: string]: unknown };
+  const DiceBox: unknown;
   export default DiceBox;
 }
