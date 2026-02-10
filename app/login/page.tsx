@@ -164,7 +164,7 @@ function LoginForm() {
     }
     setLoading(true);
     try {
-      const res = await fetch(getApiUrl('/api/auth/login'), {
+      const res = await fetch(getApiUrl('/api/auth/login/'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -175,8 +175,27 @@ function LoginForm() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || '登录失败');
+        const msg = data.error || '登录失败';
+        if (res.status === 401 && /@test\.com$/i.test(email.trim())) {
+          setError(`${msg}。若为测试账号，请先在项目根目录执行：npx tsx scripts/create-test-users.ts`);
+        } else {
+          setError(msg);
+        }
         return;
+      }
+      // 若为 DM 工具回调（完整 URL），带 token 跳转，供 DM 服务存 localStorage
+      const redirectUrl = searchParams.get('redirect');
+      if (redirectUrl && data.token) {
+        try {
+          const decoded = decodeURIComponent(redirectUrl);
+          if (decoded.startsWith('http')) {
+            const sep = decoded.includes('?') ? '&' : '?';
+            window.location.href = `${decoded}${sep}token=${encodeURIComponent(data.token)}`;
+            return;
+          }
+        } catch {
+          // 忽略非法 redirect，走下方站内跳转
+        }
       }
       const from = searchParams.get('from');
       const redirectTo = from ? decodeURIComponent(from) : '/';

@@ -6,7 +6,7 @@ import CharacterSheetTabs from '@/components/character-sheet/CharacterSheetTabs'
 
 export default function CharacterSheetByCharacterPage() {
   const router = useRouter();
-  const { character, loading, error, updateCharacter } = useCharacterData();
+  const { character, loading, error, isOwner, updateCharacter } = useCharacterData();
 
   if (error) {
     router.push('/');
@@ -24,5 +24,11 @@ export default function CharacterSheetByCharacterPage() {
     );
   }
 
-  return <CharacterSheetTabs character={character} onUpdate={updateCharacter} />;
+  return (
+    <CharacterSheetTabs
+      character={character}
+      onUpdate={updateCharacter}
+      readOnly={!isOwner}
+    />
+  );
 }

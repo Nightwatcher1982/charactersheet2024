@@ -1,0 +1,125 @@
+// DM 战役服务：仅战役与成员，无 User 表（用户来自 JWT）
+// https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Campaign {
+  id                 String    @id @default(cuid())
+  name               String
+  createdById        String    // DM = 角色卡 User.id（来自 JWT）
+  status             String    @default("active") // active | ended
+  nextSessionAt      DateTime?
+  sessionLog         String?   @db.Text
+  inviteCode         String    @unique
+  backgroundIntro    String?   @db.Text // 战役背景介绍
+  backgroundImageUrl String?   // 战役背景图片 URL
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  members    CampaignMember[]
+  encounters Encounter[]
+  events     CampaignEvent[]
+  dmNotes    CampaignDmNote[]
+  campaignLogs CampaignLogEntry[]
+
+  @@index([createdById])
+  @@index([inviteCode])
+}
+
+model CampaignLogEntry {
+  id         String   @id @default(cuid())
+  campaignId String
+  userId     String   // 谁添加的（DM 或玩家）
+  content    String   @db.Text
+  createdAt  DateTime @default(now())
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+}
+
+model CampaignDmNote {
+  id         String   @id @default(cuid())
+  campaignId String
+  content    String   @db.Text // 富文本 HTML
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+}
+
+model CampaignEvent {
+  id         String   @id @default(cuid())
+  campaignId String
+  type       String   // turn_advance | hp_change | dice_roll | encounter_ready 等
+  payload    Json     // 灵活结构
+  createdAt  DateTime @default(now())
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([campaignId, createdAt])
+}
+
+model Encounter {
+  id                String    @id @default(cuid())
+  campaignId        String
+  name              String
+  sortOrder         Int       @default(0)
+  isActive          Boolean   @default(false) // 当前选中的遭遇只有一个为 true
+  startedAt         DateTime? // 未设置表示未开始；开始遭遇后设置，才自动填充先攻并允许添加 NPC
+  currentRound      Int       @default(1)
+  currentTurnIndex  Int       @default(0)     // 当前行动在排序后列表中的下标
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  campaign Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  entries  InitiativeEntry[]
+
+  @@index([campaignId])
+}
+
+model InitiativeEntry {
+  id                String   @id @default(cuid())
+  encounterId       String
+  type              String   // "player" | "npc"
+  characterId       String?  // 玩家时关联角色卡 Character.id
+  userId            String?  // 玩家时关联用户
+  name              String
+  avatarUrl         String?
+  initiativeBonus   Int      @default(0)
+  currentInitiative Int?     // 掷骰结果，排序用
+  hp                Int?
+  maxHp             Int?
+  ac                Int?     // NPC 时仅 DM 可见
+  notes             String?  @db.Text // 仅 DM 可见
+  orderIndex        Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  encounter Encounter @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+
+  @@index([encounterId])
+}
+
+model CampaignMember {
+  id          String   @id @default(cuid())
+  campaignId  String
+  userId      String
+  characterId String   // 角色卡服务中的 Character.id
+  joinedAt    DateTime @default(now())
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, userId])
+  @@index([userId])
+}

@@ -1,9 +1,9 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useRequireAuth } from '@/lib/use-require-auth';
 import { CharacterDataProvider } from '@/lib/character-data-context';
 
+// 不在此处强制登录：公开角色允许未登录通过链接只读访问，由 API 与 Context 区分 isOwner
 export default function CharacterLayout({
   children,
 }: {
@@ -11,18 +11,6 @@ export default function CharacterLayout({
 }) {
   const params = useParams();
   const serverId = params?.id as string;
-  const { loading } = useRequireAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-parchment-light">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gold-dark mx-auto mb-4" />
-          <p className="text-leather-base">加载中...</p>
-        </div>
-      </div>
-    );
-  }
 
   if (!serverId) return null;
 

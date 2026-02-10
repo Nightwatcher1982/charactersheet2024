@@ -10,13 +10,13 @@ set -euo pipefail
 #   APP_DIR=/opt/charactersheet2024/current
 #   SERVICE=charactersheet2024
 #   BRANCH=main
-#   BASE_PATH=/charactersheet2024
+#   BASE_PATH=   （默认空，用于子域名 https://cs.dimvision.xyz/；子路径部署时设 BASE_PATH=/charactersheet2024）
 
 SERVER="${SERVER:-root@47.238.5.63}"
 APP_DIR="${APP_DIR:-/opt/charactersheet2024/current}"
 SERVICE="${SERVICE:-charactersheet2024}"
 BRANCH="${BRANCH:-main}"
-BASE_PATH="${BASE_PATH:-/charactersheet2024}"
+BASE_PATH="${BASE_PATH:-}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(git -C "$SCRIPT_DIR/.." rev-parse --show-toplevel)"
@@ -50,7 +50,7 @@ git reset --hard "origin/\$BRANCH"
 echo "==> 安装依赖"
 npm ci
 
-echo "==> 构建（确保 basePath 一致）"
+echo "==> 构建（BASE_PATH=\${BASE_PATH:-<根>}）"
 export NEXT_PUBLIC_BASE_PATH="\$BASE_PATH"
 export NEXT_TELEMETRY_DISABLED=1
 npm run build

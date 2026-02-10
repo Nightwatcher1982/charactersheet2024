@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import { getIronSession } from 'iron-session';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
+import { createToken } from '@/lib/jwt';
 import { sessionOptions, REMEMBER_ME_MAX_AGE, type SessionData } from '@/lib/session';
 import { validateEmail } from '@/lib/verification';
 import {
@@ -93,6 +94,18 @@ export async function POST(request: NextRequest) {
     session.isLoggedIn = true;
     await session.save();
 
+    let token: string | undefined;
+    try {
+      token = await createToken({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        memberExpiresAt: user.memberExpiresAt ?? null,
+      });
+    } catch (e) {
+      console.warn('JWT 签发跳过（请配置 JWT_SECRET）:', e);
+    }
+
     return NextResponse.json({
       success: true,
       message: '登录成功',
@@ -102,6 +115,7 @@ export async function POST(request: NextRequest) {
         displayName: user.displayName,
         role: user.role,
       },
+      ...(token && { token }),
     });
   } catch (err) {
     console.error('login error:', err);

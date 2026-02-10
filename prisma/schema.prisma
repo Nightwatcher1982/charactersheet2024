@@ -19,6 +19,8 @@ model User {
   displayName          String?
   contactInfo          String?
   role                 String    @default("normal") // normal | member
+  afdianUserId         String?   @unique // 爱发电 user_id，OAuth 绑定后写入；预留对接爱发电
+  memberExpiresAt      DateTime? // 会员到期时间（爱发电 1 月≈31 天）；预留对接爱发电
   emailVerifiedAt      DateTime?
   agreementAcceptedAt  DateTime?
   agreementVersion     String?
@@ -33,6 +35,7 @@ model User {
 
   @@index([email])
   @@index([role])
+  @@index([afdianUserId])
 }
 
 // 会话表（用于多端登出等）
@@ -54,6 +57,7 @@ model Character {
   id        String   @id @default(cuid())
   userId    String
   data      Json // 存储完整的 Character 对象（包括传记、日志、高光等）
+  isPublic  Boolean  @default(false) // 公开后他人可通过链接只读查看
   createdAt DateTime @default(now())
   updatedAt DateTime  @updatedAt
 

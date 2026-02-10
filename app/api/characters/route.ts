@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireAuth } from '@/lib/session';
+import { getAuthFromRequest } from '@/lib/jwt';
 
 export const dynamic = 'force-dynamic';
 
-// GET /api/characters - 获取当前用户的所有角色
-export async function GET() {
+// GET /api/characters - 获取当前用户的所有角色（支持 cookie session 或 Authorization: Bearer）
+export async function GET(request: NextRequest) {
   try {
-    const session = await requireAuth();
+    const auth = await getAuthFromRequest(request);
 
     const characters = await prisma.character.findMany({
-      where: { userId: session.userId },
+      where: { userId: auth.userId },
       orderBy: { updatedAt: 'desc' },
     });
 
@@ -19,6 +19,7 @@ export async function GET() {
       characters: characters.map((c) => ({
         ...(c.data as object),
         serverId: c.id,
+        isPublic: c.isPublic,
       })),
     });
   } catch (error) {
@@ -39,12 +40,12 @@ export async function GET() {
 // POST /api/characters - 创建新角色
 export async function POST(request: NextRequest) {
   try {
-    const session = await requireAuth();
+    const auth = await getAuthFromRequest(request);
     const characterData = await request.json();
 
     const character = await prisma.character.create({
       data: {
-        userId: session.userId!,
+        userId: auth.userId,
         data: characterData as any,
       },
     });

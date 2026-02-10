@@ -13,6 +13,8 @@ import BiographyPage from './BiographyPage';
 interface CharacterSheetTabsProps {
   character: Partial<Character>;
   onUpdate: (updates: Partial<Character>) => void;
+  /** 访客通过公开链接查看时为 true，仅展示不可编辑 */
+  readOnly?: boolean;
 }
 
 type TabId = 'basic' | 'features' | 'equipment' | 'spells' | 'biography';
@@ -24,7 +26,7 @@ interface Tab {
   description: string;
 }
 
-export default function CharacterSheetTabs({ character, onUpdate }: CharacterSheetTabsProps) {
+export default function CharacterSheetTabs({ character, onUpdate, readOnly }: CharacterSheetTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>('basic');
 
   const tabs: Tab[] = [
@@ -69,6 +71,11 @@ export default function CharacterSheetTabs({ character, onUpdate }: CharacterShe
 
   return (
     <div className="min-h-screen bg-parchment-light">
+      {readOnly && (
+        <div className="bg-amber-100 border-b border-amber-300 text-amber-900 text-center py-2 px-4 text-sm">
+          您正在以只读方式查看此角色卡，无法修改内容
+        </div>
+      )}
       {/* 顶部导航栏 - 移除 sticky 定位 */}
       <div className="bg-leather-dark shadow-dnd border-b-4 border-gold-dark">
         <div className="container mx-auto px-4 py-3">

@@ -10,6 +10,7 @@ type CharacterDataContextValue = {
   character: CharacterWithServerId | null;
   loading: boolean;
   error: boolean;
+  isOwner: boolean; // 是否为本人，否则为只读访问（公开链接访客）
   refetch: () => Promise<void>;
   updateCharacter: (updates: Partial<Character>) => Promise<void>;
 };
@@ -26,6 +27,7 @@ export function CharacterDataProvider({
   const [character, setCharacter] = useState<CharacterWithServerId | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [isOwner, setIsOwner] = useState(true);
 
   const fetchCharacter = useCallback(async () => {
     if (!serverId) {
@@ -43,6 +45,7 @@ export function CharacterDataProvider({
       }
       const data = await res.json();
       const char = data.character as Character;
+      setIsOwner(data.isOwner !== false);
       setCharacter({ ...char, serverId });
     } catch {
       setError(true);
@@ -58,7 +61,7 @@ export function CharacterDataProvider({
 
   const updateCharacter = useCallback(
     async (updates: Partial<Character>) => {
-      if (!character || !serverId) return;
+      if (!isOwner || !character || !serverId) return; // 访客只读，不发起更新
       const next = { ...character, ...updates, updatedAt: new Date().toISOString() };
       setCharacter(next);
       try {
@@ -72,13 +75,14 @@ export function CharacterDataProvider({
         setError(true);
       }
     },
-    [character, serverId]
+    [character, serverId, isOwner]
   );
 
   const value: CharacterDataContextValue = {
     character,
     loading,
     error,
+    isOwner,
     refetch: fetchCharacter,
     updateCharacter,
   };

@@ -6,11 +6,11 @@ import { useCharacterStore } from '@/lib/character-store';
 import { useRequireAuth } from '@/lib/use-require-auth';
 import { ALIGNMENTS } from '@/lib/dnd-data';
 import { getAssetPath, getApiUrl } from '@/lib/asset-path';
-import { Plus, Edit, Trash2, FileText, Settings, LogOut } from 'lucide-react';
+import { Plus, Edit, Trash2, FileText, Settings, LogOut, Copy, Swords } from 'lucide-react';
 import Link from 'next/link';
 import type { Character } from '@/lib/dnd-data';
 
-type CharacterWithServerId = Character & { serverId: string };
+type CharacterWithServerId = Character & { serverId: string; isPublic?: boolean };
 
 function getAlignmentName(alignmentId: string | undefined): string {
   if (!alignmentId) return '';
@@ -25,6 +25,7 @@ export default function HomePage() {
   const [mounted, setMounted] = useState(false);
   const [characters, setCharacters] = useState<CharacterWithServerId[]>([]);
   const [charactersLoading, setCharactersLoading] = useState(true);
+  const [campaignHallNavigating, setCampaignHallNavigating] = useState(false);
 
   const fetchCharacters = async () => {
     setCharactersLoading(true);
@@ -91,6 +92,54 @@ export default function HomePage() {
     } catch {
       alert('删除失败，请重试。');
     }
+  };
+
+  const handleTogglePublic = async (serverId: string, current: boolean) => {
+    try {
+      const res = await fetch(getApiUrl(`/api/characters/${serverId}`), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPublic: !current }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setCharacters((prev) =>
+        prev.map((c) =>
+          c.serverId === serverId ? { ...c, isPublic: data.isPublic } : c
+        )
+      );
+    } catch {
+      alert('设置失败，请重试。');
+    }
+  };
+
+  const campaignHallUrl =
+    (process.env.NEXT_PUBLIC_CAMPAIGN_HALL_URL || 'http://localhost:3001/campaigns/').replace(/\/+$/, '') + '/';
+
+  const goToCampaignHall = async () => {
+    setCampaignHallNavigating(true);
+    try {
+      const res = await fetch(getApiUrl('/api/auth/me'), { credentials: 'include' });
+      const data = await res.json();
+      const token = data?.token;
+      const base = campaignHallUrl.replace(/\/+$/, '');
+      if (token) {
+        window.location.href = `${base}/callback?token=${encodeURIComponent(token)}`;
+      } else {
+        window.location.href = base || campaignHallUrl;
+      }
+    } catch {
+      setCampaignHallNavigating(false);
+      window.location.href = campaignHallUrl.replace(/\/+$/, '') || campaignHallUrl;
+    }
+  };
+
+  const copyPublicLink = (serverId: string) => {
+    const url = typeof window !== 'undefined'
+      ? `${window.location.origin}/characters/${serverId}/character-sheet`
+      : '';
+    if (!url) return;
+    navigator.clipboard.writeText(url).then(() => alert('链接已复制到剪贴板'));
   };
 
   if (!mounted || authLoading) {
@@ -230,6 +279,35 @@ export default function HomePage() {
                       </div>
                     </div>
 
+                    {/* 公开开关与复制链接 */}
+                    <div className="flex items-center justify-between gap-3 mb-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-leather-base">公开</span>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={character.isPublic ?? false}
+                          onClick={() => handleTogglePublic(character.serverId, character.isPublic ?? false)}
+                          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${character.isPublic ? 'bg-purple-600' : 'bg-gray-200'}`}
+                        >
+                          <span
+                            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition-transform ${character.isPublic ? 'translate-x-5' : 'translate-x-1'}`}
+                            style={{ marginTop: '2px' }}
+                          />
+                        </button>
+                      </div>
+                      {character.isPublic && (
+                        <button
+                          type="button"
+                          onClick={() => copyPublicLink(character.serverId)}
+                          className="flex items-center gap-1 text-sm text-purple-600 hover:text-purple-800"
+                          title="复制公开链接"
+                        >
+                          <Copy className="w-4 h-4" /> 复制链接
+                        </button>
+                      )}
+                    </div>
+
                     {/* 查看按钮 */}
                     <div className="pt-4 border-t border-gold-light/40">
                       <Link
@@ -249,19 +327,61 @@ export default function HomePage() {
                 </div>
               ))}
             </div>
+            <div className="mt-10 flex justify-center">
+              <button
+                type="button"
+                onClick={goToCampaignHall}
+                disabled={campaignHallNavigating}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-amber-600/90 hover:bg-amber-600 disabled:opacity-70 text-white font-bold rounded-xl shadow-lg transition-all duration-300 hover:scale-105 font-cinzel"
+              >
+                {campaignHallNavigating ? (
+                  <>
+                    <span className="animate-spin inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+                    正在跳转…
+                  </>
+                ) : (
+                  <>
+                    <Swords className="w-5 h-5" />
+                    进入战役大厅
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         ) : (
-          <div className="relative bg-white/90 backdrop-blur-sm border border-gray-200 rounded-2xl p-16 text-center shadow-lg">
-            <div className="relative z-10">
-              <h3 className="text-2xl font-bold text-gray-800 mb-3 font-cinzel">
-                还没有冒险者
-              </h3>
-              <p className="text-gray-600 mb-8">
-                开始你的传奇之旅，创建第一个角色吧！
-              </p>
-              <p className="text-gray-500 text-sm">
-                ✨ 点击上方「创建新角色」按钮开始 ✨
-              </p>
+          <div>
+            <div className="relative bg-white/90 backdrop-blur-sm border border-gray-200 rounded-2xl p-16 text-center shadow-lg">
+              <div className="relative z-10">
+                <h3 className="text-2xl font-bold text-gray-800 mb-3 font-cinzel">
+                  还没有冒险者
+                </h3>
+                <p className="text-gray-600 mb-8">
+                  开始你的传奇之旅，创建第一个角色吧！
+                </p>
+                <p className="text-gray-500 text-sm">
+                  ✨ 点击上方「创建新角色」按钮开始 ✨
+                </p>
+              </div>
+            </div>
+            <div className="mt-10 flex justify-center">
+              <button
+                type="button"
+                onClick={goToCampaignHall}
+                disabled={campaignHallNavigating}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-amber-600/90 hover:bg-amber-600 disabled:opacity-70 text-white font-bold rounded-xl shadow-lg transition-all duration-300 hover:scale-105 font-cinzel"
+              >
+                {campaignHallNavigating ? (
+                  <>
+                    <span className="animate-spin inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+                    正在跳转…
+                  </>
+                ) : (
+                  <>
+                    <Swords className="w-5 h-5" />
+                    进入战役大厅
+                  </>
+                )}
+              </button>
             </div>
           </div>
         )}

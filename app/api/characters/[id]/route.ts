@@ -1,23 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireAuth } from '@/lib/session';
+import { getAuthFromRequest } from '@/lib/jwt';
+import { getCharacterComputedStats } from '@/lib/character-computed';
 
 export const dynamic = 'force-dynamic';
 
-// GET /api/characters/[id] - 获取单个角色
+/** 可选鉴权：有 cookie/JWT 则返回 userId，否则返回 null（不抛错） */
+async function getOptionalAuth(request: Request): Promise<{ userId: string } | null> {
+  try {
+    const auth = await getAuthFromRequest(request);
+    return { userId: auth.userId };
+  } catch {
+    return null;
+  }
+}
+
+// GET /api/characters/[id] - 获取单个角色；本人始终可读，公开角色允许未登录只读
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await requireAuth();
+    const auth = await getOptionalAuth(request);
     const { id } = await params;
 
-    const character = await prisma.character.findFirst({
-      where: {
-        id,
-        userId: session.userId,
-      },
+    const character = await prisma.character.findUnique({
+      where: { id },
     });
 
     if (!character) {
@@ -27,9 +35,93 @@ export async function GET(
       );
     }
 
+    const data = character.data as Record<string, unknown>;
+    const computed = getCharacterComputedStats(data as Parameters<typeof getCharacterComputedStats>[0]);
+    const characterWithComputed = {
+      ...data,
+      armorClass: computed.armorClass,
+      maxHp: computed.maxHp,
+      currentHitPoints: computed.currentHp,
+    };
+
+    const isOwner = auth !== null && character.userId === auth.userId;
+    if (isOwner) {
+      return NextResponse.json({
+        success: true,
+        character: characterWithComputed,
+        isOwner: true,
+      });
+    }
+
+    if (character.isPublic) {
+      return NextResponse.json({
+        success: true,
+        character: characterWithComputed,
+        isOwner: false,
+      });
+    }
+
+    return NextResponse.json(
+      { error: '角色不存在' },
+      { status: 404 }
+    );
+  } catch (error) {
+    console.error('获取角色失败:', error);
+    return NextResponse.json(
+      { error: '服务器错误' },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH /api/characters/[id] - 仅更新 isPublic 等元字段（仅本人）
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  let body: { isPublic?: boolean };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { error: '请求体无效' },
+      { status: 400 }
+    );
+  }
+  try {
+    const auth = await getAuthFromRequest(request);
+    const { id } = await params;
+
+    const character = await prisma.character.findFirst({
+      where: { id, userId: auth.userId },
+    });
+    if (!character) {
+      return NextResponse.json(
+        { error: '角色不存在' },
+        { status: 404 }
+      );
+    }
+
+    const updates: { isPublic?: boolean } = {};
+    if (typeof body.isPublic === 'boolean') updates.isPublic = body.isPublic;
+
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({
+        success: true,
+        character: character.data,
+        isPublic: character.isPublic,
+      });
+    }
+
+    const updated = await prisma.character.update({
+      where: { id },
+      data: updates,
+    });
+
     return NextResponse.json({
       success: true,
-      character: character.data,
+      character: updated.data,
+      isPublic: updated.isPublic,
     });
   } catch (error) {
     if (error instanceof Error && error.message === 'Unauthorized') {
@@ -38,7 +130,10 @@ export async function GET(
         { status: 401 }
       );
     }
-    console.error('获取角色失败:', error);
+    console.error('PATCH 角色失败:', error);
+    if (error instanceof Error && error.stack) {
+      console.error(error.stack);
+    }
     return NextResponse.json(
       { error: '服务器错误' },
       { status: 500 }
@@ -52,14 +147,14 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await requireAuth();
+    const auth = await getAuthFromRequest(request);
     const { id } = await params;
     const characterData = await request.json();
 
     const character = await prisma.character.findFirst({
       where: {
         id,
-        userId: session.userId,
+        userId: auth.userId,
       },
     });
 
@@ -100,13 +195,13 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await requireAuth();
+    const auth = await getAuthFromRequest(request);
     const { id } = await params;
 
     const character = await prisma.character.findFirst({
       where: {
         id,
-        userId: session.userId,
+        userId: auth.userId,
       },
     });
 
