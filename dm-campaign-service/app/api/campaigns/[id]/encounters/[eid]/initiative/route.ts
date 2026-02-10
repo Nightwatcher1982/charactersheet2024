@@ -88,7 +88,7 @@ export async function GET(
       }
     }
 
-    let entries = await prisma.initiativeEntry.findMany({
+    const entries = await prisma.initiativeEntry.findMany({
       where: { encounterId },
       orderBy: { orderIndex: 'asc' },
     });
