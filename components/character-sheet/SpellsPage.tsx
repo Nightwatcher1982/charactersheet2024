@@ -579,7 +579,7 @@ export default function SpellsPage({ character, onUpdate }: SpellsPageProps) {
         onClose={() => setAddModalLevel(null)}
         onComplete={(spellIds) => addModalLevel !== null && handleAddSpells(addModalLevel, spellIds)}
         selectedClass={character.class}
-        spellLevel={addModalLevel === null ? 0 : addModalLevel}
+        spellLevel={(addModalLevel === null ? 0 : addModalLevel) as 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9}
         alreadySelected={addModalLevel === 0 ? effectiveCantrips : (spellsByLevel[addModalLevel ?? 0] ?? [])}
         title={addModalLevel === 0 ? '添加戏法' : `添加${addModalLevel}环法术`}
         description={addModalLevel === 0 ? '选择要添加到角色卡的戏法' : `选择要添加到角色卡的${addModalLevel}环法术`}
