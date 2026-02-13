@@ -64,6 +64,8 @@ yarn-error.log*
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/e2e-reports/
+/e2e/level-up-seed.json
 
 # typescript
 *.tsbuildinfo

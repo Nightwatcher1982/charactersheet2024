@@ -11,7 +11,9 @@
     "lint": "next lint",
     "create-admin": "npx tsx scripts/create-admin.ts",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "seed:level-up-e2e": "tsx scripts/seed-level-up-e2e.ts",
+    "test:e2e:level-up": "playwright test e2e/level-up.spec.ts"
   },
   "dependencies": {
     "@alicloud/dm20151123": "^1.8.3",

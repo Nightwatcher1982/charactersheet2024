@@ -2,8 +2,11 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { Character, ALIGNMENTS } from '@/lib/dnd-data';
-import { User, Shield, Sparkles, Book, Home } from 'lucide-react';
+import { getClassIdFromName } from '@/lib/class-level-table';
+import { getSubclassById } from '@/lib/subclass-data';
+import { User, Shield, Sparkles, Book, Home, TrendingUp } from 'lucide-react';
 import BasicInfoPage from './BasicInfoPage';
 import FeaturesPage from './FeaturesPage';
 import EquipmentPage from './EquipmentPage';
@@ -27,7 +30,14 @@ interface Tab {
 }
 
 export default function CharacterSheetTabs({ character, onUpdate, readOnly }: CharacterSheetTabsProps) {
+  const params = useParams();
+  const id = params?.id as string | undefined;
   const [activeTab, setActiveTab] = useState<TabId>('basic');
+  const level = typeof character?.level === 'number' ? character.level : 1;
+  const canLevelUp = id && level < 20;
+  const subclassId = character?.subclass ?? (character?.classFeatureChoices as { subclass?: string } | undefined)?.subclass;
+  const classId = character?.class ? getClassIdFromName(character.class) : null;
+  const subclass = classId && subclassId ? getSubclassById(classId, subclassId) : null;
 
   const tabs: Tab[] = [
     {
@@ -85,17 +95,30 @@ export default function CharacterSheetTabs({ character, onUpdate, readOnly }: Ch
                 {character.name || '未命名角色'}
               </h1>
               <p className="text-sm text-parchment-base">
-                {character.level}级 {character.species} {character.class} · {character.background}
-                {character.alignment && <span className="ml-2">· {getAlignmentName(character.alignment)}</span>}
+                {character.level}级 {character.species} {character.class}
+                {subclass && <span> · {subclass.name}</span>}
+                <span> · {character.background}</span>
+                {character.alignment && <span> · {getAlignmentName(character.alignment)}</span>}
               </p>
             </div>
-            <Link
-              href="/"
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/90 hover:bg-parchment-light text-leather-dark border border-gold-dark rounded-lg text-sm font-medium transition-colors shrink-0"
-            >
-              <Home className="w-4 h-4" />
-              <span>回到首页</span>
-            </Link>
+            <div className="flex items-center gap-2 shrink-0">
+              {canLevelUp && (
+                <Link
+                  href={`/characters/${id}/level-up`}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white border border-green-700 rounded-lg text-sm font-medium transition-colors"
+                >
+                  <TrendingUp className="w-4 h-4" />
+                  <span>升级</span>
+                </Link>
+              )}
+              <Link
+                href="/"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white/90 hover:bg-parchment-light text-leather-dark border border-gold-dark rounded-lg text-sm font-medium transition-colors"
+              >
+                <Home className="w-4 h-4" />
+                <span>回到首页</span>
+              </Link>
+            </div>
           </div>
 
           {/* 页签导航 - 紧凑布局，移除滚动 */}

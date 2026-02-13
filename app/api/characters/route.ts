@@ -4,6 +4,9 @@ import { getAuthFromRequest } from '@/lib/jwt';
 
 export const dynamic = 'force-dynamic';
 
+/** 每用户最多创建的角色数量 */
+const MAX_CHARACTERS_PER_USER = 5;
+
 // GET /api/characters - 获取当前用户的所有角色（支持 cookie session 或 Authorization: Bearer）
 export async function GET(request: NextRequest) {
   try {
@@ -42,6 +45,16 @@ export async function POST(request: NextRequest) {
   try {
     const auth = await getAuthFromRequest(request);
     const characterData = await request.json();
+
+    const count = await prisma.character.count({
+      where: { userId: auth.userId },
+    });
+    if (count >= MAX_CHARACTERS_PER_USER) {
+      return NextResponse.json(
+        { error: `每个用户最多只能创建 ${MAX_CHARACTERS_PER_USER} 个角色，请先删除不需要的角色后再创建。` },
+        { status: 400 }
+      );
+    }
 
     const character = await prisma.character.create({
       data: {

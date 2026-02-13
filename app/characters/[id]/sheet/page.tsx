@@ -47,7 +47,7 @@ export default function CharacterSheetPrintPage() {
                 <span>回到首页</span>
               </Link>
               <Link
-                href={`/characters/${id}`}
+                href={`/characters/${id}/character-sheet`}
                 className="flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-red-600 text-red-600 hover:bg-red-50 rounded-lg font-bold transition-all"
               >
                 <ArrowLeft className="w-5 h-5" />

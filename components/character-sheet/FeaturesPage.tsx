@@ -1,9 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Character, CLASSES, BACKGROUNDS, SPECIES } from '@/lib/dnd-data';
-import { getClassFeaturesByName } from '@/lib/class-features-data';
+import { getClassFeaturesByName, getClassFeatureDetailByLevel, type ClassFeatureDetail } from '@/lib/class-features-data';
+import { getLevelEntryByClassName, getClassIdFromName } from '@/lib/class-level-table';
+import { getSubclassById } from '@/lib/subclass-data';
+import { getSubclassFeaturesByLevel, type SubclassFeatureDetail } from '@/lib/subclass-features-data';
 import { getFeatById } from '@/lib/feats-data';
+import { getSpellById } from '@/lib/spells-data';
 import { Check } from 'lucide-react';
 
 interface FeaturesPageProps {
@@ -13,6 +17,23 @@ interface FeaturesPageProps {
 
 type FeatureTab = 'class' | 'species' | 'background';
 
+/** 按等级汇总已获得的职业特性与选项（用于展示） */
+function useClassFeaturesByLevel(className: string, characterLevel: number) {
+  return useMemo(() => {
+    const entries: { level: number; features: { id: string; name: string }[]; choices: { id: string; name: string }[] }[] = [];
+    for (let lv = 1; lv <= characterLevel; lv++) {
+      const entry = getLevelEntryByClassName(className, lv);
+      if (!entry) continue;
+      entries.push({
+        level: lv,
+        features: entry.features ?? [],
+        choices: entry.choices?.map((c) => ({ id: c.id, name: c.name })) ?? [],
+      });
+    }
+    return entries;
+  }, [className, characterLevel]);
+}
+
 export default function FeaturesPage({ character, onUpdate }: FeaturesPageProps) {
   const [activeTab, setActiveTab] = useState<FeatureTab>('class');
 
@@ -20,6 +41,59 @@ export default function FeaturesPage({ character, onUpdate }: FeaturesPageProps)
   const speciesData = SPECIES.find(s => s.name === character.species);
   const backgroundData = BACKGROUNDS.find(b => b.name === character.background);
   const classFeatures = classData ? getClassFeaturesByName(classData.name) : null;
+  const characterLevel = typeof character.level === 'number' ? character.level : 1;
+  const levelEntries = useClassFeaturesByLevel(character.class ?? '', characterLevel);
+  const subclassId = character?.subclass ?? (character?.classFeatureChoices as { subclass?: string } | undefined)?.subclass;
+  const classId = character?.class ? getClassIdFromName(character.class) : null;
+  const subclass = classId && subclassId ? getSubclassById(classId, subclassId) : null;
+
+  const findFeatureDetail = (featureId: string, level: number): ClassFeatureDetail | undefined =>
+    getClassFeatureDetailByLevel(character.class ?? '', level, featureId);
+
+  /** 渲染一条子职特性（含逸闻附赠熟练的已选技能、魔法探秘的已选法术） */
+  const renderSubclassFeatureCard = (
+    sub: SubclassFeatureDetail,
+    level: number,
+    key: string
+  ) => {
+    const choices = character?.classFeatureChoices as Record<string, string> | undefined;
+    const loreSkills: string[] = (() => {
+      try { return choices?.loreExtraSkills ? JSON.parse(choices.loreExtraSkills) : []; } catch { return []; }
+    })();
+    const loreSpellIds: string[] = (() => {
+      try { return choices?.loreMagicalSecrets ? JSON.parse(choices.loreMagicalSecrets) : []; } catch { return []; }
+    })();
+    const showLoreSkills = sub.name === '附赠熟练' && loreSkills.length > 0;
+    const showLoreSpells = sub.name === '魔法探秘' && loreSpellIds.length > 0;
+    return (
+      <div key={key} className="bg-purple-50 rounded-lg p-4 border-2 border-purple-200">
+        <div className="flex items-start gap-3">
+          <Check className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
+          <div className="flex-1">
+            <h3 className="font-bold text-purple-900 text-lg">{sub.name}</h3>
+            {sub.nameEn && <p className="text-xs text-purple-600 mb-2">{sub.nameEn}</p>}
+            <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line">{sub.description}</p>
+            {sub.details && sub.details.length > 0 && (
+              <ul className="mt-2 space-y-1 text-sm text-gray-600">
+                {sub.details.map((d, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <span className="text-purple-600">•</span>
+                    <span>{d}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {showLoreSkills && <p className="mt-2 text-sm text-purple-700">已选技能：{loreSkills.join('、')}</p>}
+            {showLoreSpells && (
+              <p className="mt-2 text-sm text-purple-700">
+                已选法术：{loreSpellIds.map((id) => getSpellById(id)?.name ?? id).join('、')}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -65,37 +139,108 @@ export default function FeaturesPage({ character, onUpdate }: FeaturesPageProps)
               <div className="mb-6">
                 <h2 className="text-2xl font-cinzel font-bold text-purple-900">
                   {character.class}
+                  {subclass && <span className="text-purple-700 font-normal"> · {subclass.name}</span>}
                 </h2>
                 <p className="text-gray-600">{classData?.description}</p>
               </div>
 
-              {classFeatures && classFeatures.level1Features.length > 0 ? (
-                <div className="space-y-3">
-                  {classFeatures.level1Features.map((feature, index) => (
-                    <div
-                      key={index}
-                      className="bg-purple-50 rounded-lg p-4 border-2 border-purple-200"
-                    >
-                      <div className="flex items-start gap-3">
-                        <Check className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
-                        <div className="flex-1">
-                          <h3 className="font-bold text-purple-900 text-lg mb-2">
-                            {feature.name}
-                          </h3>
-                          <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line">
-                            {feature.description}
-                          </p>
-                          {feature.details && (
-                            <ul className="mt-2 space-y-1 text-sm text-gray-600">
-                              {feature.details.map((detail, idx) => (
-                                <li key={idx} className="flex items-start gap-2">
-                                  <span className="text-purple-600">•</span>
-                                  <span>{detail}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
+              {/* 按等级列出的职业特性 */}
+              {levelEntries.length > 0 ? (
+                <div className="space-y-4">
+                  {levelEntries.map(({ level, features, choices }) => (
+                    <div key={level} className="space-y-2">
+                      <h3 className="text-sm font-bold text-purple-700 border-b border-purple-200 pb-1">
+                        {level} 级
+                      </h3>
+                      <div className="space-y-2 pl-2">
+                        {features.map((f) => {
+                          if (f.id === 'subclass-feature' && classId && subclassId) {
+                            const subFeatures = getSubclassFeaturesByLevel(classId, subclassId, level);
+                            if (subFeatures.length > 0) {
+                              return subFeatures.map((sub, idx) =>
+                                renderSubclassFeatureCard(sub, level, `subclass-${level}-${idx}-${sub.name}`)
+                              );
+                            }
+                            return (
+                              <div key={f.id} className="flex items-center gap-2 py-2 text-gray-700">
+                                <Check className="w-4 h-4 text-purple-500 flex-shrink-0" />
+                                <span className="font-medium">{f.name}</span>
+                                <p className="text-sm text-gray-600">详见《2024 核心规则》对应子职业说明。</p>
+                              </div>
+                            );
+                          }
+                          const detail = findFeatureDetail(f.id, level);
+                          if (detail) {
+                            return (
+                              <div
+                                key={f.id}
+                                className="bg-purple-50 rounded-lg p-4 border-2 border-purple-200"
+                              >
+                                <div className="flex items-start gap-3">
+                                  <Check className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
+                                  <div className="flex-1">
+                                    <h3 className="font-bold text-purple-900 text-lg">{detail.name}</h3>
+                                    {detail.nameEn && <p className="text-xs text-purple-600 mb-2">{detail.nameEn}</p>}
+                                    <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line">
+                                      {detail.description}
+                                    </p>
+                                    {detail.details && (
+                                      <ul className="mt-2 space-y-1 text-sm text-gray-600">
+                                        {detail.details.map((d, idx) => (
+                                          <li key={idx} className="flex items-start gap-2">
+                                            <span className="text-purple-600">•</span>
+                                            <span>{d}</span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    )}
+                                    {(f.id === 'expertise' || f.id === 'expertise-2') && (() => {
+                                      const raw = (character.classFeatureChoices as Record<string, string> | undefined)?.expertiseSkills;
+                                      try {
+                                        const arr: string[] = raw ? JSON.parse(raw) : [];
+                                        if (arr.length > 0) return <p className="mt-2 text-sm text-purple-700">已选专精技能：{arr.join('、')}</p>;
+                                      } catch { return null; }
+                                      return null;
+                                    })()}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          }
+                          return (
+                            <div
+                              key={f.id}
+                              className="flex items-center gap-2 py-2 text-gray-700"
+                            >
+                              <Check className="w-4 h-4 text-purple-500 flex-shrink-0" />
+                              <span className="font-medium">{f.name}</span>
+                            </div>
+                          );
+                        })}
+                        {choices.map((c) => {
+                          const choiceDesc = c.id === 'ability-score-improvement' || c.id === 'epic-boon'
+                            ? '你获得属性值提升专长（见第五章）或其他你满足条件的专长。'
+                            : null;
+                          return (
+                            <div key={c.id} className={choiceDesc ? 'bg-purple-50 rounded-lg p-4 border-2 border-purple-200' : 'flex items-center gap-2 py-2 text-gray-600'}>
+                              <div className="flex items-center gap-2">
+                                <Check className="w-4 h-4 text-purple-400 flex-shrink-0" />
+                                <span className="font-medium text-purple-900">{c.name}</span>
+                                {c.id === 'subclass' && subclass && (
+                                  <span className="text-purple-700 font-medium">（已选：{subclass.name}）</span>
+                                )}
+                              </div>
+                              {choiceDesc && <p className="text-sm text-gray-700 mt-2 pl-6">{choiceDesc}</p>}
+                            </div>
+                          );
+                        })}
+                        {choices.some((c) => c.id === 'subclass') && classId && subclassId && (() => {
+                          const subFeatures = getSubclassFeaturesByLevel(classId, subclassId, level);
+                          if (subFeatures.length === 0) return null;
+                          return subFeatures.map((sub, idx) =>
+                            renderSubclassFeatureCard(sub, level, `subclass-choice-${level}-${idx}-${sub.name}`)
+                          );
+                        })()}
                       </div>
                     </div>
                   ))}
@@ -103,6 +248,19 @@ export default function FeaturesPage({ character, onUpdate }: FeaturesPageProps)
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   <p>暂无职业特性信息</p>
+                </div>
+              )}
+
+              {/* 子职业区块：有子职业时展示 */}
+              {subclass && (
+                <div className="mt-6 pt-6 border-t-2 border-purple-200">
+                  <h3 className="text-xl font-cinzel font-bold text-purple-800 mb-2">
+                    子职业：{subclass.name}
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-2">{subclass.nameEn}</p>
+                  <p className="text-sm text-gray-600">
+                    子职特性在 3 级选择子职业后获得，并在 6、10、14 级等获得进阶子职特性，详见《2024 核心规则》对应子职业说明。
+                  </p>
                 </div>
               )}
             </div>

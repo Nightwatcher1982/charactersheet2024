@@ -51,25 +51,20 @@ export default function CharacterSheetSummary({ character }: CharacterSheetSumma
   const backgroundData = BACKGROUNDS.find(b => b.name === character.background);
   const speciesData = SPECIES.find(s => s.name === character.species);
 
-  // 计算战斗数据
+  // 计算战斗数据：生命上限优先使用升级/创建时存储的 hitPoints
   const constitution = finalAbilities.constitution;
   const constitutionMod = getAbilityModifier(constitution);
   const hitDie = classData?.hitDie || 8;
-  let maxHP = hitDie + constitutionMod;
-  
-  // 检查专长对生命值的影响
+  let computedMaxHP = hitDie + constitutionMod;
+  const level = character.level || 1;
   if (character.feats?.includes('tough')) {
-    const level = character.level || 1;
-    maxHP += level * 2;
+    computedMaxHP += level * 2;
   }
-  
-  // 检查物种特性对生命值的影响
-  const speciesHPBonus = calculateSpeciesHPBonus(character);
-  maxHP += speciesHPBonus;
-  
-  // 检查职业特性对生命值的影响
-  const classFeatureHPBonus = calculateClassFeatureHPBonus(character);
-  maxHP += classFeatureHPBonus;
+  computedMaxHP += calculateSpeciesHPBonus(character);
+  computedMaxHP += calculateClassFeatureHPBonus(character);
+  const maxHP = (character.hitPoints != null && character.hitPoints > 0)
+    ? character.hitPoints
+    : computedMaxHP;
   
   const dexterity = finalAbilities.dexterity;
   const dexterityMod = getAbilityModifier(dexterity);

@@ -84,6 +84,19 @@ export function getAvatarFromCharacter(char: CharacterDataFromSheet | null): str
 }
 
 /**
+ * 无鉴权拉取公开角色（GET /api/characters/[id]）。
+ * 仅当角色 isPublic=true 时返回数据；非公开或不存在返回 null。
+ */
+export async function fetchPublicCharacter(characterId: string): Promise<CharacterDataFromSheet | null> {
+  if (!BASE) return null;
+  const base = BASE.replace(/\/$/, '');
+  const res = await fetch(`${base}/api/characters/${characterId}`, { headers: {} });
+  if (!res.ok) return null;
+  const data = (await res.json()) as { character?: CharacterDataFromSheet };
+  return data.character ?? null;
+}
+
+/**
  * 用用户 JWT 拉取单个角色详情（GET /api/characters/[id]）。
  * 仅当该角色属于该用户时角色卡才返回 200。
  */

@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { X, Check, Search, Wand2, Sparkles } from 'lucide-react';
-import { getCantripsForClass, getFirstLevelSpellsForClass, getSpellById, Spell } from '@/lib/spells-data';
+import { getCantripsForClass, getFirstLevelSpellsForClass, getSpellsForClassByLevel, getSpellById, Spell } from '@/lib/spells-data';
 
 interface AddSpellModalProps {
   isOpen: boolean;
   onClose: () => void;
   onComplete: (spellIds: string[]) => void;
   selectedClass: string;
-  spellLevel: 0 | 1; // 0 = 戏法, 1 = 一环
+  spellLevel: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9; // 0 = 戏法, 1–9 = 对应环位
   alreadySelected: string[]; // 已经在角色卡中的法术
   title: string;
   description: string;
@@ -48,9 +48,11 @@ export default function AddSpellModal({
   if (!isOpen) return null;
 
   // 获取可用法术列表
-  const allSpells = spellLevel === 0 
+  const allSpells = spellLevel === 0
     ? getCantripsForClass(selectedClass)
-    : getFirstLevelSpellsForClass(selectedClass);
+    : spellLevel === 1
+      ? getFirstLevelSpellsForClass(selectedClass)
+      : getSpellsForClassByLevel(selectedClass, spellLevel);
 
   // 过滤掉已经在角色卡中的法术
   const availableSpells = allSpells.filter(spell => !alreadySelected.includes(spell.id));
@@ -163,7 +165,7 @@ export default function AddSpellModal({
                             {spell.school}
                           </span>
                           <span className="text-xs text-gray-600">
-                            {spellLevel === 0 ? '戏法' : '一环'} · {spell.castingTime}
+                            {spellLevel === 0 ? '戏法' : `${spellLevel}环`} · {spell.castingTime}
                           </span>
                         </div>
                       </div>
@@ -193,7 +195,7 @@ export default function AddSpellModal({
                     所有可用法术都已添加
                   </p>
                   <p className="text-gray-500 text-sm">
-                    你已经学会了所有 {selectedClass} 的 {spellLevel === 0 ? '戏法' : '一环法术'}
+                    你已经学会了所有 {selectedClass} 的 {spellLevel === 0 ? '戏法' : `${spellLevel}环法术`}
                   </p>
                 </div>
               ) : (

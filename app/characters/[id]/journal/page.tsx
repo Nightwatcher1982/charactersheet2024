@@ -103,7 +103,7 @@ export default function CharacterJournalPage() {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* 头部导航 */}
         <div className="mb-6 flex items-center justify-between">
-          <Link href={`/characters/${id}`} className="flex items-center gap-2 text-red-600 hover:text-red-700 transition-colors">
+          <Link href={`/characters/${id}/character-sheet`} className="flex items-center gap-2 text-red-600 hover:text-red-700 transition-colors">
             <ArrowLeft className="w-5 h-5" />
             <span>返回角色档案</span>
           </Link>

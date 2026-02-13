@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useCharacterStore } from '@/lib/character-store';
 import { useRequireAuth } from '@/lib/use-require-auth';
 import { getAssetPath } from '@/lib/asset-path';
+import { CLASSES } from '@/lib/dnd-data';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 // 步骤组件 - 按照 DND 2024 官方流程
@@ -167,13 +168,17 @@ export default function CreateCharacterPage() {
 
   const CurrentStepComponent = STEPS[currentStep].component;
 
-  // 检查步骤1（职业）是否完成
-  const isStep1Complete = currentStep === 1 ? Boolean(
-    currentCharacter?.class &&
-    currentCharacter?.skills &&
-    currentCharacter.skills.length > 0 &&
-    currentCharacter?.classStartingEquipment
-  ) : true;
+  // 检查步骤1（职业）是否完成（含 1 级职业特性：圣职/原初职能等）
+  const isStep1Complete = (() => {
+    if (currentStep !== 1) return true;
+    if (!currentCharacter?.class || !currentCharacter?.skills?.length || !currentCharacter?.classStartingEquipment)
+      return false;
+    const classData = CLASSES.find((c) => c.name === currentCharacter.class);
+    const featureChoices = (classData as { featureChoices?: { id: string }[] })?.featureChoices ?? [];
+    const choices = currentCharacter.classFeatureChoices ?? {};
+    const allFeaturesChosen = featureChoices.every((f) => choices[f.id] != null && String(choices[f.id]).trim() !== '');
+    return allFeaturesChosen;
+  })();
 
   // 检查步骤2（起源）的所有子步骤是否完成
   const isStep2Complete = currentStep === 2 ? Boolean(

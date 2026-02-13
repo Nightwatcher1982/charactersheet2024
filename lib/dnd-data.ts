@@ -59,7 +59,9 @@ export interface Character {
   equipment: string[];
   spells: string[];
   features: string[];
-  classFeatureChoices?: Record<string, string>; // 职业和物种特性选择，如 {"divineOrder": "protector", "speciesChoices": "...", "classSkills": "[\"驯兽\",\"运动\"]"}
+  classFeatureChoices?: Record<string, string>; // 职业和物种特性选择，如 {"divineOrder": "protector", "subclass": "champion", "classSkills": "[\"驯兽\",\"运动\"]"}
+  /** 3 级选择的子职业 id，与 subclass-data 一致；也可存于 classFeatureChoices.subclass */
+  subclass?: string;
   backstory: string;
   createdAt: string;
   updatedAt: string;
@@ -87,6 +89,8 @@ export interface Character {
   deathSaves?: { successes: number; failures: number }; // 死亡豁免记录
   conditions?: string[]; // 当前状态（中毒、魅惑等）
   notes?: string; // 自由备注
+  /** 魔契师玄奥秘法：11/13/15/17 级各选一道 6/7/8/9 环法术 id，每日一次不耗法术位 */
+  mysticArcanum?: { level6?: string; level7?: string; level8?: string; level9?: string };
 }
 
 export interface ClassFeatureChoice {
@@ -194,7 +198,18 @@ export const CLASSES = [
       armor: ['轻甲', '中甲', '盾牌（非金属）'],
       weapons: ['简易武器'],
       tools: ['草药工具']
-    }
+    },
+    featureChoices: [
+      {
+        id: 'primalOrder',
+        name: '原初职能 (Primal Order)',
+        level: 1,
+        options: [
+          { id: 'magician', name: '术师 (Magician)', description: '额外学会一道戏法，奥秘与自然检定加感知调整值', benefits: ['额外1个德鲁伊戏法', '智力（奥秘、自然）检定加感知调整值'] },
+          { id: 'warden', name: '卫士 (Warden)', description: '为战斗做足训练', benefits: ['军用武器熟练', '中甲受训'] }
+        ]
+      }
+    ]
   },
   {
     id: 'fighter',

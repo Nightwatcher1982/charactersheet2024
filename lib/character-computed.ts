@@ -57,12 +57,16 @@ export function getCharacterComputedStats(character: Partial<Character>): {
   const classData = CLASSES.find((c) => c.name === character.class);
   const constitutionMod = getAbilityModifier(finalAbilities.constitution);
   const hitDie = classData?.hitDie ?? 8;
-  let maxHp = hitDie + constitutionMod;
+  let computedMax = hitDie + constitutionMod;
   if (character.feats?.includes('tough')) {
-    maxHp += level * 2;
+    computedMax += level * 2;
   }
-  maxHp += calculateSpeciesHPBonus(character);
-  maxHp += calculateClassFeatureHPBonus(character);
+  computedMax += calculateSpeciesHPBonus(character);
+  computedMax += calculateClassFeatureHPBonus(character);
+  // 升级/创建时写入的 hitPoints 即为生命上限，优先使用
+  const maxHp = (character.hitPoints != null && character.hitPoints > 0)
+    ? character.hitPoints
+    : computedMax;
 
   const currentHp =
     typeof character.currentHitPoints === 'number'

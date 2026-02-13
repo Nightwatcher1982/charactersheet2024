@@ -161,6 +161,13 @@ export default function CampaignHallPage() {
   const [campaignLogs, setCampaignLogs] = useState<{ id: string; userId: string; content: string; createdAt: string }[]>([]);
   const [newLogContent, setNewLogContent] = useState('');
   const [addingLog, setAddingLog] = useState(false);
+  const [memberCharacters, setMemberCharacters] = useState<{
+    characterId: string;
+    name?: string;
+    level?: number;
+    class?: string;
+    avatar?: string | null;
+  }[]>([]);
 
   const DICE_TYPES = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'] as const;
 
@@ -259,6 +266,17 @@ export default function CampaignHallPage() {
       .catch(() => {});
   }, [id]);
 
+  const loadMemberCharacters = useCallback(() => {
+    if (!id) return;
+    api(`/api/campaigns/${id}/member-characters`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.characters) setMemberCharacters(data.characters);
+        else setMemberCharacters([]);
+      })
+      .catch(() => setMemberCharacters([]));
+  }, [id]);
+
   useEffect(() => {
     if (!id) return;
     setLoading(true);
@@ -272,6 +290,10 @@ export default function CampaignHallPage() {
   useEffect(() => {
     if (campaign?.isMember !== false) loadEncounters();
   }, [id, campaign?.isMember, loadEncounters]);
+
+  useEffect(() => {
+    if (campaign?.isMember !== false) loadMemberCharacters();
+  }, [id, campaign?.isMember, loadMemberCharacters]);
 
   useEffect(() => {
     loadInitiative();
@@ -782,6 +804,65 @@ export default function CampaignHallPage() {
           )}
         </section>
       )}
+
+      <section className="border border-gray-200 rounded p-4 mb-4 bg-white">
+        <h2 className="font-medium mb-2 text-gray-900">玩家角色列表</h2>
+        <p className="text-sm text-gray-500 mb-3">
+          团队成员的战斗角色。您的角色始终可见；其他成员需在角色卡首页设为公开后才会显示。
+        </p>
+        {memberCharacters.length === 0 ? (
+          <p className="text-gray-500 text-sm">暂无公开角色卡</p>
+        ) : (
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 list-none p-0 m-0">
+            {memberCharacters.map((c) => {
+              const sheetUrl = CHARACTER_SHEET_URL
+                ? `${CHARACTER_SHEET_URL}/characters/${c.characterId}/character-sheet`
+                : null;
+              const cardContent = (
+                <>
+                  <div className="w-12 h-12 rounded-full bg-slate-200 flex-shrink-0 overflow-hidden">
+                    {c.avatar ? (
+                      <img
+                        src={c.avatar}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-500 text-lg font-medium">
+                        {(c.name || '?').charAt(0)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-gray-900 truncate">{c.name || '未命名'}</div>
+                    <div className="text-sm text-gray-500">
+                      {c.level ? `${c.level} 级` : ''} {c.class || ''}
+                    </div>
+                  </div>
+                </>
+              );
+              return (
+                <li key={c.characterId}>
+                  {sheetUrl ? (
+                    <a
+                      href={sheetUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-slate-50 hover:border-gray-300 transition-colors"
+                    >
+                      {cardContent}
+                    </a>
+                  ) : (
+                    <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg bg-white">
+                      {cardContent}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
 
       <section className="border border-gray-200 rounded p-4 mb-4 bg-white">
         <h2 className="font-medium mb-2 text-gray-900">遭遇与先攻</h2>

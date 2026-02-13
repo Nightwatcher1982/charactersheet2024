@@ -13,9 +13,17 @@ interface BasicInfoPageProps {
 }
 
 export default function BasicInfoPage({ character, onUpdate }: BasicInfoPageProps) {
-  const [currentHP, setCurrentHP] = useState(character.hitPoints ?? 0);
+  const [currentHP, setCurrentHP] = useState(
+    character.currentHitPoints ?? character.hitPoints ?? 0
+  );
   const [showHPModal, setShowHPModal] = useState(false);
   const [pendingHP, setPendingHP] = useState(0);
+
+  // 外部更新角色（如升级）后同步当前生命值
+  useEffect(() => {
+    const next = character.currentHitPoints ?? character.hitPoints ?? 0;
+    setCurrentHP((prev) => (prev !== next ? next : prev));
+  }, [character.currentHitPoints, character.hitPoints]);
 
   const abilities = character.abilities || {
     strength: 10,
@@ -47,30 +55,29 @@ export default function BasicInfoPage({ character, onUpdate }: BasicInfoPageProp
 
   const profBonus = getProficiencyBonus(character.level || 1);
 
-  // 计算生命值
+  // 计算生命值：上限优先使用升级/创建时存储的 character.hitPoints，否则用 1 级公式
   const classData = CLASSES.find(c => c.name === character.class);
   const constitutionMod = getAbilityModifier(finalAbilities.constitution);
   const hitDie = classData?.hitDie || 8;
-  let maxHP = hitDie + constitutionMod;
-
-  // 检查专长对生命值的影响
+  let computedMaxHP = hitDie + constitutionMod;
+  const level = character.level || 1;
   if (character.feats?.includes('tough')) {
-    const level = character.level || 1;
-    maxHP += level * 2;
+    computedMaxHP += level * 2;
   }
+  computedMaxHP += calculateSpeciesHPBonus(character);
+  computedMaxHP += calculateClassFeatureHPBonus(character);
+  const maxHP = (character.hitPoints != null && character.hitPoints > 0)
+    ? character.hitPoints
+    : computedMaxHP;
 
-  // 检查物种特性对生命值的影响
-  const speciesHPBonus = calculateSpeciesHPBonus(character);
-  maxHP += speciesHPBonus;
-
-  // 检查职业特性对生命值的影响
-  const classFeatureHPBonus = calculateClassFeatureHPBonus(character);
-  maxHP += classFeatureHPBonus;
-
-  // 如果当前HP未设置，初始化为最大值
-  if (currentHP === 0 && maxHP > 0) {
+  // 当前生命值：优先 currentHitPoints，否则用上限（满血）
+  const initialCurrent = character.currentHitPoints ?? character.hitPoints ?? 0;
+  if (currentHP === 0 && initialCurrent > 0) {
+    setCurrentHP(initialCurrent);
+  }
+  if (currentHP === 0 && maxHP > 0 && initialCurrent === 0) {
     setCurrentHP(maxHP);
-    onUpdate({ hitPoints: maxHP });
+    onUpdate({ currentHitPoints: maxHP });
   }
 
   const openHPModal = () => {
@@ -89,7 +96,7 @@ export default function BasicInfoPage({ character, onUpdate }: BasicInfoPageProp
   const confirmHP = () => {
     const value = Math.max(0, Math.min(maxHP, pendingHP));
     setCurrentHP(value);
-    onUpdate({ hitPoints: value });
+    onUpdate({ currentHitPoints: value });
     closeHPModal();
   };
 

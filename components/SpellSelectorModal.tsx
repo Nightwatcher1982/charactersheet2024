@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Check, Sparkles, BookOpen } from 'lucide-react';
+import { X, Check, Sparkles, Search } from 'lucide-react';
 import { 
   getCantripsForClass, 
   getFirstLevelSpellsForClass, 
@@ -36,6 +36,7 @@ export default function SpellSelectorModal({
   const [selectedCantrips, setSelectedCantrips] = useState<string[]>(initialCantrips);
   const [selectedFirstLevelSpells, setSelectedFirstLevelSpells] = useState<string[]>(initialFirstLevelSpells);
   const [selectedPreparedSpells, setSelectedPreparedSpells] = useState<string[]>(initialPreparedSpells);
+  const [spellSearch, setSpellSearch] = useState('');
 
   // 使用 useRef 跟踪模态框是否已经初始化，避免重复初始化
   const hasInitializedRef = useRef(false);
@@ -85,6 +86,32 @@ export default function SpellSelectorModal({
 
   const availableCantrips = getCantripsForClass(selectedClass);
   const availableFirstLevelSpells = getFirstLevelSpellsForClass(selectedClass);
+
+  const filterSpellsBySearch = (list: Spell[], q: string) => {
+    if (!q.trim()) return list;
+    const lower = q.trim().toLowerCase();
+    return list.filter(
+      (s) =>
+        s.name.includes(q.trim()) ||
+        s.nameEn.toLowerCase().includes(lower) ||
+        s.name.toLowerCase().includes(lower)
+    );
+  };
+
+  const filteredCantrips = useMemo(
+    () => filterSpellsBySearch(availableCantrips, spellSearch),
+    [availableCantrips, spellSearch]
+  );
+  const filteredFirstLevel = useMemo(
+    () => filterSpellsBySearch(availableFirstLevelSpells, spellSearch),
+    [availableFirstLevelSpells, spellSearch]
+  );
+  const filteredForPrepare = useMemo(() => {
+    const inSpellbook = selectedFirstLevelSpells
+      .map((id) => availableFirstLevelSpells.find((s) => s.id === id))
+      .filter(Boolean) as Spell[];
+    return filterSpellsBySearch(inSpellbook, spellSearch);
+  }, [selectedFirstLevelSpells, availableFirstLevelSpells, spellSearch]);
 
   // 法师：两步（法术书 -> 准备法术）。其他职业：直接选择“准备法术”列表。
   const isWizard = selectedClass === '法师';
@@ -230,11 +257,34 @@ export default function SpellSelectorModal({
           )}
         </div>
 
+        {/* 搜索：戏法/一环/准备法术列表均支持按中文名或英文名筛选 */}
+        <div className="px-4 py-2 border-b flex-shrink-0">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              value={spellSearch}
+              onChange={(e) => setSpellSearch(e.target.value)}
+              placeholder="搜索法术（中文名或英文名）"
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+            />
+            {spellSearch && (
+              <button
+                type="button"
+                onClick={() => setSpellSearch('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm"
+              >
+                清除
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* 法术列表 */}
         <div className="flex-1 overflow-y-auto min-h-0 p-4">
           {currentPage === 'cantrips' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {availableCantrips.map((spell) => {
+              {filteredCantrips.map((spell) => {
                 const isSelected = selectedCantrips.includes(spell.id);
                 const canSelect = selectedCantrips.length < spellcastingRules.cantripsKnown || isSelected;
                 
@@ -268,12 +318,14 @@ export default function SpellSelectorModal({
                   </button>
                 );
               })}
+              {spellSearch && filteredCantrips.length === 0 && (
+                <p className="col-span-full text-sm text-gray-500 py-4">无匹配戏法，可修改搜索词或清空。</p>
+              )}
             </div>
           ) : currentPage === 'prepare' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {selectedFirstLevelSpells.map((spellId) => {
-                const spell = availableFirstLevelSpells.find(s => s.id === spellId);
-                if (!spell) return null;
+              {filteredForPrepare.map((spell) => {
+                const spellId = spell.id;
                 const isPrepared = selectedPreparedSpells.includes(spellId);
                 const canSelect = selectedPreparedSpells.length < preparedTargetRaw || isPrepared;
                 
@@ -306,10 +358,13 @@ export default function SpellSelectorModal({
                   </button>
                 );
               })}
+              {spellSearch && filteredForPrepare.length === 0 && (
+                <p className="col-span-full text-sm text-gray-500 py-4">无匹配法术，可修改搜索词或清空。</p>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {availableFirstLevelSpells.map((spell) => {
+              {filteredFirstLevel.map((spell) => {
                 const isSelected = selectedFirstLevelSpells.includes(spell.id);
                 const limit = isWizard ? spellbookTarget : preparedTarget;
                 const canSelect = selectedFirstLevelSpells.length < limit || isSelected;
@@ -346,6 +401,9 @@ export default function SpellSelectorModal({
                   </button>
                 );
               })}
+              {spellSearch && filteredFirstLevel.length === 0 && (
+                <p className="col-span-full text-sm text-gray-500 py-4">无匹配一环法术，可修改搜索词或清空。</p>
+              )}
             </div>
           )}
         </div>

@@ -12,6 +12,9 @@ import type { Character } from '@/lib/dnd-data';
 
 type CharacterWithServerId = Character & { serverId: string; isPublic?: boolean };
 
+/** 每用户最多创建的角色数量（与后端一致） */
+const MAX_CHARACTERS_PER_USER = 5;
+
 function getAlignmentName(alignmentId: string | undefined): string {
   if (!alignmentId) return '';
   const a = ALIGNMENTS.find((x) => x.id === alignmentId);
@@ -65,7 +68,10 @@ export default function HomePage() {
     if (!authLoading) fetchCharacters();
   }, [authLoading]);
 
+  const atCharacterLimit = characters.length >= MAX_CHARACTERS_PER_USER;
+
   const handleCreateNew = () => {
+    if (atCharacterLimit) return;
     createNewCharacter();
     router.push('/create');
   };
@@ -200,14 +206,27 @@ export default function HomePage() {
           </h1>
         </header>
         <div className="flex-1 min-h-[40vh]" />
-        <div className="container mx-auto px-4 pb-16 flex justify-center">
+        <div className="container mx-auto px-4 pb-16 flex flex-col items-center gap-3">
           <button
+            type="button"
             onClick={handleCreateNew}
-            className="group px-10 py-5 bg-purple-600 hover:bg-purple-700 rounded-xl font-bold text-xl text-white shadow-xl hover:scale-105 transition-all duration-300 flex items-center gap-3"
+            disabled={atCharacterLimit}
+            className={`group px-10 py-5 rounded-xl font-bold text-xl text-white shadow-xl transition-all duration-300 flex items-center gap-3 ${
+              atCharacterLimit
+                ? 'bg-gray-500 cursor-not-allowed opacity-90'
+                : 'bg-purple-600 hover:bg-purple-700 hover:scale-105'
+            }`}
           >
-            <Plus className="w-7 h-7 group-hover:rotate-90 transition-transform duration-300" />
-            <span className="font-cinzel tracking-wider">创建新角色</span>
+            <Plus className={`w-7 h-7 ${atCharacterLimit ? '' : 'group-hover:rotate-90'} transition-transform duration-300`} />
+            <span className="font-cinzel tracking-wider">
+              {atCharacterLimit ? '已达上限（5 个角色）' : '创建新角色'}
+            </span>
           </button>
+          {!charactersLoading && (
+            <p className="text-white/80 text-sm font-medieval">
+              已创建 {characters.length} / {MAX_CHARACTERS_PER_USER} 个角色
+            </p>
+          )}
         </div>
       </section>
 
