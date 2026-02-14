@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthFromRequest } from '@/lib/jwt';
 import { getCharacterComputedStats } from '@/lib/character-computed';
+import { getAdminSession } from '@/lib/admin-session';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +16,7 @@ async function getOptionalAuth(request: Request): Promise<{ userId: string } | n
   }
 }
 
-// GET /api/characters/[id] - 获取单个角色；本人始终可读，公开角色允许未登录只读
+// GET /api/characters/[id] - 获取单个角色；本人始终可读，公开角色允许未登录只读，管理员可查看任意角色
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -59,6 +60,20 @@ export async function GET(
         character: characterWithComputed,
         isOwner: false,
       });
+    }
+
+    // 后台管理员可查看任意角色（只读，isOwner: false）
+    try {
+      const adminSession = await getAdminSession();
+      if (adminSession?.isAdmin && adminSession?.adminId) {
+        return NextResponse.json({
+          success: true,
+          character: characterWithComputed,
+          isOwner: false,
+        });
+      }
+    } catch {
+      /* 非管理员，忽略 */
     }
 
     return NextResponse.json(

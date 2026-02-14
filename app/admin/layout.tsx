@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useRequireAdmin } from '@/lib/use-require-admin';
-import { LayoutDashboard, Users, FileText, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, BookOpen, LogOut } from 'lucide-react';
 import { getApiUrl } from '@/lib/asset-path';
 
 export default function AdminLayout({
@@ -48,6 +48,12 @@ export default function AdminLayout({
             className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${pathname?.startsWith('/admin/users') ? 'bg-gray-700' : 'hover:bg-gray-700'}`}
           >
             <Users className="w-5 h-5" /> 用户管理
+          </Link>
+          <Link
+            href="/admin/characters"
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${pathname?.startsWith('/admin/characters') ? 'bg-gray-700' : 'hover:bg-gray-700'}`}
+          >
+            <BookOpen className="w-5 h-5" /> 角色卡管理
           </Link>
           <Link
             href="/admin/audit"

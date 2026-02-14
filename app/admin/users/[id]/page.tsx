@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, User, Key, Crown, FileText, Trash2 } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowLeft, User, Key, Crown, FileText, Trash2, ExternalLink } from 'lucide-react';
 import { getApiUrl } from '@/lib/asset-path';
 
 type UserDetail = {
@@ -319,7 +320,8 @@ export default function AdminUserDetailPage() {
                     <th className="py-2 pr-4">职业</th>
                     <th className="py-2 pr-4">等级</th>
                     <th className="py-2 pr-4">创建时间</th>
-                    <th className="py-2">更新时间</th>
+                    <th className="py-2 pr-4">更新时间</th>
+                    <th className="py-2 text-right">操作</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -331,8 +333,18 @@ export default function AdminUserDetailPage() {
                       <td className="py-2 pr-4 text-gray-500">
                         {formatDate(c.createdAt)}
                       </td>
-                      <td className="py-2 text-gray-500">
+                      <td className="py-2 pr-4 text-gray-500">
                         {formatDate(c.updatedAt)}
+                      </td>
+                      <td className="py-2 text-right">
+                        <Link
+                          href={`/characters/${c.id}/character-sheet`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-800 text-sm"
+                        >
+                          <ExternalLink className="w-4 h-4" /> 查看
+                        </Link>
                       </td>
                     </tr>
                   ))}

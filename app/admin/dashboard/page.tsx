@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Users, FileText, ChevronRight } from 'lucide-react';
+import { Users, FileText, BookOpen, ChevronRight } from 'lucide-react';
 import { getApiUrl } from '@/lib/asset-path';
 
 export default function AdminDashboardPage() {
@@ -57,6 +57,15 @@ export default function AdminDashboardPage() {
         >
           <span className="flex items-center gap-2">
             <Users className="w-5 h-5 text-gray-600" /> 用户管理
+          </span>
+          <ChevronRight className="w-5 h-5 text-gray-400" />
+        </Link>
+        <Link
+          href="/admin/characters"
+          className="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+        >
+          <span className="flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-gray-600" /> 角色卡管理
           </span>
           <ChevronRight className="w-5 h-5 text-gray-400" />
         </Link>
