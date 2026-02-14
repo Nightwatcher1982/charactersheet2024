@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Link from 'next/link';
 import { ArrowLeft, User, Key, Crown, FileText, Trash2, ExternalLink } from 'lucide-react';
 import { getApiUrl } from '@/lib/asset-path';
 
