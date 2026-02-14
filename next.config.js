@@ -13,6 +13,21 @@ const nextConfig = {
   eslint: { ignoreDuringBuilds: true },
   trailingSlash: true,
   ...(normalizedBasePath ? { basePath: normalizedBasePath } : {}),
+  // 页面/文档不缓存，避免部署后用户拿到旧 HTML 导致 _next/static chunk 404；静态资源保持长期缓存
+  async headers() {
+    return [
+      {
+        source: '/_next/static/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' },
+        ],
+      },
+    ];
+  },
   images: {
     // 启用 WebP/AVIF 等格式，减小体积、加快加载
     formats: ['image/avif', 'image/webp'],
